@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
-
+import { FiMenu } from "react-icons/fi";
 const Navbar = () => {
   const navItems = [
     { name: "About", path: "/about" },
@@ -76,7 +76,7 @@ const Navbar = () => {
 
       {/* Mobile Menu Button */}
       <button className="md:hidden text-[#111714] dark:text-gray-300">
-        <span className="material-symbols-outlined">menu</span>
+        <FiMenu />
       </button>
     </header>
   );
