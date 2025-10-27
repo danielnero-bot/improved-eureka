@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+
+@theme {
+  --color-primary: #38e07b;
+  --color-background-light: #f6f8f7;
+  --color-background-dark: #122017;
+  --font-display: "Space Grotesk", sans-serif;
+
+  --radius-sm: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+}
+
+/* Optional: global body styles */
+body {
+  background-color: var(--color-background-light);
+  font-family: var(--font-display);
+  color: #111714;
+}
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
+  link[rel="icon"] {
+    color: #38e07b;/* your primary green */
+  }
+
+  @media (prefers-color-scheme: dark) {
+    link[rel="icon"] {
+      color: #f6f8f7;/* or a lighter tone */
+    }
+  }
+}
