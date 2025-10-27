@@ -10,45 +10,50 @@ const About = () => {
             {/* ====== HERO SECTION ====== */}
             <section className="px-4 py-12 sm:py-16 md:py-20 text-center">
               <h1 className="text-3xl font-bold tracking-tight text-[#111714] dark:text-gray-100 sm:text-4xl md:text-5xl">
-                Our Mission: Your Restaurant&apos;s Success
+                Empowering Restaurants to Go Digital — Effortlessly
               </h1>
               <p className="mt-4 text-base leading-relaxed text-[#648772] dark:text-gray-400 sm:text-lg">
-                We believe every restaurant, big or small, deserves a beautiful,
-                professional online presence without the hefty price tag.
-                QuickPlate was born from a simple idea: to empower local
-                restaurant owners with the tools they need to thrive in the
-                digital world.
+                QuickPlate helps restaurant owners build, customize, and manage
+                their websites — all from one intuitive dashboard. No coding, no
+                hosting fees, just pure freedom to create and grow your brand
+                online.
               </p>
             </section>
 
-            {/* ====== STORY & OPEN SOURCE SECTIONS ====== */}
+            {/* ====== STORY & PURPOSE SECTIONS ====== */}
             <section className="grid grid-cols-1 gap-12 px-4 md:grid-cols-2 md:gap-16">
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-[#111714] dark:text-gray-100">
                   Our Story
                 </h2>
                 <p className="text-[#648772] dark:text-gray-400">
-                  QuickPlate started as a passion project by a small team of
-                  developers who loved both food and technology. We saw our
-                  favorite local eateries struggling with outdated websites or
-                  no online presence at all. High costs and technical complexity
-                  were major barriers. We decided to build a solution that was
-                  simple, powerful, and completely free.
+                  QuickPlate began as a project built to solve a simple problem:
+                  many restaurants wanted a professional online presence, but
+                  lacked the time or technical know-how. We envisioned a
+                  platform that gave them control — a place to create menus,
+                  upload photos, and manage everything from one easy dashboard.
+                </p>
+                <p className="text-[#648772] dark:text-gray-400">
+                  Today, that vision powers local restaurants, cafés, and food
+                  brands all over the world — all built on open technology and a
+                  community-driven spirit.
                 </p>
               </div>
 
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-[#111714] dark:text-gray-100">
-                  Why Open Source?
+                  Why We’re Open Source
                 </h2>
                 <p className="text-[#648772] dark:text-gray-400">
-                  Making QuickPlate open source was a natural choice. We want to
-                  foster a community of collaboration where developers and
-                  restaurant owners can contribute, improve, and adapt the
-                  platform for everyone&apos;s benefit. Transparency and
-                  community are at the heart of what we do. By being open
-                  source, we ensure QuickPlate will always be free and
-                  accessible to all.
+                  We believe technology should empower, not exclude. That’s why
+                  QuickPlate is free and open source — anyone can use it, extend
+                  it, and make it better. Our code, our process, and our mission
+                  are transparent because collaboration fuels innovation.
+                </p>
+                <p className="text-[#648772] dark:text-gray-400">
+                  By being open source, we invite developers, designers, and
+                  restaurant owners alike to join us in building the future of
+                  digital food experiences.
                 </p>
               </div>
             </section>
@@ -60,9 +65,9 @@ const About = () => {
                   Meet the Contributors
                 </h2>
                 <p className="mt-4 text-base leading-relaxed text-[#648772] dark:text-gray-400 sm:text-lg">
-                  QuickPlate is built and maintained by a dedicated community of
-                  volunteers. We&apos;re proud to have contributors from all
-                  over the world.
+                  QuickPlate is powered by a passionate global community —
+                  developers, designers, and creators who believe in building
+                  tools that help local businesses thrive.
                 </p>
               </div>
 
@@ -75,7 +80,7 @@ const About = () => {
                   },
                   {
                     name: "Favour Benson",
-                    role: "Co Founder",
+                    role: "Co-Founder",
                     img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCj_fPjBvjG2XQxj9BC7J2KN3BGSuiGZjxWbx2kTzmfKPqFU-Ow7VuQShmTipwKJuhTbwhfkY021y8qCVkEQ4DjAyDgV0KM-WjVB7VtP2s7FdL2CsC9r8bj0ZQoC5dLtFKHFrG1cx9soFm4n0liufg-bT4YYMhhMC85Gdt6C1nMph_w59m_sUPKz3PaFxar2m0Z14BJjZsxYlKFWB1DhTzQgId2-Z9Rv1Kyz-_wzhEx_eWRH1Pkd8fyiM3xHlrQfk6oSI3hFm5k8S6O",
                   },
                   {
@@ -103,8 +108,6 @@ const About = () => {
                 ))}
               </div>
             </section>
-
-            
           </div>
         </main>
       </div>

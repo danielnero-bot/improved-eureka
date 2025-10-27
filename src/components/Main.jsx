@@ -2,7 +2,10 @@ import React from "react";
 import { MdCloudSync } from "react-icons/md";
 import { BiCodeBlock } from "react-icons/bi";
 import { FaPalette } from "react-icons/fa";
-const Main = () => {
+import { FiSettings, FiEdit3, FiSend } from "react-icons/fi";
+
+
+function Main () {
   return (
     <main>
       {/* Hero Section */}
@@ -16,20 +19,20 @@ const Main = () => {
         >
           <div className="flex flex-col gap-2 text-left">
             <h1 className="text-white text-5xl font-black leading-tight">
-              Launch Your Own Restaurant Website in Minutes
+              Launch Your Restaurant Website in Minutes
             </h1>
             <p className="text-white text-base">
-              QuickPlate is a free, open-source tool for restaurant owners to
-              create and manage their websites with ease.
+              QuickPlate lets you easily create, edit, and manage your
+              restaurant website — all from one simple dashboard.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3 mt-4">
             <button className="bg-primary text-[#111714] font-bold rounded-lg px-5 h-12 hover:scale-105 transition-transform">
-              Get Started
+              Get Started Free
             </button>
             <button className="bg-white dark:bg-gray-800 text-[#111714] dark:text-gray-200 font-bold rounded-lg px-5 h-12 hover:scale-105 transition-transform">
-              View on GitHub
+              Go to Dashboard
             </button>
           </div>
         </div>
@@ -39,11 +42,11 @@ const Main = () => {
       <section className="flex flex-col gap-10 px-4 py-10">
         <div>
           <h2 className="text-4xl font-black text-[#111714] dark:text-gray-100">
-            Everything You Need, Nothing You Don’t
+            Everything You Need to Run Your Online Restaurant
           </h2>
           <p className="text-[#648772] dark:text-gray-400 max-w-[720px]">
-            QuickPlate is built with simplicity and power in mind, giving you
-            the essential tools to launch your online presence.
+            QuickPlate combines powerful tools and an intuitive dashboard so you
+            can focus on serving great food while we handle your website.
           </p>
         </div>
 
@@ -52,26 +55,24 @@ const Main = () => {
             {
               icon: <BiCodeBlock />,
               title: "Free & Open Source",
-              text: "Completely free to use, modify, and own. No hidden fees, ever.",
+              text: "Completely free to use and customize. You control your data and your brand.",
             },
             {
               icon: <MdCloudSync />,
-              title: "Easy Firebase Integration",
-              text: "Connect to your own Firebase project for easy setup and data management.",
+              title: "Realtime Firebase Backend",
+              text: "Securely store your restaurant data in your own Firebase project.",
             },
             {
               icon: <FaPalette />,
-              title: "Customizable Design",
-              text: "Tailor the look and feel to match your restaurant’s unique brand.",
+              title: "Beautiful & Customizable",
+              text: "Personalize colors, fonts, and layout to match your restaurant’s identity.",
             },
           ].map((item) => (
             <div
               key={item.title}
               className="flex flex-col gap-2 rounded-lg border border-[#dce5df] dark:border-gray-700 bg-white dark:bg-background-dark p-4"
             >
-              <span className="material-symbols-outlined text-primary text-3xl">
-                {item.icon}
-              </span>
+              <span className="text-primary text-3xl">{item.icon}</span>
               <h3 className="text-[#111714] dark:text-gray-100 font-bold">
                 {item.title}
               </h3>
@@ -91,28 +92,26 @@ const Main = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             {
-              icon: <i class="fa-solid fa-code-fork"></i>,
-              title: "1. Fork the Repository",
-              text: "Get a copy of the project on your GitHub account in one click.",
+              icon: <FiSettings />,
+              title: "1. Create Your Account",
+              text: "Sign up for free and access your QuickPlate dashboard instantly.",
             },
             {
-              icon: <i class="fa-solid fa-gear"></i>,
-              title: "2. Configure Your Details",
-              text: "Easily add your menu, business hours, and contact information.",
+              icon: <FiEdit3 />,
+              title: "2. Add Your Restaurant Details",
+              text: "Upload your menu, set business hours, and customize your website content.",
             },
             {
-              icon: <i class="ph ph-rocket-launch"></i>,
-              title: "3. Deploy Your Website",
-              text: "Go live with your new website for the world to see.",
+              icon: <FiSend />,
+              title: "3. Go Live Instantly",
+              text: "Publish your restaurant website with one click — no coding required.",
             },
           ].map((step) => (
             <div
               key={step.title}
               className="flex flex-col gap-2 rounded-lg border border-[#dce5df] dark:border-gray-700 bg-white dark:bg-background-dark p-4"
             >
-              <span className="material-symbols-outlined text-primary text-3xl">
-                {step.icon}
-              </span>
+              <span className="text-primary text-3xl">{step.icon}</span>
               <h3 className="text-[#111714] dark:text-gray-100 font-bold">
                 {step.title}
               </h3>
@@ -128,14 +127,14 @@ const Main = () => {
       <section className="px-4 py-10">
         <div className="flex flex-col items-center justify-center gap-6 rounded-xl bg-primary/20 dark:bg-primary/30 p-8 text-center">
           <h2 className="text-3xl font-bold text-[#111714] dark:text-white">
-            Ready to Build?
+            Ready to Build Your Restaurant Website?
           </h2>
           <p className="text-base text-[#111714] dark:text-gray-200 max-w-md">
-            Get started today by forking the project on GitHub. It’s completely
-            free and takes just a few minutes to set up.
+            Manage your menu, orders, and branding easily — all from your
+            dashboard. Get started in just minutes.
           </p>
           <button className="bg-primary text-[#111714] font-bold rounded-lg px-5 h-12 hover:scale-105 transition-transform">
-            Fork on GitHub
+            Go to Dashboard
           </button>
         </div>
       </section>
