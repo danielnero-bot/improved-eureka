@@ -1,9 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { FiMenu, FiX } from "react-icons/fi";
+import { FaSun, FaMoon } from "react-icons/fa";
+import { FaXmark } from "react-icons/fa6";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    try {
+      const stored = localStorage.getItem("theme");
+      if (stored) return stored;
+    } catch {
+      /* ignore */
+    }
+    if (
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
+      return "dark";
+    }
+    return "light";
+  });
+
+  useEffect(() => {
+    try {
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      localStorage.setItem("theme", theme);
+    } catch {
+      /* ignore */
+    }
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
   const navItems = [
     { name: "About", path: "/about" },
@@ -74,8 +106,15 @@ const Navbar = () => {
               </NavLink>
             )
           )}
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="p-2 rounded-md text-[#111714] dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            {theme === "dark" ? <FaSun /> : <FaMoon />}
+          </button>
           <Link
-            to="/signup"
+            to="/getStarted"
             className="bg-primary text-[#111714] font-bold rounded-lg px-5 h-10 flex items-center justify-center hover:scale-105 transition-transform"
           >
             Get Started
@@ -105,6 +144,19 @@ const Navbar = () => {
             } md:hidden`}
           >
             <div className="flex flex-col p-6 gap-6 mt-16">
+              <div className="flex justify-between">
+                <button
+                  onClick={toggleTheme}
+                  aria-label="Toggle theme"
+                  className="p-2 rounded-md text-[#111714] dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors self-end"
+                  >
+                  {theme === "dark" ? <FaSun /> : <FaMoon />}
+                </button>
+                  <FaXmark
+                  onClick={()=> setIsOpen(false) }
+                  className="my-2"
+                  />
+              </div>
               {navItems.map((item) =>
                 item.external ? (
                   <a
@@ -135,7 +187,7 @@ const Navbar = () => {
                 )
               )}
               <Link
-                to="/signup"
+                to="/getStarted"
                 onClick={() => setIsOpen(false)}
                 className="bg-primary text-[#111714] font-bold rounded-lg px-5 py-3 text-center hover:scale-105 transition-transform"
               >

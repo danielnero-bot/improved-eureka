@@ -20,10 +20,7 @@ body {
   color: #111714;
 }
 @layer base {
-  :root {
-    color-scheme: light dark;
-  }
-
+  
   link[rel="icon"] {
     color: #38e07b;/* your primary green */
   }

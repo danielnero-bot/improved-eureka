@@ -6,8 +6,10 @@ import About from "./pages/about";
 import Main from "./components/Main";
 import Landing from "./pages/docs";
 import Contact from "./pages/contact";
+import JoinQuickPlate from "./pages/getStarted";
+import CreateUserAccount from "./pages/signupUser";
+import RestaurantSignup from "./pages/signupRestaurant";
 import "./index.css";
-
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -17,11 +19,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/" element={<App />}>
           {/* Index route (home page) */}
           <Route index element={<Main />} />
-          {/* Other pages */}
+          {/* Other pages that use the App layout */}
           <Route path="/about" element={<About />} />
           <Route path="/docs" element={<Landing />} />
           <Route path="/contact" element={<Contact />} />
         </Route>
+        {/* Pages without header/footer (standalone) */}
+        <Route path="/getStarted" element={<JoinQuickPlate />} />
+        <Route path="/signupUser" element={<CreateUserAccount />} />
+        <Route path="/signupRestaurant" element={<RestaurantSignup />} />
       </Routes>
     </HashRouter>
   </React.StrictMode>
