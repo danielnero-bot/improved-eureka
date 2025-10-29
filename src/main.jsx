@@ -12,6 +12,7 @@ import RestaurantSignup from "./pages/signupRestaurant";
 import Login from "./pages/login";
 import License from "./pages/LICENSE";
 import AdminDashboard from "./pages/Admindashboard";
+import RestaurantSetup from "./pages/restaurantsetu";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -34,6 +35,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/login" element={<Login />} />
         <Route path="/license" element={<License />} />
         <Route path="/adminDashboard" element={<AdminDashboard />} />
+        <Route path="/restaurantsetup" element={<RestaurantSetup />} />
       </Routes>
     </HashRouter>
   </React.StrictMode>

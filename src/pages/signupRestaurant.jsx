@@ -1,26 +1,70 @@
 import React, { useState } from "react";
 import { MdLightMode, MdDarkMode } from "react-icons/md";
 import { FaRegEye, FaRegEyeSlash, FaGoogle } from "react-icons/fa";
-import PasswordChecker from "../components/PasswordChecker";
-import { auth } from "../firebase/config";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "../firebase/config";
+import PasswordChecker from "../components/PasswordChecker";
 
 const RestaurantSignup = () => {
   const navigate = useNavigate();
+  const [fullName, setFullName] = useState("");
+  const [restaurantName, setRestaurantName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const saveRestaurantData = async (userId, displayName = fullName) => {
+    // Create restaurant profile in Firestore
+    await setDoc(doc(db, "restaurants", userId), {
+      ownerId: userId,
+      ownerName: displayName,
+      restaurantName,
+      email,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: "active",
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!fullName || !email || !password || !restaurantName) {
+      setError("All fields are required");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await saveRestaurantData(userCredential.user.uid);
+      navigate("/restaurantsetup");
+    } catch (err) {
+      setError(err?.message || "Failed to create account");
+    }
+    setLoading(false);
+  };
+
   const handleGoogleSignIn = async () => {
+    if (!restaurantName) {
+      setError("Please enter your restaurant name before signing up with Google");
+      return;
+    }
     setError("");
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      navigate("/adminDashboard");
+      const result = await signInWithPopup(auth, provider);
+      await saveRestaurantData(result.user.uid, result.user.displayName);
+      navigate("/restaurantsetup");
     } catch (err) {
       setError(err?.message || "Google sign-in failed");
     }
@@ -52,7 +96,12 @@ const RestaurantSignup = () => {
           </div>
 
           {/* Signup Form */}
-          <form className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                {error}
+              </div>
+            )}
             <div className="space-y-4">
               {/* Full Name */}
               <label className="flex flex-col">
@@ -63,6 +112,9 @@ const RestaurantSignup = () => {
                   className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal"
                   placeholder="Jane Doe"
                   type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
                 />
               </label>
 
@@ -75,6 +127,9 @@ const RestaurantSignup = () => {
                   className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal"
                   placeholder="The Gourmet Corner"
                   type="text"
+                  value={restaurantName}
+                  onChange={(e) => setRestaurantName(e.target.value)}
+                  required
                 />
               </label>
 
@@ -87,6 +142,9 @@ const RestaurantSignup = () => {
                   className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal"
                   placeholder="jane.doe@example.com"
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </label>
 
@@ -152,9 +210,12 @@ const RestaurantSignup = () => {
             <div className="pt-2">
               <button
                 type="submit"
-                className="flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary px-8 py-4 text-base font-bold leading-normal text-black transition-all duration-200 hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                disabled={loading}
+                className="flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary px-8 py-4 text-base font-bold leading-normal text-black transition-all duration-200 hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign Up as Restaurant Owner
+                {loading
+                  ? "Creating Account..."
+                  : "Sign Up as Restaurant Owner"}
               </button>
             </div>
           </form>
