@@ -4,7 +4,7 @@ const Contact = () => {
   return (
     <div className="bg-background-light dark:bg-background-dark font-display text-[#111714] dark:text-gray-200 min-h-screen flex flex-col">
       {/* Main */}
-      <main className="flex-grow">
+      <main className="grow">
         <div className="py-16 sm:py-24 px-4 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-[#111714] dark:text-white">
             Get in Touch

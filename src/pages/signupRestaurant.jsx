@@ -1,16 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
+import { MdLightMode, MdDarkMode } from "react-icons/md";
+import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import PasswordChecker from "../components/PasswordChecker";
+import { Link } from "react-router-dom";
 
 const RestaurantSignup = () => {
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-background-light dark:bg-background-dark p-4 font-display text-slate-800 dark:text-slate-200">
       {/* Dark/Light Mode Toggle */}
       <div className="absolute top-6 right-6">
         <button className="h-10 w-10 flex items-center justify-center rounded-full bg-white/50 dark:bg-black/50 text-slate-700 dark:text-slate-300 backdrop-blur-sm">
           <span className="material-symbols-outlined dark:hidden">
-            dark_mode
+            <MdDarkMode />
           </span>
           <span className="material-symbols-outlined hidden dark:inline">
-            light_mode
+            <MdLightMode />
           </span>
         </button>
       </div>
@@ -73,16 +80,26 @@ const RestaurantSignup = () => {
                   <input
                     className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal pr-12"
                     placeholder="••••••••"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setIsPasswordFocused(true)}
+                    onBlur={() => setIsPasswordFocused(false)}
                   />
                   <button
                     type="button"
+                    onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 flex items-center justify-center pr-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                   >
-                    <span className="material-symbols-outlined">
-                      visibility
-                    </span>
+                    {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
                   </button>
+                </div>
+                <div className="mt-4">
+                  <PasswordChecker
+                    password={password}
+                    onChange={setPassword}
+                    isVisible={isPasswordFocused || password.length > 0}
+                  />
                 </div>
               </label>
             </div>
@@ -112,12 +129,12 @@ const RestaurantSignup = () => {
 
           <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4">
             Already have an account?{" "}
-            <a
-              href="#"
+            <Link 
+              to="/login"
               className="font-medium text-primary/80 hover:text-primary"
             >
               Login
-            </a>
+            </Link>
           </p>
         </div>
 
