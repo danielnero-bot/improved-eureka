@@ -69,8 +69,19 @@ const RestaurantSetup = () => {
           storage,
           `restaurants/${uid}/logo_${Date.now()}_${logoFile.name}`
         );
-        await uploadBytes(fileRef, logoFile);
-        logoURL = await getDownloadURL(fileRef);
+        try {
+          await uploadBytes(fileRef, logoFile);
+          logoURL = await getDownloadURL(fileRef);
+        } catch (upErr) {
+          // Don't block the entire form save if storage upload fails.
+          console.warn(
+            "Logo upload failed, continuing without logoURL:",
+            upErr
+          );
+          // Optionally inform the user but proceed to save other data
+          // setError("Logo upload failed, but other details were saved.");
+          logoURL = null;
+        }
       }
       // Build payload and sanitize undefined values. Use serverTimestamp for dates.
       const payload = {
@@ -112,13 +123,19 @@ const RestaurantSetup = () => {
         }
       }
 
+      // Debug log for successful write
+      console.debug("Restaurant payload written for", uid, payload);
+
       setSuccess("Restaurant details saved successfully.");
       // Continue to the admin dashboard (adjust route if your app differs)
       navigate("/adminDashboard");
     } catch (err) {
+      // Log full error to console and show a friendly message to user
+      console.error("Failed to save restaurant details:", err);
       setError(err?.message || "Failed to save restaurant details.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
