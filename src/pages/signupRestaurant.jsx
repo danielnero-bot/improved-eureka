@@ -7,7 +7,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase/config";
 import PasswordChecker from "../components/PasswordChecker";
 
@@ -23,16 +23,34 @@ const RestaurantSignup = () => {
   const [error, setError] = useState("");
 
   const saveRestaurantData = async (userId, displayName = fullName) => {
-    // Create restaurant profile in Firestore
-    await setDoc(doc(db, "restaurants", userId), {
+    // Create or merge restaurant profile in Firestore. Use server timestamps
+    const payload = {
       ownerId: userId,
       ownerName: displayName,
-      restaurantName,
-      email,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      restaurantName: restaurantName || null,
+      email: email || null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
       status: "active",
-    });
+    };
+
+    // Remove any undefined keys — Firestore rejects undefined values
+    Object.keys(payload).forEach(
+      (k) => payload[k] === undefined && delete payload[k]
+    );
+
+    try {
+      console.debug(
+        "[saveRestaurantData] writing payload to restaurants/" + userId,
+        payload
+      );
+      await setDoc(doc(db, "restaurants", userId), payload, { merge: true });
+      console.debug("[saveRestaurantData] write succeeded for", userId);
+    } catch (writeErr) {
+      console.error("[saveRestaurantData] Firestore write error:", writeErr);
+      // Rethrow so caller sees the failure
+      throw writeErr;
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -44,18 +62,44 @@ const RestaurantSignup = () => {
     setError("");
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await saveRestaurantData(userCredential.user.uid);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      // Ensure the newly-created user has a valid ID token before navigating.
+      // The SDK may call the REST accounts:lookup endpoint under the hood; if the
+      // token isn't ready this can result in a 400. Awaiting getIdToken stabilizes
+      // the auth state.
+      try {
+        await userCredential.user.getIdToken();
+      } catch (tokenErr) {
+        console.warn(
+          "Could not get ID token immediately after signup:",
+          tokenErr
+        );
+      }
+
+      // Navigate so the user can continue to setup. Save restaurant data in the
+      // background; log any errors but don't block navigation.
       navigate("/restaurantsetup");
+      saveRestaurantData(userCredential.user.uid).catch((saveErr) => {
+        console.error("Background saveRestaurantData error:", saveErr);
+      });
     } catch (err) {
-      setError(err?.message || "Failed to create account");
+      console.error("Signup error:", err);
+      setError(
+        err?.message || JSON.stringify(err) || "Failed to create account"
+      );
     }
     setLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
     if (!restaurantName) {
-      setError("Please enter your restaurant name before signing up with Google");
+      setError(
+        "Please enter your restaurant name before signing up with Google"
+      );
       return;
     }
     setError("");

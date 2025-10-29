@@ -7,7 +7,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/config";
 
 const Login = () => {
@@ -19,9 +19,22 @@ const Login = () => {
   const [error, setError] = useState("");
   const [userType, setUserType] = useState("user"); // "user" or "restaurant"
 
-  const checkRestaurantProfile = async (userId) => {
-    const restaurantDoc = await getDoc(doc(db, "restaurants", userId));
-    return restaurantDoc.exists();
+  // Determine role by querying Firestore for the user's email.
+  // If a restaurant doc exists with this email we treat them as a restaurant owner.
+  const getRoleByEmail = async (emailToCheck) => {
+    if (!emailToCheck) return "user";
+    try {
+      const q = query(
+        collection(db, "restaurants"),
+        where("email", "==", emailToCheck)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) return "restaurant";
+      return "user";
+    } catch (err) {
+      console.error("Error checking role by email:", err);
+      return "user";
+    }
   };
 
   const handleLogin = async (e) => {
@@ -34,14 +47,9 @@ const Login = () => {
     setLoading(true);
     try {
       const { user } = await signInWithEmailAndPassword(auth, email, password);
-
-      if (userType === "restaurant") {
-        const isRestaurant = await checkRestaurantProfile(user.uid);
-        if (!isRestaurant) {
-          setError("This account is not registered as a restaurant");
-          setLoading(false);
-          return;
-        }
+      // Auto-detect role by email in Firestore
+      const role = await getRoleByEmail(user.email);
+      if (role === "restaurant") {
         navigate("/adminDashboard");
       } else {
         navigate("/dashboard");
@@ -58,16 +66,9 @@ const Login = () => {
     try {
       const provider = new GoogleAuthProvider();
       const { user } = await signInWithPopup(auth, provider);
-
-      if (userType === "restaurant") {
-        const isRestaurant = await checkRestaurantProfile(user.uid);
-        if (!isRestaurant) {
-          setError(
-            "This Google account is not registered as a restaurant. Please sign up first."
-          );
-          setLoading(false);
-          return;
-        }
+      // Auto-detect role by email in Firestore
+      const role = await getRoleByEmail(user.email);
+      if (role === "restaurant") {
         navigate("/adminDashboard");
       } else {
         navigate("/dashboard");
@@ -152,77 +153,85 @@ const Login = () => {
                 </label>
               </div>
 
-            {/* Role Selector & Login Button */}
-            <div className="flex h-12 flex-1 items-center justify-center rounded-lg bg-background-light dark:bg-background-dark p-1 border border-border-light dark:border-border-dark">
-              <label className="flex h-full flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-md px-2 text-sm font-medium text-text-light-secondary has-checked:bg-surface-light has-checked:text-text-light-primary has-checked:shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:text-dark-secondary dark:has-checked:bg-surface-dark dark:has-checked:text-dark-primary">
-                <span className="truncate">Login as User</span>
-                <input
-                  className="invisible w-0"
-                  name="role-selector"
-                  type="radio"
-                  value="user"
-                  checked={userType === "user"}
-                  onChange={(e) => setUserType(e.target.value)}
-                />
-              </label>
+              {/* Role Selector & Login Button */}
+              <div className="flex h-12 flex-1 items-center justify-center rounded-lg bg-background-light dark:bg-background-dark p-1 border border-border-light dark:border-border-dark">
+                <label className="flex h-full flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-md px-2 text-sm font-medium text-text-light-secondary has-checked:bg-surface-light has-checked:text-text-light-primary has-checked:shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:text-dark-secondary dark:has-checked:bg-surface-dark dark:has-checked:text-dark-primary">
+                  <span className="truncate">Login as User</span>
+                  <input
+                    className="invisible w-0"
+                    name="role-selector"
+                    type="radio"
+                    value="user"
+                    checked={userType === "user"}
+                    onChange={(e) => setUserType(e.target.value)}
+                  />
+                </label>
 
-              <label className="flex h-full flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-md px-2 text-sm font-medium text-text-light-secondary has-checked:bg-surface-light has-checked:text-text-light-primary has-checked:shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:text-dark-secondary dark:has-checked:bg-surface-dark dark:has-checked:text-dark-primary">
-                <span className="truncate">Login as Restaurant Owner</span>
-                <input
-                  className="invisible w-0"
-                  name="role-selector"
-                  type="radio"
-                  value="restaurant"
-                  checked={userType === "restaurant"}
-                  onChange={(e) => setUserType(e.target.value)}
-                />
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex h-12 min-w-[84px] w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-5 text-base font-bold text-text-light-primary transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span className="truncate">{loading ? "Logging in..." : "Login"}</span>
-            </button>
-
-            <div className="relative flex items-center justify-center mt-2">
-              <div className="absolute w-full border-t border-gray-300 dark:border-gray-700"></div>
-              <div className="relative bg-background-light dark:bg-background-dark px-4">
-                <span className="text-sm text-text-light-secondary dark:text-dark-secondary">Or continue with</span>
+                <label className="flex h-full flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-md px-2 text-sm font-medium text-text-light-secondary has-checked:bg-surface-light has-checked:text-text-light-primary has-checked:shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:text-dark-secondary dark:has-checked:bg-surface-dark dark:has-checked:text-dark-primary">
+                  <span className="truncate">Login as Restaurant Owner</span>
+                  <input
+                    className="invisible w-0"
+                    name="role-selector"
+                    type="radio"
+                    value="restaurant"
+                    checked={userType === "restaurant"}
+                    onChange={(e) => setUserType(e.target.value)}
+                  />
+                </label>
               </div>
-            </div>
 
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="flex items-center justify-center gap-2 w-full h-12 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FaGoogle className="w-5 h-5" />
-              <span>Sign in with Google</span>
-            </button>
-
-            <p className="text-center text-sm text-text-light-secondary dark:text-dark-secondary">
-              Don't have an account?{" "}
-              <Link
-                to={userType === "restaurant" ? "/signup-restaurant" : "/signup-user"}
-                className="font-semibold text-primary hover:underline"
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex h-12 min-w-[84px] w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary px-5 text-base font-bold text-text-light-primary transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign up
-              </Link>
-            </p>
-          </form>
-        </div>
-      </main>
+                <span className="truncate">
+                  {loading ? "Logging in..." : "Login"}
+                </span>
+              </button>
 
-      {/* Footer */}
-      <footer className="absolute bottom-6 text-center text-sm text-text-light-secondary dark:text-dark-secondary">
-        Powered by QuickPlate Open Source
-      </footer>
+              <div className="relative flex items-center justify-center mt-2">
+                <div className="absolute w-full border-t border-gray-300 dark:border-gray-700"></div>
+                <div className="relative bg-background-light dark:bg-background-dark px-4">
+                  <span className="text-sm text-text-light-secondary dark:text-dark-secondary">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="flex items-center justify-center gap-2 w-full h-12 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FaGoogle className="w-5 h-5" />
+                <span>Sign in with Google</span>
+              </button>
+
+              <p className="text-center text-sm text-text-light-secondary dark:text-dark-secondary">
+                Don't have an account?{" "}
+                <Link
+                  to={
+                    userType === "restaurant"
+                      ? "/signupRestaurant"
+                      : "/signupUser"
+                  }
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Sign up
+                </Link>
+              </p>
+            </form>
+          </div>
+        </main>
+
+        {/* Footer */}
+        <footer className="absolute bottom-6 text-center text-sm text-text-light-secondary dark:text-dark-secondary">
+          Powered by QuickPlate Open Source
+        </footer>
+      </div>
     </div>
-  </div>
   );
 };
 
