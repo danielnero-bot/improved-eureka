@@ -1,5 +1,9 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -15,4 +19,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+// Ensure a consistent persistence model and surface errors during setup.
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  // Non-fatal: log and continue. This helps when browser storage is restricted.
+  // If this fails repeatedly, the SDK may attempt to refresh the current user
+  // and could surface errors like identitytoolkit accounts:lookup 400.
+  // Keeping a visible console warning helps debugging in the browser.
+  // eslint-disable-next-line no-console
+  console.warn("Firebase auth setPersistence failed:", err);
+});
 export default app;

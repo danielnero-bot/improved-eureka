@@ -7,7 +7,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc } from "firebase/firestore";
 import { auth, db } from "../firebase/config";
 
 const Login = () => {
@@ -21,18 +21,40 @@ const Login = () => {
 
   // Determine role by querying Firestore for the user's email.
   // If a restaurant doc exists with this email we treat them as a restaurant owner.
-  const getRoleByEmail = async (emailToCheck) => {
+  const getRoleByEmail = async (emailToCheck, retryCount = 0) => {
     if (!emailToCheck) return "user";
+
     try {
+      // Wait a short delay before checking on retry attempts
+      if (retryCount > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+      }
+
+      // First try checking by UID (more reliable)
+      const user = auth.currentUser;
+      if (user?.uid) {
+        const docSnap = await getDocs(doc(db, "restaurants", user.uid));
+        if (docSnap.exists()) {
+          return "restaurant";
+        }
+      }
+
+      // Fallback to email check
       const q = query(
         collection(db, "restaurants"),
         where("email", "==", emailToCheck)
       );
       const snap = await getDocs(q);
       if (!snap.empty) return "restaurant";
+
       return "user";
     } catch (err) {
       console.error("Error checking role by email:", err);
+      // Retry up to 3 times with increasing delays
+      if (retryCount < 3) {
+        console.log(`Retrying role check (attempt ${retryCount + 1})...`);
+        return getRoleByEmail(emailToCheck, retryCount + 1);
+      }
       return "user";
     }
   };
@@ -46,9 +68,15 @@ const Login = () => {
     setError("");
     setLoading(true);
     try {
-      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      // Wait for a token refresh to ensure auth state is current
+      await userCredential.user.getIdToken(true);
       // Auto-detect role by email in Firestore
-      const role = await getRoleByEmail(user.email);
+      const role = await getRoleByEmail(userCredential.user.email);
       if (role === "restaurant") {
         navigate("/adminDashboard");
       } else {
@@ -65,9 +93,11 @@ const Login = () => {
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      const { user } = await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
+      // Wait for a token refresh to ensure auth state is current
+      await userCredential.user.getIdToken(true);
       // Auto-detect role by email in Firestore
-      const role = await getRoleByEmail(user.email);
+      const role = await getRoleByEmail(userCredential.user.email);
       if (role === "restaurant") {
         navigate("/adminDashboard");
       } else {

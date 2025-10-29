@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FaRegImage } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase/config";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import {
   getStorage,
   ref as storageRef,
@@ -55,6 +55,15 @@ const RestaurantSetup = () => {
       let logoURL = null;
       // If a logo file was selected, upload it to Firebase Storage and get a public URL
       if (logoFile) {
+        // Basic client-side validation: type and size
+        const allowed = ["image/png", "image/jpeg", "image/jpg", "image/gif"];
+        const maxBytes = 5 * 1024 * 1024; // 5MB
+        if (!allowed.includes(logoFile.type)) {
+          throw new Error("Logo must be a PNG, JPG, or GIF image.");
+        }
+        if (logoFile.size > maxBytes) {
+          throw new Error("Logo must be smaller than 5MB.");
+        }
         const storage = getStorage();
         const fileRef = storageRef(
           storage,
@@ -63,24 +72,45 @@ const RestaurantSetup = () => {
         await uploadBytes(fileRef, logoFile);
         logoURL = await getDownloadURL(fileRef);
       }
-      // Merge setup fields into the existing restaurant document (created at signup)
-      await setDoc(
-        doc(db, "restaurants", uid),
-        {
-          restaurantName,
-          address,
-          description,
-          openingHours,
-          closingHours,
-          phoneNumber,
-          contactEmail,
-          logoFileName: logoFile ? logoFile.name : null,
-          logoURL: logoURL,
-          setupComplete: true,
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
+      // Build payload and sanitize undefined values. Use serverTimestamp for dates.
+      const payload = {
+        restaurantName,
+        address,
+        description,
+        openingHours,
+        closingHours,
+        phoneNumber,
+        contactEmail,
+        logoFileName: logoFile ? logoFile.name : null,
+        logoURL: logoURL || null,
+        setupComplete: true,
+        // createdAt will only be set if not present because we use merge: true
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      // Remove any undefined keys (Firestore rejects undefined)
+      Object.keys(payload).forEach(
+        (k) => payload[k] === undefined && delete payload[k]
       );
+
+      // Attempt the Firestore write with a small retry/backoff in case of transient failures
+      const MAX_ATTEMPTS = 3;
+      let attempt = 0;
+      while (attempt < MAX_ATTEMPTS) {
+        try {
+          await setDoc(doc(db, "restaurants", uid), payload, { merge: true });
+          break; // success
+        } catch (writeErr) {
+          attempt += 1;
+          console.warn(`setDoc attempt ${attempt} failed:`, writeErr);
+          if (attempt >= MAX_ATTEMPTS) {
+            throw writeErr;
+          }
+          // backoff
+          await new Promise((r) => setTimeout(r, 300 * attempt));
+        }
+      }
 
       setSuccess("Restaurant details saved successfully.");
       // Continue to the admin dashboard (adjust route if your app differs)
