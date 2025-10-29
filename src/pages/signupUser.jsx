@@ -51,9 +51,9 @@ const CreateUserAccount = () => {
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-background-light dark:bg-background-dark p-4 font-display">
       <Link to="/" className="flex text-white absolute top-5 left-7">
-        <Link to="/" className=" text-primary pr-3 pt-1">
+        <button to="/" className=" text-primary pr-3 pt-1">
           <IoMdArrowRoundBack />
-        </Link>
+        </button>
         <span>Back</span>
       </Link>
 

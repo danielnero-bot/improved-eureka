@@ -1,13 +1,32 @@
 import React, { useState } from "react";
 import { MdLightMode, MdDarkMode } from "react-icons/md";
-import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import { FaRegEye, FaRegEyeSlash, FaGoogle } from "react-icons/fa";
 import PasswordChecker from "../components/PasswordChecker";
-import { Link } from "react-router-dom";
+import { auth } from "../firebase/config";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { Link, useNavigate } from "react-router-dom";
 
 const RestaurantSignup = () => {
+  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      navigate("/adminDashboard");
+    } catch (err) {
+      setError(err?.message || "Google sign-in failed");
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-background-light dark:bg-background-dark p-4 font-display text-slate-800 dark:text-slate-200">
       {/* Dark/Light Mode Toggle */}
@@ -100,6 +119,31 @@ const RestaurantSignup = () => {
                     onChange={setPassword}
                     isVisible={isPasswordFocused || password.length > 0}
                   />
+
+                  {error && (
+                    <div className="mt-3 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="relative flex items-center justify-center mt-4">
+                    <div className="absolute w-full border-t border-gray-300 dark:border-gray-700"></div>
+                    <div className="relative bg-white dark:bg-slate-900 px-4">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        Or continue with
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
+                    className="flex items-center justify-center gap-2 w-full h-12 mt-3 px-4 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <FaGoogle className="w-5 h-5" />
+                    <span>Sign up with Google</span>
+                  </button>
                 </div>
               </label>
             </div>
@@ -118,18 +162,18 @@ const RestaurantSignup = () => {
           {/* Info Text */}
           <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
             By signing up, you agree to our{" "}
-            <a
-              href="#"
+            <Link
+              to="/license"
               className="font-medium text-primary/80 hover:text-primary"
             >
               Open Source License (MIT)
-            </a>
+            </Link>
             .
           </p>
 
           <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4">
             Already have an account?{" "}
-            <Link 
+            <Link
               to="/login"
               className="font-medium text-primary/80 hover:text-primary"
             >
