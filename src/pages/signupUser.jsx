@@ -50,11 +50,14 @@ const CreateUserAccount = () => {
   };
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-background-light dark:bg-background-dark p-4 font-display">
-      <Link to="/" className="flex text-white absolute top-5 left-7">
-        <button to="/" className=" text-primary pr-3 pt-1">
+      <Link
+        to="/getStarted"
+        className="flex text-black dark:text-white absolute top-5 left-7"
+      >
+        <button className=" text-primary pr-3 pt-0.5">
           <IoMdArrowRoundBack />
         </button>
-        <span>Back</span>
+        <span className="pt-0.5"> Back</span>
       </Link>
 
       {/* Dark/Light Mode Button */}

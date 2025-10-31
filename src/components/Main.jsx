@@ -29,12 +29,18 @@ function Main () {
           </div>
 
           <div className="flex flex-wrap gap-3 mt-4">
-            <button className="bg-primary text-[#111714] font-bold rounded-lg px-5 h-12 hover:scale-105 transition-transform">
+            <Link
+              to="/getStarted"
+              className="bg-primary text-[#111714] font-bold rounded-lg px-5 py-3 h-12 hover:scale-105 transition-transform"
+            >
               Get Started Free
-            </button>
-            <button className="bg-white dark:bg-gray-800 text-[#111714] dark:text-gray-200 font-bold rounded-lg px-5 h-12 hover:scale-105 transition-transform">
+            </Link>
+            <Link
+              to="/login"
+              className="bg-white dark:bg-gray-800 text-[#111714] dark:text-gray-200 font-bold rounded-lg px-5 py-3 h-12 hover:scale-105 transition-transform"
+            >
               Go to Dashboard
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -134,9 +140,12 @@ function Main () {
             Manage your menu, orders, and branding easily — all from your
             dashboard. Get started in just minutes.
           </p>
-          <button className="bg-primary text-[#111714] font-bold rounded-lg px-5 h-12 hover:scale-105 transition-transform">
+          <Link
+            to="/login"
+            className="bg-primary text-[#111714] font-bold rounded-lg px-5 py-3 h-12 hover:scale-105 transition-transform"
+          >
             Go to Dashboard
-          </button>
+          </Link>
         </div>
       </section>
     </main>

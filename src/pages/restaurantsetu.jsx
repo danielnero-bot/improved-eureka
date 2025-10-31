@@ -64,22 +64,52 @@ const RestaurantSetup = () => {
         if (logoFile.size > maxBytes) {
           throw new Error("Logo must be smaller than 5MB.");
         }
+
+        // Generate a clean filename
+        const fileExtension = logoFile.name.split(".").pop();
+        const safeFileName = `logo_${Date.now()}.${fileExtension}`;
+
         const storage = getStorage();
         const fileRef = storageRef(
           storage,
-          `restaurants/${uid}/logo_${Date.now()}_${logoFile.name}`
+          `restaurants/${uid}/${safeFileName}`
         );
+
         try {
-          await uploadBytes(fileRef, logoFile);
+          // Log the attempt
+          console.debug("Attempting to upload logo to:", fileRef.fullPath);
+
+          // Upload with metadata
+          const metadata = {
+            contentType: logoFile.type,
+            customMetadata: {
+              uploadedBy: uid,
+              originalName: logoFile.name,
+            },
+          };
+
+          const uploadTask = await uploadBytes(fileRef, logoFile, metadata);
+          console.debug("Upload completed:", uploadTask.metadata);
+
+          // Get the download URL
           logoURL = await getDownloadURL(fileRef);
+          console.debug("Logo URL obtained:", logoURL);
         } catch (upErr) {
-          // Don't block the entire form save if storage upload fails.
-          console.warn(
-            "Logo upload failed, continuing without logoURL:",
-            upErr
+          // Log detailed error info
+          console.error("Logo upload failed:", {
+            error: upErr,
+            errorCode: upErr.code,
+            errorMessage: upErr.message,
+            storagePath: fileRef.fullPath,
+            fileName: safeFileName,
+            fileType: logoFile.type,
+            fileSize: logoFile.size,
+          });
+
+          // Show user-friendly error but allow form to continue
+          setError(
+            "Logo upload failed (will save other details). Please try uploading the logo again later."
           );
-          // Optionally inform the user but proceed to save other data
-          // setError("Logo upload failed, but other details were saved.");
           logoURL = null;
         }
       }
