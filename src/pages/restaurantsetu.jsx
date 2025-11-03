@@ -1,12 +1,14 @@
-import React, { useState } from "react";
-import { FaRegImage } from "react-icons/fa6";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../firebase/config"; // still Firebase auth
-import { supabase } from "../supabse" 
+import { auth } from "../firebase/config";
+import { supabase } from "../supabase";
+import { FaRegImage } from "react-icons/fa6";
 
 const RestaurantSetup = () => {
   const navigate = useNavigate();
+  const [uid, setUid] = useState(null);
 
+  // 🔹 Restaurant details
   const [restaurantName, setRestaurantName] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
@@ -16,23 +18,43 @@ const RestaurantSetup = () => {
   const [contactEmail, setContactEmail] = useState("");
   const [logoFile, setLogoFile] = useState(null);
 
+  // 🔹 UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // ✅ Get Firebase UID once user is logged in
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setUid(user.uid);
+        setContactEmail(user.email); // auto-fill contact email
+      } else {
+        navigate("/login");
+      }
+    });
+    return unsubscribe;
+  }, [navigate]);
+
+  // 🧾 Save restaurant data to Supabase
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
-    const uid = auth.currentUser?.uid;
-    if (!uid) {
-      setError("You must be signed in to save restaurant details.");
+    if (
+      !restaurantName ||
+      !address ||
+      !description ||
+      !phoneNumber ||
+      !contactEmail
+    ) {
+      setError("Please fill in all required fields.");
       return;
     }
 
-    if (!restaurantName || !address || !description || !phoneNumber || !contactEmail) {
-      setError("Please fill in all required fields.");
+    if (!uid) {
+      setError("You must be signed in to save restaurant details.");
       return;
     }
 
@@ -49,7 +71,7 @@ const RestaurantSetup = () => {
 
         const { error: uploadError } = await supabase.storage
           .from("restaurant-logos")
-          .upload(filePath, logoFile);
+          .upload(filePath, logoFile, { upsert: true });
 
         if (uploadError) throw uploadError;
 
@@ -60,11 +82,11 @@ const RestaurantSetup = () => {
         logoURL = publicUrlData.publicUrl;
       }
 
-      // 🗄 Save data in Supabase table
+      // 🗄 Save (or update) restaurant record in Supabase
       const { error: insertError } = await supabase.from("restaurants").upsert(
         [
           {
-            user_id: uid,
+            firebase_uid: uid,
             name: restaurantName,
             address,
             description,
@@ -73,18 +95,18 @@ const RestaurantSetup = () => {
             phone_number: phoneNumber,
             contact_email: contactEmail,
             logo_url: logoURL,
-            updated_at: new Date(),
+            updated_at: new Date().toISOString(),
           },
         ],
-        { onConflict: "user_id" }
+        { onConflict: "firebase_uid" } // ensure no duplicates
       );
 
       if (insertError) throw insertError;
 
-      setSuccess("Restaurant details saved successfully!");
-      navigate("/adminDashboard");
+      setSuccess("✅ Restaurant details saved successfully!");
+      setTimeout(() => navigate("/adminDashboard"), 1500);
     } catch (err) {
-      console.error(err);
+      console.error("❌ Supabase Error:", err);
       setError(err.message || "Failed to save restaurant details.");
     } finally {
       setLoading(false);
@@ -96,11 +118,21 @@ const RestaurantSetup = () => {
       <div className="w-full max-w-2xl space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold">Set Up Your Restaurant</h1>
-          <p className="mt-2 text-gray-500">Add your restaurant details to start managing your menu.</p>
+          <p className="mt-2 text-gray-500">
+            Add your restaurant details to start managing your menu.
+          </p>
         </div>
 
-        {error && <div className="bg-red-100 border border-red-400 text-red-700 p-3 rounded">{error}</div>}
-        {success && <div className="bg-green-100 border border-green-400 text-green-700 p-3 rounded">{success}</div>}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 p-3 rounded">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="bg-green-100 border border-green-400 text-green-700 p-3 rounded">
+            {success}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Restaurant Name */}
@@ -117,9 +149,12 @@ const RestaurantSetup = () => {
 
           {/* Logo Upload */}
           <div>
-            <label className="text-sm font-medium">Logo *</label>
+            <label className="text-sm font-medium flex items-center gap-2">
+              <FaRegImage /> Upload Logo
+            </label>
             <input
               type="file"
+              accept="image/*"
               onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
               className="w-full border p-3 rounded"
             />
@@ -149,6 +184,7 @@ const RestaurantSetup = () => {
             />
           </div>
 
+          {/* Opening/Closing Hours */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Opening Hours *</label>
@@ -170,6 +206,7 @@ const RestaurantSetup = () => {
             </div>
           </div>
 
+          {/* Phone and Email */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Phone Number *</label>
@@ -191,9 +228,11 @@ const RestaurantSetup = () => {
             </div>
           </div>
 
+          {/* Buttons */}
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
+              onClick={() => navigate("/")}
               className="border border-gray-300 px-5 py-2 rounded hover:bg-gray-100"
             >
               Cancel

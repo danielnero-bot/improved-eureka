@@ -6,7 +6,6 @@ import {
   onAuthStateChanged,
   signOut,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
 
 // Helper to clear persisted auth data if it becomes corrupted
 const clearPersistedAuth = () => {
@@ -61,7 +60,6 @@ export const auth = getAuth(app);
 // Set up diagnostic logging
 setupAuthLogging(auth);
 
-export const db = getFirestore(app);
 
 // Ensure a consistent persistence model and surface errors during setup.
 setPersistence(auth, browserLocalPersistence).catch((err) => {

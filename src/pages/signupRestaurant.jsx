@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MdLightMode, MdDarkMode } from "react-icons/md";
 import { FaRegEye, FaRegEyeSlash, FaGoogle } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,12 +7,14 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "../firebase/config";
+import { auth } from "../firebase/config";
+import { supabase } from "../supabase";
 import PasswordChecker from "../components/PasswordChecker";
 
 const RestaurantSignup = () => {
   const navigate = useNavigate();
+
+  // 🔹 Form states
   const [fullName, setFullName] = useState("");
   const [restaurantName, setRestaurantName] = useState("");
   const [email, setEmail] = useState("");
@@ -22,250 +24,259 @@ const RestaurantSignup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const saveRestaurantData = async (userId, displayName = fullName) => {
-    // Create or merge restaurant profile in Firestore. Use server timestamps
-    const payload = {
-      ownerId: userId,
-      ownerName: displayName,
-      restaurantName: restaurantName || null,
-      email: email || null,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      status: "active",
-    };
+  // 🔹 Theme state (Light / Dark)
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
-    // Remove any undefined keys — Firestore rejects undefined values
-    Object.keys(payload).forEach(
-      (k) => payload[k] === undefined && delete payload[k]
-    );
+  useEffect(() => {
+    // Apply Tailwind dark mode class to root HTML
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
+  // 🔹 Save restaurant info to Supabase
+  const saveRestaurantData = async (
+    firebaseUid,
+    ownerName,
+    restaurantName,
+    contactEmail
+  ) => {
     try {
-      console.debug(
-        "[saveRestaurantData] writing payload to restaurants/" + userId,
-        payload
-      );
-      await setDoc(doc(db, "restaurants", userId), payload, { merge: true });
-      console.debug("[saveRestaurantData] write succeeded for", userId);
-    } catch (writeErr) {
-      console.error("[saveRestaurantData] Firestore write error:", writeErr);
-      // Rethrow so caller sees the failure
-      throw writeErr;
+      const { data, error: insertError } = await supabase
+        .from("restaurants")
+        .insert([
+          {
+            firebase_uid: firebaseUid,
+            owner_name: ownerName,
+            name: restaurantName,
+            contact_email: contactEmail,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ])
+        .select();
+
+      if (insertError) throw insertError;
+      return data;
+    } catch (err) {
+      console.error("❌ Error saving to Supabase:", err);
+      throw new Error("Failed to save restaurant details");
     }
   };
 
+  // 🔹 Handle email/password signup
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!fullName || !email || !password || !restaurantName) {
-      setError("All fields are required");
-      return;
+      return setError("All fields are required.");
     }
+
     setError("");
     setLoading(true);
+
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-      // Ensure the newly-created user has a valid ID token before navigating.
-      // The SDK may call the REST accounts:lookup endpoint under the hood; if the
-      // token isn't ready this can result in a 400. Awaiting getIdToken stabilizes
-      // the auth state.
-      try {
-        await userCredential.user.getIdToken();
-      } catch (tokenErr) {
-        console.warn(
-          "Could not get ID token immediately after signup:",
-          tokenErr
-        );
-      }
+      const user = userCredential.user;
 
-      // Navigate so the user can continue to setup. Save restaurant data in the
-      // background; log any errors but don't block navigation.
+      await saveRestaurantData(user.uid, fullName, restaurantName, email);
+
       navigate("/restaurantsetup");
-      saveRestaurantData(userCredential.user.uid).catch((saveErr) => {
-        console.error("Background saveRestaurantData error:", saveErr);
-      });
     } catch (err) {
-      console.error("Signup error:", err);
-      setError(
-        err?.message || JSON.stringify(err) || "Failed to create account"
-      );
+      setError(err?.message || "Failed to create account");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
+  // 🔹 Handle Google signup
   const handleGoogleSignIn = async () => {
     if (!restaurantName) {
-      setError(
-        "Please enter your restaurant name before signing up with Google"
-      );
+      setError("Please enter your restaurant name before continuing.");
       return;
     }
+
     setError("");
     setLoading(true);
-    const provider = new GoogleAuthProvider();
+
     try {
+      const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      await saveRestaurantData(result.user.uid, result.user.displayName);
+      const user = result.user;
+
+      await saveRestaurantData(
+        user.uid,
+        user.displayName || "Restaurant Owner",
+        restaurantName,
+        user.email
+      );
+
       navigate("/restaurantsetup");
     } catch (err) {
       setError(err?.message || "Google sign-in failed");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-background-light dark:bg-background-dark p-4 font-display text-slate-800 dark:text-slate-200">
-      {/* Dark/Light Mode Toggle */}
-      <div className="absolute top-6 right-6">
-        <button className="h-10 w-10 flex items-center justify-center rounded-full bg-white/50 dark:bg-black/50 text-slate-700 dark:text-slate-300 backdrop-blur-sm">
-          <span className="material-symbols-outlined dark:hidden">
-            <MdDarkMode />
-          </span>
-          <span className="material-symbols-outlined hidden dark:inline">
-            <MdLightMode />
-          </span>
-        </button>
-      </div>
+    <div
+      className={`relative flex min-h-screen w-full flex-col items-center justify-center transition-colors duration-300 ${
+        theme === "dark"
+          ? "bg-background-light text-black"
+          : "bg-background-dark text-white"
+      }`}
+    >
+      {/* 🌗 Theme Toggle */}
+      <button
+        onClick={toggleTheme}
+        className="absolute top-6 right-6 h-10 w-10 flex items-center justify-center rounded-full bg-white/70 dark:bg-black/40 text-slate-700 dark:text-slate-300 backdrop-blur-md shadow-md hover:scale-105 transition-transform"
+      >
+        {theme === "dark" ? (
+          <MdLightMode className="text-yellow-400 text-xl" />
+        ) : (
+          <MdDarkMode className="text-slate-700 text-xl" />
+        )}
+      </button>
 
-      {/* Main Content */}
-      <main className="w-full max-w-md space-y-8 px-4 sm:px-0">
-        <div className="bg-white dark:bg-slate-900/50 p-8 sm:p-10 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800">
-          {/* Heading */}
-          <div className="text-center mb-8">
-            <p className="text-slate-900 dark:text-white text-3xl sm:text-4xl font-black leading-tight tracking-[-0.033em]">
-              Create Your Restaurant Account
-            </p>
-          </div>
+      <main className="w-full max-w-md space-y-8 px-4 sm:px-0 transition-all">
+        <div
+          className={`p-8 sm:p-10 rounded-xl shadow-lg border transition-colors duration-300 ${
+            theme === "dark"
+              ? "bg-background-light text-black"
+              : "bg-background-dark text-white"
+          }`}
+        >
+          <h1 className="text-center text-3xl sm:text-4xl font-black mb-6">
+            Create Your Restaurant Account
+          </h1>
 
-          {/* Signup Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                 {error}
               </div>
             )}
-            <div className="space-y-4">
-              {/* Full Name */}
-              <label className="flex flex-col">
-                <p className="text-slate-800 dark:text-slate-200 text-base font-medium leading-normal pb-2">
-                  Full Name
-                </p>
+
+            {/* Full Name */}
+            <div>
+              <label className="block mb-2 font-medium">Full Name</label>
+              <input
+                type="text"
+                placeholder="Jane Doe"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent h-14 p-4 focus:ring-2 focus:ring-primary/60"
+                required
+              />
+            </div>
+
+            {/* Restaurant Name */}
+            <div>
+              <label className="block mb-2 font-medium">Restaurant Name</label>
+              <input
+                type="text"
+                placeholder="The Gourmet Corner"
+                value={restaurantName}
+                onChange={(e) => setRestaurantName(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent h-14 p-4 focus:ring-2 focus:ring-primary/60"
+                required
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block mb-2 font-medium">Email</label>
+              <input
+                type="email"
+                placeholder="jane.doe@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent h-14 p-4 focus:ring-2 focus:ring-primary/60"
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block mb-2 font-medium">Password</label>
+              <div className="relative">
                 <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal"
-                  placeholder="Jane Doe"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => setIsPasswordFocused(true)}
+                  onBlur={() => setIsPasswordFocused(false)}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent h-14 p-4 pr-12 focus:ring-2 focus:ring-primary/60"
                   required
                 />
-              </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                >
+                  {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                </button>
+              </div>
 
-              {/* Restaurant Name */}
-              <label className="flex flex-col">
-                <p className="text-slate-800 dark:text-slate-200 text-base font-medium leading-normal pb-2">
-                  Restaurant Name
-                </p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal"
-                  placeholder="The Gourmet Corner"
-                  type="text"
-                  value={restaurantName}
-                  onChange={(e) => setRestaurantName(e.target.value)}
-                  required
-                />
-              </label>
-
-              {/* Email */}
-              <label className="flex flex-col">
-                <p className="text-slate-800 dark:text-slate-200 text-base font-medium leading-normal pb-2">
-                  Email
-                </p>
-                <input
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal"
-                  placeholder="jane.doe@example.com"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </label>
-
-              {/* Password */}
-              <label className="flex flex-col">
-                <p className="text-slate-800 dark:text-slate-200 text-base font-medium leading-normal pb-2">
-                  Password
-                </p>
-                <div className="relative flex w-full flex-1 items-stretch">
-                  <input
-                    className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-800 dark:text-slate-200 focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-slate-700 bg-background-light dark:bg-background-dark h-14 placeholder:text-slate-400 dark:placeholder:text-slate-500 p-[15px] text-base font-normal leading-normal pr-12"
-                    placeholder="••••••••"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onFocus={() => setIsPasswordFocused(true)}
-                    onBlur={() => setIsPasswordFocused(false)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center justify-center pr-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
-                  >
-                    {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
-                  </button>
-                </div>
+              {isPasswordFocused && (
                 <div className="mt-4">
                   <PasswordChecker
                     password={password}
                     onChange={setPassword}
-                    isVisible={isPasswordFocused || password.length > 0}
+                    isVisible
                   />
-
-                  {error && (
-                    <div className="mt-3 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded">
-                      {error}
-                    </div>
-                  )}
-
-                  <div className="relative flex items-center justify-center mt-4">
-                    <div className="absolute w-full border-t border-gray-300 dark:border-gray-700"></div>
-                    <div className="relative bg-white dark:bg-slate-900 px-4">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Or continue with
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleGoogleSignIn}
-                    disabled={loading}
-                    className="flex items-center justify-center gap-2 w-full h-12 mt-3 px-4 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <FaGoogle className="w-5 h-5" />
-                    <span>Sign up with Google</span>
-                  </button>
                 </div>
-              </label>
+              )}
             </div>
 
-            {/* Submit Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary px-8 py-4 text-base font-bold leading-normal text-black transition-all duration-200 hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
+            {/* Divider */}
+            <div className="relative flex items-center justify-center mt-6">
+              <div className="absolute w-full border-t border-slate-300 dark:border-slate-700"></div>
+              <div
+                className={`relative px-4 ${
+                  theme === "dark" ? "bg-slate-800" : "bg-white"
+                }`}
               >
-                {loading
-                  ? "Creating Account..."
-                  : "Sign Up as Restaurant Owner"}
-              </button>
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  Or continue with
+                </span>
+              </div>
             </div>
+
+            {/* Google Sign In */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="flex items-center justify-center gap-2 w-full h-12 mt-3 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition disabled:opacity-50"
+            >
+              <FaGoogle className="w-5 h-5" />
+              <span>Sign up with Google</span>
+            </button>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary text-black font-bold hover:bg-opacity-90 focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+            >
+              {loading ? "Creating Account..." : "Sign Up as Restaurant Owner"}
+            </button>
           </form>
 
-          {/* Info Text */}
-          <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
+          <p className="text-center text-sm mt-6">
             By signing up, you agree to our{" "}
             <Link
               to="/license"
@@ -276,7 +287,7 @@ const RestaurantSignup = () => {
             .
           </p>
 
-          <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4">
+          <p className="text-center text-sm mt-4">
             Already have an account?{" "}
             <Link
               to="/login"
@@ -287,7 +298,6 @@ const RestaurantSignup = () => {
           </p>
         </div>
 
-        {/* Footer */}
         <footer className="text-center">
           <p className="text-xs text-slate-400 dark:text-slate-500">
             Powered by QuickPlate Open Source
