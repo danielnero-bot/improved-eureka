@@ -13,6 +13,7 @@ import Login from "./pages/login";
 import License from "./pages/LICENSE";
 import RestaurantDashboard from "./pages/restaurantdashboard";
 import RestaurantSetup from "./pages/restaurantsetu";
+import MenuManagement from "./pages/menupage";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -36,6 +37,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/license" element={<License />} />
         <Route path="/restaurantDashboard" element={<RestaurantDashboard />} />
         <Route path="/restaurantsetup" element={<RestaurantSetup />} />
+        <Route path="/menupage" element={<MenuManagement/> }/>
       </Routes>
     </HashRouter>
   </React.StrictMode>

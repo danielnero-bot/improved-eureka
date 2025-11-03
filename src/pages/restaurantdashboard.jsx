@@ -13,13 +13,26 @@ import {
   MdPersonAdd,
   MdAnalytics,
 } from "react-icons/md";
+import { Link, useLocation } from "react-router-dom";
 
 const RestaurantDashboard = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
 
   const toggleTheme = () => setDarkMode((prev) => !prev);
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
+
+  const navItems = [
+    { icon: <MdDashboard />, label: "Dashboard", path: "/dashboard" },
+    { icon: <MdRestaurantMenu />, label: "Menu", path: "/menu" },
+    {
+      icon: <MdStorefront />,
+      label: "Restaurant Info",
+      path: "/restaurant-info",
+    },
+    { icon: <MdSettings />, label: "Settings", path: "/settings" },
+  ];
 
   return (
     <div
@@ -31,17 +44,13 @@ const RestaurantDashboard = () => {
     >
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 w-64 transform flex-col border-r transition-transform duration-300 ${
-          darkMode
-            ? "bg-card-dark border-border-dark"
-            : "bg-card-light border-border-light"
-        } ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 lg:static`}
+        className={`group fixed top-0 left-0 z-30 h-screen flex flex-col border-r transition-all duration-300 overflow-hidden ${
+          darkMode ? "bg-red border-border-dark" : "bg-red border-border-light"
+        } w-16 hover:w-64`}
       >
         {/* Logo / Header */}
-        <div className="flex h-16 items-center gap-3 border-b px-6">
-          <div className="text-primary">
+        <div className="flex h-16 items-center gap-3 border-b px-4">
+          <div className="text-primary flex-shrink-0">
             <svg
               fill="none"
               viewBox="0 0 48 48"
@@ -54,47 +63,54 @@ const RestaurantDashboard = () => {
               />
             </svg>
           </div>
-          <span className="text-lg font-bold">QuickPlate</span>
+          <span className="text-lg font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+            QuickPlate
+          </span>
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-1 flex-col justify-between p-4">
+        <nav className="flex flex-1 flex-col justify-between p-4 overflow-y-auto">
           <ul className="space-y-2">
-            {[
-              { icon: <MdDashboard />, label: "Dashboard", active: true },
-              { icon: <MdRestaurantMenu />, label: "Menu" },
-              { icon: <MdStorefront />, label: "Restaurant Info" },
-              { icon: <MdSettings />, label: "Settings" },
-            ].map(({ icon, label, active }) => (
-              <li key={label}>
-                <button
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
-                    active
-                      ? "bg-primary/10 text-primary"
-                      : darkMode
-                      ? "text-text-muted-dark hover:text-text-dark"
-                      : "text-text-muted-light hover:text-text-light"
-                  }`}
-                >
-                  {icon}
-                  <span>{label}</span>
-                </button>
-              </li>
-            ))}
+            {navItems.map(({ icon, label, path }) => {
+              const active = location.pathname === path;
+              return (
+                <li key={label}>
+                  <Link
+                    to={path}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+                      active
+                        ? "bg-primary/10 text-primary border-l-4 border-primary"
+                        : darkMode
+                        ? "text-text-muted-dark hover:text-text-dark"
+                        : "text-text-muted-light hover:text-text-light"
+                    }`}
+                    title={label} // Add tooltip for better UX
+                  >
+                    <span className="text-xl flex-shrink-0">{icon}</span>
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
+                      {label}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
 
           {/* Logout */}
           <ul>
             <li>
               <button
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full ${
                   darkMode
                     ? "text-text-muted-dark hover:text-text-dark"
                     : "text-text-muted-light hover:text-text-light"
                 }`}
+                title="Logout" // Add tooltip for better UX
               >
-                <MdLogout />
-                <span>Logout</span>
+                <MdLogout className="text-xl flex-shrink-0" />
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
+                  Logout
+                </span>
               </button>
             </li>
           </ul>
@@ -102,10 +118,10 @@ const RestaurantDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col ml-16 transition-all duration-300">
         {/* Header */}
         <header
-          className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 ${
+          className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
             darkMode
               ? "bg-card-dark border-border-dark"
               : "bg-card-light border-border-light"
@@ -117,7 +133,7 @@ const RestaurantDashboard = () => {
           >
             <MdMenu className="text-2xl" />
           </button>
-
+          <div className="hidden lg:inline"> Dashboard</div>
           <div className="flex items-center gap-4">
             <button
               onClick={toggleTheme}
@@ -149,9 +165,8 @@ const RestaurantDashboard = () => {
         </header>
 
         {/* Main Section */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300">
           <div className="mx-auto max-w-7xl space-y-8">
-            {/* Title */}
             <div>
               <h1 className="text-3xl font-bold">Dashboard Overview</h1>
               <p
@@ -159,7 +174,7 @@ const RestaurantDashboard = () => {
                   darkMode ? "text-text-muted-dark" : "text-text-muted-light"
                 }
               >
-                Welcome back! Here’s an overview of your restaurant’s
+                Welcome back! Here's an overview of your restaurant's
                 performance.
               </p>
             </div>
@@ -177,11 +192,7 @@ const RestaurantDashboard = () => {
                   value: "68",
                   icon: <MdReceiptLong />,
                 },
-                {
-                  title: "New Customers",
-                  value: "12",
-                  icon: <MdPersonAdd />,
-                },
+                { title: "New Customers", value: "12", icon: <MdPersonAdd /> },
               ].map(({ title, value, icon }) => (
                 <div
                   key={title}
