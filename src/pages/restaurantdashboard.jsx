@@ -172,13 +172,17 @@ const RestaurantDashboard = () => {
           : "bg-background-dark text-white"
       }`}
     >
-      {/* Sidebar */}
+      {/* Sidebar - Hidden on mobile, visible on desktop */}
       <aside
-        className={`group fixed top-0 left-0 z-30 h-screen flex flex-col border-r transition-all duration-300 overflow-hidden ${
+        className={`fixed top-0 left-0 z-30 h-screen flex flex-col border-r transition-all duration-300 overflow-hidden ${
           darkMode
             ? "bg-gray-800 border-border-dark"
             : "bg-indigo-700 border-border-light"
-        } w-16 hover:w-64`}
+        } ${
+          sidebarOpen
+            ? "w-64 translate-x-0"
+            : "-translate-x-full lg:translate-x-0 lg:w-16 lg:hover:w-64"
+        } lg:group`}
       >
         {/* Logo / Header */}
         <div className="flex h-16 items-center gap-3 border-b border-white/10 px-4">
@@ -195,7 +199,13 @@ const RestaurantDashboard = () => {
               />
             </svg>
           </div>
-          <span className="text-lg font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+          <span
+            className={`text-lg font-bold text-white ${
+              sidebarOpen
+                ? "opacity-100"
+                : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
+            } transition-opacity duration-300 whitespace-nowrap`}
+          >
             QuickPlate
           </span>
         </div>
@@ -209,6 +219,7 @@ const RestaurantDashboard = () => {
                 <li key={label}>
                   <Link
                     to={path}
+                    onClick={() => setSidebarOpen(false)}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
                       active
                         ? "bg-white/20 text-white"
@@ -217,7 +228,13 @@ const RestaurantDashboard = () => {
                     title={label}
                   >
                     <span className="text-xl shrink-0">{icon}</span>
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
+                    <span
+                      className={`${
+                        sidebarOpen
+                          ? "opacity-100"
+                          : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
+                      } transition-opacity duration-300 whitespace-nowrap overflow-hidden`}
+                    >
                       {label}
                     </span>
                   </Link>
@@ -235,7 +252,13 @@ const RestaurantDashboard = () => {
                 title="Logout"
               >
                 <MdLogout className="text-xl shrink-0" />
-                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
+                <span
+                  className={`${
+                    sidebarOpen
+                      ? "opacity-100"
+                      : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
+                  } transition-opacity duration-300 whitespace-nowrap overflow-hidden`}
+                >
                   Logout
                 </span>
               </button>
@@ -244,8 +267,20 @@ const RestaurantDashboard = () => {
         </nav>
       </aside>
 
+      {/* Overlay for mobile when sidebar is open */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
-      <div className="flex flex-1 flex-col ml-16 transition-all duration-300">
+      <div
+        className={`flex flex-1 flex-col transition-all duration-300 ${
+          sidebarOpen ? "lg:ml-16" : "lg:ml-16"
+        }`}
+      >
         {/* Header */}
         <header
           className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
@@ -254,14 +289,16 @@ const RestaurantDashboard = () => {
               : "bg-card-light border-border-light"
           }`}
         >
-          <button
-            onClick={toggleSidebar}
-            className="rounded-full p-2 lg:hidden"
-          >
-            <MdMenu className="text-2xl" />
-          </button>
-
-          <div className="hidden lg:inline">Dashboard</div>
+          <div className="flex items-center gap-4">
+            {/* Hamburger Menu Button - Only show on mobile */}
+            <button
+              onClick={toggleSidebar}
+              className="lg:hidden rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <MdMenu className="text-2xl" />
+            </button>
+            <div className="hidden lg:inline">Dashboard</div>
+          </div>
 
           <div className="flex items-center gap-4">
             <button

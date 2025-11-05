@@ -6,6 +6,7 @@ import {
   MdStorefront,
   MdSettings,
   MdLogout,
+  MdMenu,
 } from "react-icons/md";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
@@ -17,6 +18,7 @@ const MenuManagement = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [restaurantData, setRestaurantData] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -60,6 +62,10 @@ const MenuManagement = () => {
     navigate("/addmenuitem");
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   const navItems = [
     { icon: <MdDashboard />, label: "Dashboard", path: "/restaurantdashboard" },
     { icon: <MdRestaurantMenu />, label: "Menu", path: "/menupage" },
@@ -89,13 +95,17 @@ const MenuManagement = () => {
 
   return (
     <div className="bg-background-light dark:bg-background-dark font-display text-black dark:text-white min-h-screen flex">
-      {/* Sidebar */}
+      {/* Sidebar - Hidden on mobile, visible on desktop */}
       <aside
-        className={`group fixed top-0 left-0 z-30 h-screen flex flex-col border-r transition-all duration-300 overflow-hidden ${
+        className={`fixed top-0 left-0 z-30 h-screen flex flex-col border-r transition-all duration-300 overflow-hidden ${
           darkMode
             ? "bg-gray-800 border-border-dark"
             : "bg-indigo-700 border-border-light"
-        } w-16 hover:w-64`}
+        } ${
+          sidebarOpen
+            ? "w-64 translate-x-0"
+            : "-translate-x-full lg:translate-x-0 lg:w-16 lg:hover:w-64"
+        } lg:group`}
       >
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 border-b border-white/10 px-4">
@@ -112,7 +122,13 @@ const MenuManagement = () => {
               />
             </svg>
           </div>
-          <span className="text-lg font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+          <span
+            className={`text-lg font-bold text-white ${
+              sidebarOpen
+                ? "opacity-100"
+                : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
+            } transition-opacity duration-300 whitespace-nowrap`}
+          >
             QuickPlate
           </span>
         </div>
@@ -126,6 +142,7 @@ const MenuManagement = () => {
                 <li key={label}>
                   <Link
                     to={path}
+                    onClick={() => setSidebarOpen(false)}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
                       active
                         ? "bg-white/20 text-white pl-1.5"
@@ -134,7 +151,13 @@ const MenuManagement = () => {
                     title={label}
                   >
                     <span className="text-xl shrink-0">{icon}</span>
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
+                    <span
+                      className={`${
+                        sidebarOpen
+                          ? "opacity-100"
+                          : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
+                      } transition-opacity duration-300 whitespace-nowrap overflow-hidden`}
+                    >
                       {label}
                     </span>
                   </Link>
@@ -148,7 +171,13 @@ const MenuManagement = () => {
             <li>
               <button className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full text-white/70 hover:text-white hover:bg-white/10">
                 <MdLogout className="text-xl shrink-0" />
-                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
+                <span
+                  className={`${
+                    sidebarOpen
+                      ? "opacity-100"
+                      : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
+                  } transition-opacity duration-300 whitespace-nowrap overflow-hidden`}
+                >
                   Logout
                 </span>
               </button>
@@ -157,11 +186,34 @@ const MenuManagement = () => {
         </nav>
       </aside>
 
+      {/* Overlay for mobile when sidebar is open */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
-      <div className="flex flex-1 flex-col ml-16 transition-all duration-300">
+      <div
+        className={`flex flex-1 flex-col transition-all duration-300 ${
+          sidebarOpen ? "lg:ml-16" : "lg:ml-16"
+        }`}
+      >
         {/* Header */}
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-border-light/80 dark:border-border-dark/80 bg-background-light/80 dark:bg-background-dark/80 px-4 sm:px-6 lg:px-8 backdrop-blur-md">
-          <h1 className="text-xl font-bold tracking-tight">Menu Management</h1>
+          <div className="flex items-center gap-4">
+            {/* Hamburger Menu Button - Only show on mobile */}
+            <button
+              onClick={toggleSidebar}
+              className="lg:hidden rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <MdMenu className="text-2xl" />
+            </button>
+            <h1 className="text-xl font-bold tracking-tight">
+              Menu Management
+            </h1>
+          </div>
 
           <div className="flex items-center gap-4">
             {/* Add New Item Button */}
