@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MdLightMode,
   MdDarkMode,
@@ -13,19 +13,127 @@ import {
   MdPersonAdd,
   MdAnalytics,
 } from "react-icons/md";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "../supabase";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 
 const RestaurantDashboard = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [restaurantData, setRestaurantData] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState({
+    todayRevenue: 0,
+    todayOrders: 0,
+    newCustomers: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
   const location = useLocation();
+  const navigate = useNavigate();
+  const auth = getAuth();
 
   const toggleTheme = () => setDarkMode((prev) => !prev);
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
+  // Format currency function
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+
+      try {
+        // Fetch restaurant data
+        const { data, error } = await supabase
+          .from("restaurants")
+          .select("*")
+          .eq("firebase_uid", user.uid)
+          .single();
+
+        if (error) {
+          console.error("❌ Error fetching restaurant:", error);
+        } else {
+          setRestaurantData(data);
+          // Fetch dashboard stats if restaurant data is available
+          if (data) {
+            await fetchDashboardStats(data.id);
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error in fetchRestaurantData:", error);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [auth, navigate]);
+
+  // Fetch dashboard statistics
+  const fetchDashboardStats = async (restaurantId) => {
+    try {
+      // Today's revenue
+      const { data: revenueData, error: revenueError } = await supabase
+        .from("orders")
+        .select("total_amount")
+        .eq("restaurant_id", restaurantId)
+        .gte("created_at", new Date().toISOString().split("T")[0])
+        .eq("status", "completed");
+
+      if (!revenueError && revenueData) {
+        const totalRevenue = revenueData.reduce(
+          (sum, order) => sum + parseFloat(order.total_amount || 0),
+          0
+        );
+        setDashboardStats((prev) => ({ ...prev, todayRevenue: totalRevenue }));
+      }
+
+      // Today's orders
+      const { data: ordersData, error: ordersError } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("restaurant_id", restaurantId)
+        .gte("created_at", new Date().toISOString().split("T")[0]);
+
+      if (!ordersError && ordersData) {
+        setDashboardStats((prev) => ({
+          ...prev,
+          todayOrders: ordersData.length,
+        }));
+      }
+
+      // New customers (last 24 hours)
+      const { data: customersData, error: customersError } = await supabase
+        .from("customers")
+        .select("id")
+        .eq("restaurant_id", restaurantId)
+        .gte(
+          "created_at",
+          new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+        );
+
+      if (!customersError && customersData) {
+        setDashboardStats((prev) => ({
+          ...prev,
+          newCustomers: customersData.length,
+        }));
+      }
+    } catch (error) {
+      console.error("❌ Error fetching dashboard stats:", error);
+    }
+  };
+
   const navItems = [
-    { icon: <MdDashboard />, label: "Dashboard", path: "/dashboard" },
-    { icon: <MdRestaurantMenu />, label: "Menu", path: "/menu" },
+    { icon: <MdDashboard />, label: "Dashboard", path: "/restaurantdashboard" },
+    { icon: <MdRestaurantMenu />, label: "Menu", path: "/menupage" },
     {
       icon: <MdStorefront />,
       label: "Restaurant Info",
@@ -33,6 +141,28 @@ const RestaurantDashboard = () => {
     },
     { icon: <MdSettings />, label: "Settings", path: "/settings" },
   ];
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate("/login");
+  };
+
+  if (loading) {
+    return (
+      <div
+        className={`font-display min-h-screen flex items-center justify-center transition-colors duration-300 ${
+          darkMode
+            ? "bg-background-light text-black"
+            : "bg-background-dark text-white"
+        }`}
+      >
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-lg">Loading restaurant details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -45,12 +175,14 @@ const RestaurantDashboard = () => {
       {/* Sidebar */}
       <aside
         className={`group fixed top-0 left-0 z-30 h-screen flex flex-col border-r transition-all duration-300 overflow-hidden ${
-          darkMode ? "bg-red border-border-dark" : "bg-red border-border-light"
+          darkMode
+            ? "bg-gray-800 border-border-dark"
+            : "bg-indigo-700 border-border-light"
         } w-16 hover:w-64`}
       >
         {/* Logo / Header */}
-        <div className="flex h-16 items-center gap-3 border-b px-4">
-          <div className="text-primary flex-shrink-0">
+        <div className="flex h-16 items-center gap-3 border-b border-white/10 px-4">
+          <div className="text-white shrink-0">
             <svg
               fill="none"
               viewBox="0 0 48 48"
@@ -63,7 +195,7 @@ const RestaurantDashboard = () => {
               />
             </svg>
           </div>
-          <span className="text-lg font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+          <span className="text-lg font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
             QuickPlate
           </span>
         </div>
@@ -79,14 +211,12 @@ const RestaurantDashboard = () => {
                     to={path}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
                       active
-                        ? "bg-primary/10 text-primary border-l-4 border-primary"
-                        : darkMode
-                        ? "text-text-muted-dark hover:text-text-dark"
-                        : "text-text-muted-light hover:text-text-light"
+                        ? "bg-white/20 text-white"
+                        : "text-white/70 hover:text-white hover:bg-white/10"
                     }`}
-                    title={label} // Add tooltip for better UX
+                    title={label}
                   >
-                    <span className="text-xl flex-shrink-0">{icon}</span>
+                    <span className="text-xl shrink-0">{icon}</span>
                     <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
                       {label}
                     </span>
@@ -100,14 +230,11 @@ const RestaurantDashboard = () => {
           <ul>
             <li>
               <button
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full ${
-                  darkMode
-                    ? "text-text-muted-dark hover:text-text-dark"
-                    : "text-text-muted-light hover:text-text-light"
-                }`}
-                title="Logout" // Add tooltip for better UX
+                onClick={handleLogout}
+                className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full text-white/70 hover:text-white hover:bg-white/10"
+                title="Logout"
               >
-                <MdLogout className="text-xl flex-shrink-0" />
+                <MdLogout className="text-xl shrink-0" />
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap overflow-hidden">
                   Logout
                 </span>
@@ -133,7 +260,9 @@ const RestaurantDashboard = () => {
           >
             <MdMenu className="text-2xl" />
           </button>
-          <div className="hidden lg:inline"> Dashboard</div>
+
+          <div className="hidden lg:inline">Dashboard</div>
+
           <div className="flex items-center gap-4">
             <button
               onClick={toggleTheme}
@@ -146,21 +275,19 @@ const RestaurantDashboard = () => {
               )}
             </button>
 
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 text-primary">
-                <svg
-                  fill="none"
-                  viewBox="0 0 48 48"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M8.6 8.6a21 21 0 0130.8 0L24 24 8.6 8.6z"
-                    fill="currentColor"
+            {/* Restaurant Info */}
+            {restaurantData && (
+              <div className="flex items-center gap-3">
+                {restaurantData.logo_url && (
+                  <img
+                    src={restaurantData.logo_url}
+                    alt={`${restaurantData.name} logo`}
+                    className="w-8 h-8 rounded-full object-cover"
                   />
-                </svg>
+                )}
+                <span className="text-lg font-bold">{restaurantData.name}</span>
               </div>
-              <span className="text-lg font-bold">Bella Italia</span>
-            </div>
+            )}
           </div>
         </header>
 
@@ -174,8 +301,9 @@ const RestaurantDashboard = () => {
                   darkMode ? "text-text-muted-dark" : "text-text-muted-light"
                 }
               >
-                Welcome back! Here's an overview of your restaurant's
-                performance.
+                {restaurantData
+                  ? `Welcome back to ${restaurantData.name}! Here's an overview of your restaurant's performance.`
+                  : "Welcome back! Here's an overview of your restaurant's performance."}
               </p>
             </div>
 
@@ -184,15 +312,19 @@ const RestaurantDashboard = () => {
               {[
                 {
                   title: "Today's Revenue",
-                  value: "$1,250",
+                  value: formatCurrency(dashboardStats.todayRevenue),
                   icon: <MdPayments />,
                 },
                 {
                   title: "Today's Orders",
-                  value: "68",
+                  value: dashboardStats.todayOrders.toString(),
                   icon: <MdReceiptLong />,
                 },
-                { title: "New Customers", value: "12", icon: <MdPersonAdd /> },
+                {
+                  title: "New Customers",
+                  value: dashboardStats.newCustomers.toString(),
+                  icon: <MdPersonAdd />,
+                },
               ].map(({ title, value, icon }) => (
                 <div
                   key={title}
