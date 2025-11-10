@@ -123,7 +123,7 @@ const RestaurantSetup = () => {
       }
 
       setSuccess("✅ Restaurant details saved successfully!");
-      setTimeout(() => navigate("/adminDashboard"), 1500);
+      setTimeout(() => navigate("/restaurantDashboard"), 1500);
     } catch (err) {
       console.error("❌ Supabase Error:", err);
       setError(err.message || "Failed to save restaurant details.");

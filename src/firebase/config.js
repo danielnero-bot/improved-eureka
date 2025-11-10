@@ -7,43 +7,9 @@ import {
   signOut,
 } from "firebase/auth";
 
-// Helper to clear persisted auth data if it becomes corrupted
-const clearPersistedAuth = () => {
-  const keys = Object.keys(localStorage).filter((k) =>
-    k.includes("firebase:authUser")
-  );
-  keys.forEach((k) => {
-    console.warn("Clearing potentially corrupted auth data:", k);
-    localStorage.removeItem(k);
-  });
-};
-
-// Diagnostic logging for auth state changes
-const setupAuthLogging = (auth) => {
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      console.debug("Auth state changed - signed in user:", {
-        uid: user.uid,
-        email: user.email,
-        emailVerified: user.emailVerified,
-        isAnonymous: user.isAnonymous,
-      });
-      // Proactively refresh the token to catch any issues early
-      user.getIdToken(true).catch((err) => {
-        console.error("Failed to refresh token:", err);
-        // If we can't get a token, the auth state might be corrupted
-        if (err?.code === "auth/invalid-user-token") {
-          console.warn("Invalid user token, clearing auth state...");
-          clearPersistedAuth();
-          signOut(auth); // Force a clean signOut
-        }
-      });
-    } else {
-      console.debug("Auth state changed - signed out");
-    }
-  });
-};
-
+/* ----------------------------
+   🔹 Firebase Configuration
+----------------------------- */
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -53,24 +19,70 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
+/* ----------------------------
+   🔹 Initialize Firebase
+----------------------------- */
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// Set up diagnostic logging
-setupAuthLogging(auth);
+/* ----------------------------
+   🧩 Helper — Clear corrupted auth
+----------------------------- */
+const clearCorruptedAuth = () => {
+  const keys = Object.keys(localStorage).filter((k) =>
+    k.includes("firebase:authUser")
+  );
+  if (keys.length) {
+    console.warn("🧹 Clearing possibly corrupted Firebase auth data:", keys);
+    keys.forEach((k) => localStorage.removeItem(k));
+  }
+};
 
+/* ----------------------------
+   🧭 Setup Auth Monitoring
+----------------------------- */
+const monitorAuthState = (authInstance) => {
+  onAuthStateChanged(authInstance, async (user) => {
+    if (user) {
+      console.debug("✅ Signed in:", {
+        uid: user.uid,
+        email: user.email,
+        verified: user.emailVerified,
+      });
 
-// Ensure a consistent persistence model and surface errors during setup.
+      // Refresh token proactively to avoid stale tokens
+      try {
+        await user.getIdToken(true);
+      } catch (err) {
+        console.error("🚨 Token refresh failed:", err);
+
+        if (err?.code === "auth/invalid-user-token") {
+          console.warn("Invalid user token — resetting auth state...");
+          clearCorruptedAuth();
+          signOut(authInstance);
+        }
+      }
+    } else {
+      console.debug("🚪 Signed out");
+    }
+  });
+};
+
+/* ----------------------------
+   ⚙️ Set Persistence
+----------------------------- */
 setPersistence(auth, browserLocalPersistence).catch((err) => {
-  // Non-fatal: log and continue. This helps when browser storage is restricted.
-  // If this fails repeatedly, the SDK may attempt to refresh the current user
-  // and could surface errors like identitytoolkit accounts:lookup 400.
-  console.warn("Firebase auth setPersistence failed:", err);
-  // If persistence fails, check if we have corrupted auth data
+  console.warn("⚠️ Failed to set auth persistence:", err);
+
+  // If persistence type is invalid, clear stored data
   if (err?.code === "auth/invalid-persistence-type") {
-    clearPersistedAuth();
+    clearCorruptedAuth();
   }
 });
+
+/* ----------------------------
+   🔹 Initialize Auth Logging
+----------------------------- */
+monitorAuthState(auth);
 
 export default app;

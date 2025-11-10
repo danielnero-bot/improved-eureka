@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 import { IoMdArrowRoundBack } from "react-icons/io";
-import { getSupabaseWithAuth } from "../supabase"; // 🔹 Use this to ensure Firebase auth syncs with Supabase
-
+import { getSupabaseWithAuth } from "../supabase"; 
 const AddMenuItem = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -17,7 +16,6 @@ const AddMenuItem = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const auth = getAuth();
-  const restaurantId = localStorage.getItem("restaurant_id");
 
   // ✅ Handle input change
   const handleInputChange = (e) => {
@@ -104,42 +102,48 @@ const AddMenuItem = () => {
         alert("Please fill in all required fields.");
         return;
       }
-      if (!imageFile) {
-        alert("Please upload an image for this menu item.");
+
+      // ✅ Get restaurant ID for the logged-in user
+      const restaurantId = await getRestaurantId(supabase);
+      if (!restaurantId) {
+        alert("No restaurant found for this user.");
         return;
       }
 
-      const restaurantId = await getRestaurantId(supabase);
-      if (!restaurantId) return;
+      // ✅ Skip image upload for now — use placeholder URL
+      const fakeImageUrl =
+        "https://via.placeholder.com/300x200?text=Menu+Image";
 
-      // Upload image
-      const imageUrl = await uploadImage(supabase, imageFile);
-
-      // Insert data
-      const { error: insertError } = await supabase.from("menu-items").insert([
+      // ✅ Insert menu item record
+      const { data, error } = await supabase.from("menu_items").insert([
         {
           name: formData.name.trim(),
           description: formData.description.trim(),
           category: formData.category,
           price: parseFloat(formData.price),
           available: formData.available,
-          image_url: imageUrl,
+          image_url: fakeImageUrl,
           restaurant_id: restaurantId,
           created_at: new Date().toISOString(),
         },
       ]);
 
-      if (insertError) throw insertError;
-
-      alert("✅ Menu item added successfully!");
-      navigate("/menupage");
+      if (error) {
+        console.error("❌ Insert error:", error);
+        alert("Failed to add menu item. Check console for details.");
+      } else {
+        console.log("✅ Insert success:", data);
+        alert("Menu item added successfully!");
+        navigate("/menupage");
+      }
     } catch (error) {
-      console.error("Error adding menu item:", error);
-      alert("❌ Failed to add menu item. Please try again.");
+      console.error("Unexpected error adding menu item:", error);
+      alert("Something went wrong. Check console for details.");
     } finally {
       setLoading(false);
     }
   };
+
 
   // ✅ Handle cancel and back
   const handleCancel = () => {
