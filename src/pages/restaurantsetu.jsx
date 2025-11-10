@@ -82,26 +82,45 @@ const RestaurantSetup = () => {
         logoURL = publicUrlData.publicUrl;
       }
 
-      // 🗄 Save (or update) restaurant record in Supabase
-      const { error: insertError } = await supabase.from("restaurants").upsert(
-        [
-          {
-            firebase_uid: uid,
-            name: restaurantName,
-            address,
-            description,
-            opening_hours: openingHours,
-            closing_hours: closingHours,
-            phone_number: phoneNumber,
-            contact_email: contactEmail,
-            logo_url: logoURL,
-            updated_at: new Date().toISOString(),
-          },
-        ],
-        { onConflict: "firebase_uid" } // ensure no duplicates
-      );
+      // 🗄 Check if restaurant already exists for this user
+      const { data: existingRestaurant } = await supabase
+        .from("restaurants")
+        .select("id")
+        .eq("owner_uid", uid)
+        .maybeSingle();
 
-      if (insertError) throw insertError;
+      let restaurantId = existingRestaurant?.id;
+
+      // 🆕 Insert or update restaurant record
+      const { data, error: upsertError } = await supabase
+        .from("restaurants")
+        .upsert(
+          [
+            {
+              id: restaurantId, // will update if exists
+              owner_uid: uid,
+              name: restaurantName,
+              address,
+              description,
+              opening_hours: openingHours,
+              closing_hours: closingHours,
+              phone_number: phoneNumber,
+              contact_email: contactEmail,
+              logo_url: logoURL,
+              updated_at: new Date().toISOString(),
+            },
+          ],
+          { onConflict: "owner_uid" } // prevent duplicates
+        )
+        .select()
+        .single();
+
+      if (upsertError) throw upsertError;
+
+      // 💾 Save restaurant ID locally
+      if (data?.id) {
+        localStorage.setItem("restaurant_id", data.id);
+      }
 
       setSuccess("✅ Restaurant details saved successfully!");
       setTimeout(() => navigate("/adminDashboard"), 1500);

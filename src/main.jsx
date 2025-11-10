@@ -15,6 +15,7 @@ import RestaurantDashboard from "./pages/restaurantdashboard";
 import RestaurantSetup from "./pages/restaurantsetu";
 import MenuManagement from "./pages/menupage";
 import AddMenuItem from "./pages/addmenuitem";
+import RestaurantDetails from "./pages/restaurantdetails"
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -40,6 +41,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/restaurantsetup" element={<RestaurantSetup />} />
         <Route path="/menupage" element={<MenuManagement />} />
         <Route path="/addmenuitem" element={<AddMenuItem />} />
+        <Route path="/restaurant-info" element={<RestaurantDetails />} />
       </Routes>
     </HashRouter>
   </React.StrictMode>
