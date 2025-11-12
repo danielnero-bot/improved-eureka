@@ -84,7 +84,7 @@ const RestaurantSetup = () => {
 
       // 🗄 Check if restaurant already exists for this user
       const { data: existingRestaurant } = await supabase
-        .from("restaurants")
+        .from("restaurantcheck")
         .select("id")
         .eq("owner_uid", uid)
         .maybeSingle();
@@ -93,7 +93,7 @@ const RestaurantSetup = () => {
 
       // 🆕 Insert or update restaurant record
       const { data, error: upsertError } = await supabase
-        .from("restaurants")
+        .from("restaurantcheck")
         .upsert(
           [
             {

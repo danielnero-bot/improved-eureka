@@ -1,9 +1,14 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 import { IoMdArrowRoundBack } from "react-icons/io";
-import { getSupabaseWithAuth } from "../supabase"; 
+import { supabase } from "../supabase";
+import { FaImage } from "react-icons/fa6";
+
 const AddMenuItem = () => {
+  const { id } = useParams();
+  const isEditing = !!id;
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -13,9 +18,80 @@ const AddMenuItem = () => {
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [existingImage, setExistingImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(isEditing);
+  const [restaurantData, setRestaurantData] = useState(null);
   const navigate = useNavigate();
   const auth = getAuth();
+
+  // ✅ Fetch restaurant data and menu item if editing
+  useEffect(() => {
+    const fetchData = async () => {
+      const user = auth.currentUser;
+
+      if (!user) {
+        alert("Please log in to continue.");
+        navigate("/login");
+        return;
+      }
+
+      try {
+        // Fetch restaurant data
+        const { data: restaurant, error: restaurantError } = await supabase
+          .from("restaurants")
+          .select("*")
+          .eq("firebase_uid", user.uid)
+          .single();
+
+        if (restaurantError) {
+          console.error("❌ Error fetching restaurant:", restaurantError);
+          return;
+        }
+
+        setRestaurantData(restaurant);
+
+        // Fetch menu item if editing
+        if (isEditing) {
+          const { data: menuItem, error } = await supabase
+            .from("menu_items")
+            .select("*")
+            .eq("id", id)
+            .eq("restaurant_id", restaurant.id)
+            .single();
+
+          if (error) {
+            console.error("Error fetching menu item:", error);
+            alert("Menu item not found.");
+            navigate("/menupage");
+            return;
+          }
+
+          // Populate form with existing data
+          setFormData({
+            name: menuItem.name || "",
+            description: menuItem.description || "",
+            category: menuItem.category || "Main Course",
+            price: menuItem.price || "",
+            available: menuItem.available ?? true,
+          });
+
+          if (menuItem.image_url) {
+            setExistingImage(menuItem.image_url);
+            setImagePreview(menuItem.image_url);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        alert("Failed to load data.");
+        navigate("/menupage");
+      } finally {
+        setFetchLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id, isEditing, auth, navigate]);
 
   // ✅ Handle input change
   const handleInputChange = (e) => {
@@ -26,14 +102,20 @@ const AddMenuItem = () => {
     }));
   };
 
-  // ✅ Handle image preview
+  // ✅ Handle image upload and preview
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
+    const validTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "image/gif",
+      "image/webp",
+    ];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a valid image (JPG, PNG, or GIF)");
+      alert("Please upload a valid image (JPG, PNG, GIF, or WEBP)");
       return;
     }
 
@@ -43,50 +125,49 @@ const AddMenuItem = () => {
     }
 
     setImageFile(file);
+    setExistingImage(null); // Clear existing image when new one is uploaded
     const reader = new FileReader();
     reader.onload = () => setImagePreview(reader.result);
     reader.readAsDataURL(file);
   };
 
-  // ✅ Fetch restaurant ID for current Firebase user
-  const getRestaurantId = async (supabase) => {
-    const user = auth.currentUser;
-    if (!user) {
-      alert("Please log in to continue.");
-      navigate("/login");
-      return null;
-    }
-
-    const { data, error } = await supabase
-      .from("restaurants")
-      .select("id")
-      .eq("firebase_uid", user.uid)
-      .single();
-
-    if (error) {
-      console.error("Error fetching restaurant:", error);
-      return null;
-    }
-    return data?.id;
+  // ✅ Remove image
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setExistingImage(null);
   };
 
-  // ✅ Upload image to Supabase Storage
-  const uploadImage = async (supabase, file) => {
-    const fileExt = file.name.split(".").pop();
-    const fileName = `menu_${Date.now()}.${fileExt}`;
-    const filePath = `menu-items/${fileName}`;
+  // ✅ Upload image to Supabase Storage and get URL
+  const uploadImageToStorage = async (file) => {
+    if (!file) return null;
 
-    const { error: uploadError } = await supabase.storage
-      .from("menu-images")
-      .upload(filePath, file, { upsert: true });
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()
+        .toString(36)
+        .substring(2)}_${Date.now()}.${fileExt}`;
+      const filePath = `menu-items/${fileName}`;
 
-    if (uploadError) throw uploadError;
+      // Upload the file to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("menu-images") // Make sure this bucket exists in your Supabase storage
+        .upload(filePath, file);
 
-    const { data } = supabase.storage
-      .from("menu-images")
-      .getPublicUrl(filePath);
+      if (uploadError) {
+        throw uploadError;
+      }
 
-    return data.publicUrl;
+      // Get the public URL for the uploaded file
+      const { data: urlData } = supabase.storage
+        .from("menu-images")
+        .getPublicUrl(filePath);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw new Error("Failed to upload image");
+    }
   };
 
   // ✅ Handle form submission
@@ -95,55 +176,79 @@ const AddMenuItem = () => {
     setLoading(true);
 
     try {
-      const supabase = await getSupabaseWithAuth();
-
       // Validate fields
       if (!formData.name.trim() || !formData.price) {
         alert("Please fill in all required fields.");
         return;
       }
 
-      // ✅ Get restaurant ID for the logged-in user
-      const restaurantId = await getRestaurantId(supabase);
-      if (!restaurantId) {
-        alert("No restaurant found for this user.");
+      if (!restaurantData) {
+        alert("No restaurant data found.");
         return;
       }
 
-      // ✅ Skip image upload for now — use placeholder URL
-      const fakeImageUrl =
-        "https://via.placeholder.com/300x200?text=Menu+Image";
+      let imageUrl = existingImage;
 
-      // ✅ Insert menu item record
-      const { data, error } = await supabase.from("menu_items").insert([
-        {
-          name: formData.name.trim(),
-          description: formData.description.trim(),
-          category: formData.category,
-          price: parseFloat(formData.price),
-          available: formData.available,
-          image_url: fakeImageUrl,
-          restaurant_id: restaurantId,
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      // ✅ Upload new image if provided
+      if (imageFile) {
+        try {
+          imageUrl = await uploadImageToStorage(imageFile);
+        } catch (uploadError) {
+          console.error("Image upload failed:", uploadError);
+          alert("Failed to upload image. Please try again.");
+          return;
+        }
+      }
 
-      if (error) {
-        console.error("❌ Insert error:", error);
-        alert("Failed to add menu item. Check console for details.");
+      // ✅ Prepare data for insertion/update
+      const menuItemData = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        price: parseFloat(formData.price),
+        available: formData.available,
+        restaurant_id: restaurantData.id,
+        ...(imageUrl && { image_url: imageUrl }),
+      };
+
+      let result;
+
+      if (isEditing) {
+        // ✅ Update existing menu item
+        result = await supabase
+          .from("menu_items")
+          .update(menuItemData)
+          .eq("id", id)
+          .eq("restaurant_id", restaurantData.id);
       } else {
-        console.log("✅ Insert success:", data);
-        alert("Menu item added successfully!");
+        // ✅ Insert new menu item
+        result = await supabase
+          .from("menu_items")
+          .insert([{ ...menuItemData, created_at: new Date().toISOString() }]);
+      }
+
+      if (result.error) {
+        console.error("❌ Database error:", result.error);
+        alert(
+          `Failed to ${
+            isEditing ? "update" : "add"
+          } menu item. Check console for details.`
+        );
+      } else {
+        console.log(
+          `✅ ${isEditing ? "Update" : "Insert"} success:`,
+          result.data
+        );
+        alert(`Menu item ${isEditing ? "updated" : "added"} successfully!`);
         navigate("/menupage");
       }
     } catch (error) {
-      console.error("Unexpected error adding menu item:", error);
+      console.error("Unexpected error:", error);
       alert("Something went wrong. Check console for details.");
     } finally {
       setLoading(false);
     }
   };
-
 
   // ✅ Handle cancel and back
   const handleCancel = () => {
@@ -151,32 +256,58 @@ const AddMenuItem = () => {
   };
   const handleBack = () => navigate("/menupage");
 
+  if (fetchLoading) {
+    return (
+      <div
+        className={`bg-background-light dark:bg-background-dark font-display text-black dark:text-white min-h-screen flex items-center justify-center transition-colors duration-300 ${
+          darkMode ? "bg-background-light" : "bg-background-dark"
+        }`}
+      >
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-lg">Loading menu item...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-background-light dark:bg-background-dark font-display text-black dark:text-white min-h-screen flex flex-col">
+    <div
+      className={`bg-background-light dark:bg-background-dark font-display text-black dark:text-white min-h-screen flex flex-col transition-colors duration-300 ${
+        darkMode ? "bg-background-light" : "bg-background-dark"
+      }`}
+    >
+      {/* Header */}
+      <header
+        className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
+          darkMode
+            ? "bg-card-dark border-border-dark"
+            : "bg-card-light border-border-light"
+        }`}
+      >
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleBack}
+            className="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <IoMdArrowRoundBack className="text-xl" />
+          </button>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {isEditing ? "Edit Menu Item" : "Add New Menu Item"}
+          </h1>
+        </div>
+      </header>
+
+      {/* Main Content */}
       <div className="flex-1 flex justify-center px-4 sm:px-6 lg:px-8 py-5">
         <div className="w-full max-w-2xl flex flex-col">
-          {/* Header */}
-          <header className="flex items-center justify-between py-4 backdrop-blur-lg">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleBack}
-                className="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <IoMdArrowRoundBack className="text-xl" />
-              </button>
-              <h1 className="text-2xl font-bold tracking-tight">
-                Add New Menu Item
-              </h1>
-            </div>
-          </header>
-
           {/* Form */}
           <main className="grow space-y-8 py-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Image Upload */}
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Menu Item Image *
+                  Menu Item Image {!isEditing && "*"}
                 </label>
                 <div className="mt-1 flex justify-center rounded-lg border-2 border-dashed border-border-light dark:border-border-dark px-6 pt-5 pb-6">
                   <div className="space-y-1 text-center">
@@ -189,21 +320,18 @@ const AddMenuItem = () => {
                         />
                         <button
                           type="button"
-                          onClick={() => {
-                            setImageFile(null);
-                            setImagePreview(null);
-                          }}
-                          className="text-sm text-error hover:text-error/80"
+                          onClick={handleRemoveImage}
+                          className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                         >
                           Remove Image
                         </button>
                       </div>
                     ) : (
                       <>
-                        <span className="material-symbols-outlined text-5xl text-text-secondary-light dark:text-text-secondary-dark">
-                          image
-                        </span>
-                        <div className="flex text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                        <div className="text-5xl text-text-secondary-light dark:text-text-secondary-dark mb-2">
+                          📷
+                        </div>
+                        <div className="flex text-sm text-text-secondary-light dark:text-text-secondary-dark justify-center">
                           <label
                             htmlFor="file-upload"
                             className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80"
@@ -220,8 +348,13 @@ const AddMenuItem = () => {
                           <p className="pl-1">or drag and drop</p>
                         </div>
                         <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-                          PNG, JPG, GIF up to 10MB
+                          PNG, JPG, GIF, WEBP up to 10MB
                         </p>
+                        {isEditing && (
+                          <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-2">
+                            Leave empty to keep current image
+                          </p>
+                        )}
                       </>
                     )}
                   </div>
@@ -240,7 +373,7 @@ const AddMenuItem = () => {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 block w-full rounded-lg border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-3 focus:border-primary focus:ring-primary"
+                  className="mt-1 block w-full rounded-lg border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-3 focus:border-primary focus:ring-primary focus:outline-none"
                 />
               </div>
 
@@ -258,7 +391,7 @@ const AddMenuItem = () => {
                   placeholder="A juicy beef patty with fresh lettuce, tomato, and our special sauce."
                   value={formData.description}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-lg border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-3 focus:border-primary focus:ring-primary resize-none"
+                  className="mt-1 block w-full rounded-lg border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-3 focus:border-primary focus:ring-primary focus:outline-none resize-none"
                 ></textarea>
               </div>
 
@@ -275,7 +408,7 @@ const AddMenuItem = () => {
                     id="category"
                     value={formData.category}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-lg border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark py-2 px-3 focus:border-primary focus:ring-primary"
+                    className="mt-1 block w-full rounded-lg border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark py-2 px-3 focus:border-primary focus:ring-primary focus:outline-none"
                   >
                     <option>Appetizers</option>
                     <option>Main Course</option>
@@ -303,7 +436,7 @@ const AddMenuItem = () => {
                       value={formData.price}
                       onChange={handleInputChange}
                       required
-                      className="block w-full rounded-lg border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark pl-7 pr-4 focus:border-primary focus:ring-primary p-3"
+                      className="block w-full rounded-lg border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark pl-7 pr-4 focus:border-primary focus:ring-primary focus:outline-none p-3"
                     />
                   </div>
                 </div>
@@ -328,7 +461,7 @@ const AddMenuItem = () => {
                     onChange={handleInputChange}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-focus:ring-2 peer-focus:ring-primary/50 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-focus:ring-2 peer-focus:ring-primary/50 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:h-5 after:w-5 after:rounded-full after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
 
@@ -337,13 +470,15 @@ const AddMenuItem = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex w-full sm:w-auto items-center justify-center h-12 px-5 bg-primary text-text-light text-base font-bold rounded-lg hover:scale-105 transition-transform disabled:opacity-50"
+                  className="flex w-full sm:w-auto items-center justify-center h-12 px-5 bg-primary text-white text-base font-bold rounded-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Saving...
+                      {isEditing ? "Updating..." : "Saving..."}
                     </>
+                  ) : isEditing ? (
+                    "Update Item"
                   ) : (
                     "Save Item"
                   )}
@@ -351,7 +486,7 @@ const AddMenuItem = () => {
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="flex w-full sm:w-auto items-center justify-center h-12 px-5 bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark border border-border-light dark:border-border-dark font-bold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="flex w-full sm:w-auto items-center justify-center h-12 px-5 bg-card-light dark:bg-card-dark text-text-light dark:text-text-dark border border-border-light dark:border-border-dark font-bold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Cancel
                 </button>

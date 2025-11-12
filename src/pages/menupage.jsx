@@ -1,88 +1,141 @@
 import React, { useState, useEffect } from "react";
 import { IoIosAddCircle, IoIosAdd } from "react-icons/io";
-import {
-  MdDashboard,
-  MdRestaurantMenu,
-  MdStorefront,
-  MdSettings,
-  MdLogout,
-  MdMenu,
-} from "react-icons/md";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { MdMenu, MdDarkMode, MdLightMode } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
-import { getAuth } from "firebase/auth";
+import { getAuth, signOut } from "firebase/auth";
+import Sidebar from "../components/Sidebar";
 
 const MenuManagement = () => {
+  const [darkMode, setDarkMode] = useState(false);
   const [restaurantData, setRestaurantData] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
+  const [deleteLoading, setDeleteLoading] = useState(null);
   const navigate = useNavigate();
+  const auth = getAuth();
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const auth = getAuth();
-      const user = auth.currentUser;
+    fetchData();
+  }, [auth]);
 
-      if (!user) {
-        console.error("❌ No user logged in");
+  const fetchData = async () => {
+    setLoading(true);
+    const user = auth.currentUser;
+
+    if (!user) {
+      console.error("❌ No user logged in");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // 1️⃣ Fetch restaurant by Firebase UID
+      const { data: restaurant, error: restaurantError } = await supabase
+        .from("restaurants")
+        .select("*")
+        .eq("firebase_uid", user.uid)
+        .single();
+
+      if (restaurantError) {
+        console.error("❌ Error fetching restaurant:", restaurantError);
         setLoading(false);
         return;
       }
 
-      try {
-        // 1️⃣ Fetch restaurant by Firebase UID
-        const { data: restaurant, error: restaurantError } = await supabase
-          .from("restaurants")
-          .select("*")
-          .eq("firebase_uid", user.uid)
-          .single();
+      setRestaurantData(restaurant);
 
-        if (restaurantError) {
-          console.error("❌ Error fetching restaurant:", restaurantError);
-          setLoading(false);
-          return;
-        }
+      // 2️⃣ Fetch menu items for the restaurant
+      const { data: items, error: menuError } = await supabase
+        .from("menu_items")
+        .select("*")
+        .eq("restaurant_id", restaurant.id)
+        .order("created_at", { ascending: false });
 
-        setRestaurantData(restaurant);
-
-        // 2️⃣ Fetch menu items for the restaurant
-        const { data: items, error: menuError } = await supabase
-          .from("menu_items")
-          .select("*")
-          .eq("restaurant_id", restaurant.id);
-
-        if (menuError) {
-          console.error("❌ Error fetching menu items:", menuError);
-        } else {
-          setMenuItems(items || []);
-        }
-      } catch (error) {
-        console.error("❌ Fetch error:", error);
-      } finally {
-        setLoading(false);
+      if (menuError) {
+        console.error("❌ Error fetching menu items:", menuError);
+      } else {
+        setMenuItems(items || []);
       }
-    };
-
-    fetchData();
-  }, []);
+    } catch (error) {
+      console.error("❌ Fetch error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddMenuItem = () => navigate("/addmenuitem");
+  const handleEditMenuItem = (itemId) => navigate(`/addmenuitem/${itemId}`);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const toggleTheme = () => setDarkMode((prev) => !prev);
 
-  const navItems = [
-    { icon: <MdDashboard />, label: "Dashboard", path: "/restaurantdashboard" },
-    { icon: <MdRestaurantMenu />, label: "Menu", path: "/menupage" },
-    {
-      icon: <MdStorefront />,
-      label: "Restaurant Info",
-      path: "/restaurant-info",
-    },
-    { icon: <MdSettings />, label: "Settings", path: "/settings" },
-  ];
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate("/login");
+  };
+
+  const handleDeleteMenuItem = async (itemId, itemName) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete "${itemName}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setDeleteLoading(itemId);
+
+    try {
+      const { error } = await supabase
+        .from("menu_items")
+        .delete()
+        .eq("id", itemId)
+        .eq("restaurant_id", restaurantData.id);
+
+      if (error) {
+        console.error("❌ Error deleting menu item:", error);
+        alert("Failed to delete menu item. Please try again.");
+      } else {
+        // Remove item from local state
+        setMenuItems((prev) => prev.filter((item) => item.id !== itemId));
+        alert("Menu item deleted successfully!");
+      }
+    } catch (error) {
+      console.error("❌ Delete error:", error);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setDeleteLoading(null);
+    }
+  };
+
+  const toggleAvailability = async (itemId, currentAvailability, itemName) => {
+    try {
+      const { error } = await supabase
+        .from("menu_items")
+        .update({ available: !currentAvailability })
+        .eq("id", itemId)
+        .eq("restaurant_id", restaurantData.id);
+
+      if (error) {
+        console.error("❌ Error updating availability:", error);
+        alert("Failed to update availability. Please try again.");
+      } else {
+        // Update local state
+        setMenuItems((prev) =>
+          prev.map((item) =>
+            item.id === itemId
+              ? { ...item, available: !currentAvailability }
+              : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error("❌ Availability toggle error:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
 
   const filteredMenu = menuItems.filter((item) =>
     item.name?.toLowerCase().includes(search.toLowerCase())
@@ -90,27 +143,65 @@ const MenuManagement = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background-light dark:bg-background-dark">
+      <div
+        className={`flex items-center justify-center min-h-screen transition-colors duration-300 ${
+          darkMode
+            ? "bg-background-light text-black"
+            : "bg-background-dark text-white"
+        }`}
+      >
         <div className="text-center">
           <div className="animate-spin h-12 w-12 border-b-2 border-primary rounded-full mx-auto"></div>
-          <p className="mt-4 text-lg text-black dark:text-white">
-            Loading menu...
-          </p>
+          <p className="mt-4 text-lg">Loading menu...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-background-light dark:bg-background-dark text-black dark:text-white">
-      {/* Sidebar omitted for brevity (same as your original code) */}
+    <div
+      className={`font-display min-h-screen flex transition-colors duration-300 ${
+        darkMode
+          ? "bg-background-light text-black"
+          : "bg-background-dark text-white"
+      }`}
+    >
+      {/* Reusable Sidebar Component */}
+      <Sidebar
+        darkMode={darkMode}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        onLogout={handleLogout}
+        restaurantData={restaurantData}
+      />
 
-      <div className="flex flex-1 flex-col transition-all duration-300">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b px-4 bg-background-light/80 dark:bg-background-dark/80">
+      {/* Overlay for mobile when sidebar is open */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
+      <div
+        className={`flex flex-1 flex-col transition-all duration-300 ${
+          sidebarOpen ? "lg:ml-16" : "lg:ml-16"
+        }`}
+      >
+        {/* Header */}
+        <header
+          className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
+            darkMode
+              ? "bg-card-dark border-border-dark"
+              : "bg-card-light border-border-light"
+          }`}
+        >
           <div className="flex items-center gap-4">
+            {/* Hamburger Menu Button - Only show on mobile */}
             <button
               onClick={toggleSidebar}
-              className="lg:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="lg:hidden rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <MdMenu className="text-2xl" />
             </button>
@@ -119,19 +210,31 @@ const MenuManagement = () => {
 
           <div className="flex items-center gap-4">
             <button
+              onClick={toggleTheme}
+              className="rounded-full p-2 transition-colors"
+            >
+              {darkMode ? (
+                <MdLightMode className="text-xl" />
+              ) : (
+                <MdDarkMode className="text-xl" />
+              )}
+            </button>
+
+            <button
               onClick={handleAddMenuItem}
-              className="flex items-center gap-2 px-4 py-2 h-9 rounded-md bg-primary text-text-light font-bold hover:scale-105 transition-transform"
+              className="flex items-center gap-2 px-4 py-2 h-9 rounded-md bg-primary text-white font-bold hover:scale-105 transition-transform"
             >
               <IoIosAddCircle />
               <span className="hidden sm:inline">Add New Item</span>
             </button>
 
+            {/* Restaurant Info */}
             {restaurantData && (
               <div className="hidden md:flex items-center gap-3">
                 {restaurantData.logo_url && (
                   <img
                     src={restaurantData.logo_url}
-                    alt="Logo"
+                    alt={`${restaurantData.name} logo`}
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 )}
@@ -141,18 +244,23 @@ const MenuManagement = () => {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        {/* Main Content */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300">
           {menuItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
               <IoIosAddCircle className="text-6xl text-primary/70" />
               <h2 className="text-2xl font-bold">No Menu Items Yet</h2>
-              <p className="text-text-secondary-light dark:text-text-secondary-dark max-w-sm">
+              <p
+                className={`max-w-sm ${
+                  darkMode ? "text-text-muted-dark" : "text-text-muted-light"
+                }`}
+              >
                 You haven't added any dishes yet. Start by adding your first
                 menu item!
               </p>
               <button
                 onClick={handleAddMenuItem}
-                className="mt-4 flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-text-light hover:scale-105 transition-transform"
+                className="mt-4 flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-white hover:scale-105 transition-transform"
               >
                 <IoIosAdd />
                 Add Your First Item
@@ -167,8 +275,15 @@ const MenuManagement = () => {
                   placeholder="Search for a dish..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full sm:max-w-xs h-10 pl-10 pr-4 rounded-md border bg-card-light dark:bg-card-dark focus:ring-2 focus:ring-primary"
+                  className={`w-full sm:max-w-xs h-10 pl-10 pr-4 rounded-md border focus:ring-2 focus:ring-primary ${
+                    darkMode
+                      ? "bg-card-dark border-border-dark text-white"
+                      : "bg-card-light border-border-light text-black"
+                  }`}
                 />
+                <div className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                  {filteredMenu.length} of {menuItems.length} items
+                </div>
               </div>
 
               {/* Menu Grid */}
@@ -176,47 +291,104 @@ const MenuManagement = () => {
                 {filteredMenu.map((item) => (
                   <div
                     key={item.id}
-                    className="flex flex-col border rounded-lg bg-card-light dark:bg-card-dark overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
+                    className={`flex flex-col border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow ${
+                      darkMode
+                        ? "bg-card-dark border-border-dark"
+                        : "bg-card-light border-border-light"
+                    }`}
                   >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="h-48 w-full object-cover"
-                    />
+                    <div className="relative">
+                      <img
+                        src={
+                          item.image_url ||
+                          "https://via.placeholder.com/300x200?text=No+Image"
+                        }
+                        alt={item.name}
+                        className="h-48 w-full object-cover"
+                      />
+                      <button
+                        onClick={() =>
+                          toggleAvailability(item.id, item.available, item.name)
+                        }
+                        className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
+                          item.available
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
+                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50"
+                        }`}
+                      >
+                        {item.available ? "Available" : "Out of Stock"}
+                      </button>
+                    </div>
                     <div className="p-4 flex flex-col flex-1">
                       <div className="flex items-start justify-between">
                         <h2 className="text-lg font-bold">{item.name}</h2>
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                            item.available
-                              ? "bg-success/10 text-success"
-                              : "bg-error/10 text-error"
-                          }`}
-                        >
-                          {item.available ? "Available" : "Out of Stock"}
-                        </span>
                       </div>
-                      <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark">
+                      <p
+                        className={`text-sm ${
+                          darkMode
+                            ? "text-text-muted-dark"
+                            : "text-text-muted-light"
+                        }`}
+                      >
                         {item.category}
                       </p>
-                      <p className="mt-2 text-sm text-text-secondary-light dark:text-text-secondary-dark flex-1">
+                      <p
+                        className={`mt-2 text-sm flex-1 ${
+                          darkMode
+                            ? "text-text-muted-dark"
+                            : "text-text-muted-light"
+                        }`}
+                      >
                         {item.description}
                       </p>
                       <p className="mt-4 text-lg font-semibold text-primary">
-                        {item.price}
+                        ${parseFloat(item.price).toFixed(2)}
                       </p>
                     </div>
-                    <div className="flex justify-end gap-2 p-3 border-t border-border-light dark:border-border-dark">
-                      <button className="h-8 px-3 text-sm font-medium rounded-md hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
+                    <div
+                      className={`flex justify-end gap-2 p-3 border-t ${
+                        darkMode ? "border-border-dark" : "border-border-light"
+                      }`}
+                    >
+                      <button
+                        onClick={() => handleEditMenuItem(item.id)}
+                        className={`h-8 px-3 text-sm font-medium rounded-md transition-colors ${
+                          darkMode
+                            ? "hover:bg-background-dark/50"
+                            : "hover:bg-background-light"
+                        }`}
+                      >
                         Edit
                       </button>
-                      <button className="h-8 px-3 text-sm font-medium text-error rounded-md hover:bg-error/10 transition-colors">
-                        Delete
+                      <button
+                        onClick={() => handleDeleteMenuItem(item.id, item.name)}
+                        disabled={deleteLoading === item.id}
+                        className="h-8 px-3 text-sm font-medium text-red-600 dark:text-red-400 rounded-md hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
+                      >
+                        {deleteLoading === item.id ? (
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-red-600 mx-auto"></div>
+                        ) : (
+                          "Delete"
+                        )}
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
+
+              {filteredMenu.length === 0 && search && (
+                <div className="text-center py-12">
+                  <p className="text-lg text-text-muted-light dark:text-text-muted-dark">
+                    No menu items found matching "{search}"
+                  </p>
+                  <button
+                    onClick={() => setSearch("")}
+                    className="mt-2 text-primary hover:underline"
+                  >
+                    Clear search
+                  </button>
+                </div>
+              )}
             </>
           )}
         </main>

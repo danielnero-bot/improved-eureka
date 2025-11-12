@@ -3,19 +3,15 @@ import {
   MdLightMode,
   MdDarkMode,
   MdMenu,
-  MdLogout,
-  MdDashboard,
-  MdRestaurantMenu,
-  MdStorefront,
-  MdSettings,
   MdPayments,
   MdReceiptLong,
   MdPersonAdd,
   MdAnalytics,
 } from "react-icons/md";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
+import Sidebar from "../components/Sidebar"; 
 
 const RestaurantDashboard = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -131,17 +127,6 @@ const RestaurantDashboard = () => {
     }
   };
 
-  const navItems = [
-    { icon: <MdDashboard />, label: "Dashboard", path: "/restaurantdashboard" },
-    { icon: <MdRestaurantMenu />, label: "Menu", path: "/menupage" },
-    {
-      icon: <MdStorefront />,
-      label: "Restaurant Info",
-      path: "/restaurant-info",
-    },
-    { icon: <MdSettings />, label: "Settings", path: "/settings" },
-  ];
-
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/login");
@@ -172,100 +157,14 @@ const RestaurantDashboard = () => {
           : "bg-background-dark text-white"
       }`}
     >
-      {/* Sidebar - Hidden on mobile, visible on desktop */}
-      <aside
-        className={`fixed top-0 left-0 z-30 h-screen flex flex-col border-r transition-all duration-300 overflow-hidden ${
-          darkMode
-            ? "bg-gray-800 border-border-dark"
-            : "bg-indigo-700 border-border-light"
-        } ${
-          sidebarOpen
-            ? "w-64 translate-x-0"
-            : "-translate-x-full lg:translate-x-0 lg:w-16 lg:hover:w-64"
-        } lg:group`}
-      >
-        {/* Logo / Header */}
-        <div className="flex h-16 items-center gap-3 border-b border-white/10 px-4">
-          <div className="text-white shrink-0">
-            <svg
-              fill="none"
-              viewBox="0 0 48 48"
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-8 h-8"
-            >
-              <path
-                d="M8.6 8.6a21 21 0 0130.8 0L24 24 8.6 8.6z"
-                fill="currentColor"
-              />
-            </svg>
-          </div>
-          <span
-            className={`text-lg font-bold text-white ${
-              sidebarOpen
-                ? "opacity-100"
-                : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
-            } transition-opacity duration-300 whitespace-nowrap`}
-          >
-            QuickPlate
-          </span>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex flex-1 flex-col justify-between p-4 overflow-y-auto">
-          <ul className="space-y-2">
-            {navItems.map(({ icon, label, path }) => {
-              const active = location.pathname === path;
-              return (
-                <li key={label}>
-                  <Link
-                    to={path}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
-                      active
-                        ? "bg-white/20 text-white"
-                        : "text-white/70 hover:text-white hover:bg-white/10"
-                    }`}
-                    title={label}
-                  >
-                    <span className="text-xl shrink-0">{icon}</span>
-                    <span
-                      className={`${
-                        sidebarOpen
-                          ? "opacity-100"
-                          : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
-                      } transition-opacity duration-300 whitespace-nowrap overflow-hidden`}
-                    >
-                      {label}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-
-          {/* Logout */}
-          <ul>
-            <li>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full text-white/70 hover:text-white hover:bg-white/10"
-                title="Logout"
-              >
-                <MdLogout className="text-xl shrink-0" />
-                <span
-                  className={`${
-                    sidebarOpen
-                      ? "opacity-100"
-                      : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
-                  } transition-opacity duration-300 whitespace-nowrap overflow-hidden`}
-                >
-                  Logout
-                </span>
-              </button>
-            </li>
-          </ul>
-        </nav>
-      </aside>
+      {/* Reusable Sidebar Component */}
+      <Sidebar
+        darkMode={darkMode}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        onLogout={handleLogout}
+        restaurantData={restaurantData}
+      />
 
       {/* Overlay for mobile when sidebar is open */}
       {sidebarOpen && (
