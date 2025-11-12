@@ -2,12 +2,6 @@ import React, { useState, useEffect } from "react";
 import { MdLightMode, MdDarkMode } from "react-icons/md";
 import { FaRegEye, FaRegEyeSlash, FaGoogle } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
-import { auth } from "../firebase/config";
 import { supabase } from "../supabase";
 
 const Login = () => {
@@ -16,40 +10,61 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [userType, setUserType] = useState("user");
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
-  // 🌓 Apply theme preference on mount
+  // Apply theme preference
   useEffect(() => {
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    if (theme === "dark") document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  useEffect(() => {
+    checkExistingSession();
+  }, []);
+
+  // Check for existing session
+  const checkExistingSession = async () => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        const role = await determineUserRole(session.user);
+        navigate(role === "restaurant" ? "/restaurantDashboard" : "/dashboard");
+      }
+    } catch {
+      console.log("No existing session");
+    }
   };
 
-  // 🧠 Check role from Supabase
-  const getRoleFromSupabase = async (uid) => {
+  const toggleTheme = () =>
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+
+  // Determine role: first check metadata, fallback to tables
+  const determineUserRole = async (user) => {
+    // Check metadata
+    const roleFromMeta = user?.user_metadata?.role;
+    if (roleFromMeta) return roleFromMeta;
+
+    // Fallback to tables
     try {
       const { data: restaurant } = await supabase
         .from("restaurants")
         .select("id")
-        .eq("firebase_uid", uid)
+        .eq("owner_uid", user.id)
         .single();
       if (restaurant) return "restaurant";
 
-      const { data: user } = await supabase
+      const { data: normalUser } = await supabase
         .from("users")
         .select("id")
-        .eq("firebase_uid", uid)
+        .eq("user_uid", user.id)
         .single();
-      if (user) return "user";
+      if (normalUser) return "user";
 
       return "user";
     } catch {
@@ -57,54 +72,78 @@ const Login = () => {
     }
   };
 
-  // 🔐 Handle Email/Password Login
+  // Email/password login
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     if (!email || !password)
       return setError("Email and password are required.");
-
     setLoading(true);
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const firebaseUser = userCredential.user;
-      await firebaseUser.getIdToken(true);
-      const role = await getRoleFromSupabase(firebaseUser.uid);
 
+    try {
+      const { data, error: loginError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+      if (loginError) throw loginError;
+
+      const user = data.user;
+      if (!user) throw new Error("Login failed");
+
+      const role = await determineUserRole(user);
       navigate(role === "restaurant" ? "/restaurantDashboard" : "/dashboard");
     } catch (err) {
-      setError(err?.message || "Login failed");
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔐 Handle Google Sign-In
+  // Google OAuth popup
   const handleGoogleSignIn = async () => {
     setError("");
-    setLoading(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
-      const firebaseUser = userCredential.user;
-      await firebaseUser.getIdToken(true);
-      const role = await getRoleFromSupabase(firebaseUser.uid);
+    setGoogleLoading(true);
 
-      navigate(role === "restaurant" ? "/restaurantDashboard" : "/dashboard");
+    try {
+      const redirectUrl = window.location.origin;
+
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: redirectUrl },
+      });
+      if (oauthError) throw oauthError;
+
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === "SIGNED_IN" && session?.user) {
+          try {
+            const role = await determineUserRole(session.user);
+            navigate(
+              role === "restaurant" ? "/restaurantDashboard" : "/dashboard"
+            );
+          } catch {
+            setError("Failed to determine user role");
+          } finally {
+            subscription.unsubscribe();
+            setGoogleLoading(false);
+          }
+        }
+        if (event === "SIGNED_OUT") {
+          subscription.unsubscribe();
+          setGoogleLoading(false);
+        }
+      });
     } catch (err) {
-      setError(err?.message || "Google login failed");
-    } finally {
-      setLoading(false);
+      setError(err.message || "Google login failed");
+      setGoogleLoading(false);
     }
   };
+
   return (
-    <div className="font-display bg-background-light dark:bg-background-dark text-white text-text-light-primary dark:text-dark-primary">
+    <div className="font-display bg-background-light dark:bg-background-dark text-white">
       <div className="relative flex min-h-screen w-full flex-col items-center justify-center p-4">
-        {/* 🌓 Theme Toggle Button */}
         <div className="absolute top-4 right-4">
           <button
             onClick={toggleTheme}
@@ -128,7 +167,7 @@ const Login = () => {
 
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
               {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <div className="bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded">
                   {error}
                 </div>
               )}
@@ -140,7 +179,7 @@ const Login = () => {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-14 rounded-lg border border-gray-300 dark:border-gray-700 bg-surface-light dark:bg-surface-dark p-4 text-base focus:ring-2 focus:ring-primary"
+                  className="h-14 rounded-lg border p-4 focus:ring-2 focus:ring-primary text-black dark:text-white bg-surface-light dark:bg-surface-dark"
                 />
               </label>
 
@@ -152,7 +191,7 @@ const Login = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-14 w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-surface-light dark:bg-surface-dark p-4 text-base focus:ring-2 focus:ring-primary"
+                    className="h-14 w-full rounded-lg border p-4 focus:ring-2 focus:ring-primary text-black dark:text-white bg-surface-light dark:bg-surface-dark"
                   />
                   <button
                     type="button"
@@ -163,45 +202,6 @@ const Login = () => {
                   </button>
                 </div>
               </label>
-
-              {/* Role toggle for UX (optional) */}
-              <div className="flex items-center justify-center border border-gray-300 dark:border-gray-700 rounded-lg p-1">
-                <label className="flex-1 text-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role-selector"
-                    value="user"
-                    checked={userType === "user"}
-                    onChange={(e) => setUserType(e.target.value)}
-                    className="hidden"
-                  />
-                  <span
-                    className={`block py-2 rounded-md ${
-                      userType === "user" ? "bg-primary text-white" : ""
-                    }`}
-                  >
-                    Login as User
-                  </span>
-                </label>
-
-                <label className="flex-1 text-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role-selector"
-                    value="restaurant"
-                    checked={userType === "restaurant"}
-                    onChange={(e) => setUserType(e.target.value)}
-                    className="hidden"
-                  />
-                  <span
-                    className={`block py-2 rounded-md ${
-                      userType === "restaurant" ? "bg-primary text-white" : ""
-                    }`}
-                  >
-                    Login as Restaurant Owner
-                  </span>
-                </label>
-              </div>
 
               <button
                 type="submit"
@@ -223,15 +223,21 @@ const Login = () => {
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
-                disabled={loading}
-                className="flex items-center justify-center gap-2 h-12 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
+                disabled={googleLoading || loading}
+                className="flex items-center justify-center gap-2 h-12 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
               >
-                <FaGoogle className="w-5 h-5" />
-                <span>Sign in with Google</span>
+                {googleLoading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-700 dark:border-gray-300"></div>
+                ) : (
+                  <FaGoogle className="w-5 h-5" />
+                )}
+                <span>
+                  {googleLoading ? "Signing in..." : "Sign in with Google"}
+                </span>
               </button>
 
               <p className="text-center text-sm text-text-light-secondary dark:text-dark-secondary">
-                Don’t have an account?{" "}
+                Don't have an account?{" "}
                 <Link
                   to={
                     userType === "restaurant"

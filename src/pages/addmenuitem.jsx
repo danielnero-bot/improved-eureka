@@ -2,13 +2,20 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 import { IoMdArrowRoundBack } from "react-icons/io";
+import { MdLightMode, MdDarkMode } from "react-icons/md";
 import { supabase } from "../supabase";
 import { FaImage } from "react-icons/fa6";
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+console.log(user);
 
 const AddMenuItem = () => {
+  
   const { id } = useParams();
   const isEditing = !!id;
 
+  const [darkMode, setDarkMode] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -255,6 +262,7 @@ const AddMenuItem = () => {
     if (window.confirm("Discard changes?")) navigate("/menupage");
   };
   const handleBack = () => navigate("/menupage");
+  const toggleTheme = () => setDarkMode((prev) => !prev);
 
   if (fetchLoading) {
     return (
@@ -296,6 +304,17 @@ const AddMenuItem = () => {
             {isEditing ? "Edit Menu Item" : "Add New Menu Item"}
           </h1>
         </div>
+
+        <button
+          onClick={toggleTheme}
+          className="rounded-full p-2 transition-colors"
+        >
+          {darkMode ? (
+            <MdLightMode className="text-xl" />
+          ) : (
+            <MdDarkMode className="text-xl" />
+          )}
+        </button>
       </header>
 
       {/* Main Content */}

@@ -126,6 +126,7 @@ const RestaurantDashboard = () => {
       console.error("❌ Error fetching dashboard stats:", error);
     }
   };
+  
 
   const handleLogout = async () => {
     await signOut(auth);
