@@ -20,7 +20,7 @@ import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <HashRouter basename="/improved-eureka/">
+    <HashRouter>
       <Routes>
         {/* App acts as the layout (with Navbar & Footer) */}
         <Route path="/" element={<App />}>
