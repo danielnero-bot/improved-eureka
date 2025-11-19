@@ -78,7 +78,7 @@ const handleGoogleSignIn = async () => {
 setError("");
 setGoogleLoading(true);
 
-```
+
 try {
   const redirectUrl = `${window.location.origin}${window.location.pathname}#/auth/callback`;
 
