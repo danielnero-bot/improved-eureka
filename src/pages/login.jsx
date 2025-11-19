@@ -15,48 +15,28 @@ const Login = () => {
   const [userType, setUserType] = useState("user");
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
-  // Apply theme preference
+  // Theme handler
   useEffect(() => {
     if (theme === "dark") document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  useEffect(() => {
-    checkExistingSession();
-  }, []);
-
-  // Check for existing session
-  const checkExistingSession = async () => {
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.user) {
-        const role = await determineUserRole(session.user);
-        navigate(role === "restaurant" ? "/restaurantDashboard" : "/dashboard");
-      }
-    } catch {
-      console.log("No existing session");
-    }
-  };
-
   const toggleTheme = () =>
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
-  // Determine role: first check metadata, fallback to tables
+  // Determine role by metadata > restaurants table > users table
   const determineUserRole = async (user) => {
-    // Check metadata
-    const roleFromMeta = user?.user_metadata?.role;
-    if (roleFromMeta) return roleFromMeta;
+    const metaRole = user?.user_metadata?.role;
+    if (metaRole) return metaRole;
 
-    // Fallback to tables
     try {
       const { data: restaurant } = await supabase
         .from("restaurants")
         .select("id")
         .eq("owner_uid", user.id)
         .single();
+
       if (restaurant) return "restaurant";
 
       const { data: normalUser } = await supabase
@@ -64,6 +44,7 @@ const Login = () => {
         .select("id")
         .eq("user_uid", user.id)
         .single();
+
       if (normalUser) return "user";
 
       return "user";
@@ -72,26 +53,28 @@ const Login = () => {
     }
   };
 
-  // Email/password login
+  // Email login
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    if (!email || !password)
+
+    if (!email || !password) {
       return setError("Email and password are required.");
+    }
+
     setLoading(true);
 
     try {
       const { data, error: loginError } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        await supabase.auth.signInWithPassword({ email, password });
+
       if (loginError) throw loginError;
 
       const user = data.user;
-      if (!user) throw new Error("Login failed");
+      if (!user) throw new Error("Login failed. Try again.");
 
       const role = await determineUserRole(user);
+
       navigate(role === "restaurant" ? "/restaurantDashboard" : "/dashboard");
     } catch (err) {
       setError(err.message || "Login failed");
@@ -100,41 +83,22 @@ const Login = () => {
     }
   };
 
-  // Google OAuth popup
+  // Google OAuth Fix for GitHub Pages + HashRouter
   const handleGoogleSignIn = async () => {
     setError("");
     setGoogleLoading(true);
 
     try {
-      const redirectUrl = window.location.origin;
+      const redirectUrl = `${window.location.origin}${window.location.pathname}#/auth/callback`;
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: redirectUrl },
+        options: {
+          redirectTo: redirectUrl,
+        },
       });
-      if (oauthError) throw oauthError;
 
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (event === "SIGNED_IN" && session?.user) {
-          try {
-            const role = await determineUserRole(session.user);
-            navigate(
-              role === "restaurant" ? "/restaurantDashboard" : "/dashboard"
-            );
-          } catch {
-            setError("Failed to determine user role");
-          } finally {
-            subscription.unsubscribe();
-            setGoogleLoading(false);
-          }
-        }
-        if (event === "SIGNED_OUT") {
-          subscription.unsubscribe();
-          setGoogleLoading(false);
-        }
-      });
+      if (oauthError) throw oauthError;
     } catch (err) {
       setError(err.message || "Google login failed");
       setGoogleLoading(false);
@@ -144,6 +108,7 @@ const Login = () => {
   return (
     <div className="font-display bg-background-light dark:bg-background-dark text-white">
       <div className="relative flex min-h-screen w-full flex-col items-center justify-center p-4">
+        {/* Theme Toggle */}
         <div className="absolute top-4 right-4">
           <button
             onClick={toggleTheme}
@@ -172,6 +137,7 @@ const Login = () => {
                 </div>
               )}
 
+              {/* Email */}
               <label className="flex flex-col gap-1">
                 <p className="pb-2 text-base font-medium">Email</p>
                 <input
@@ -179,10 +145,11 @@ const Login = () => {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-14 rounded-lg border p-4 focus:ring-2 focus:ring-primary text-black dark:text-white bg-surface-light dark:bg-surface-dark"
+                  className="h-14 rounded-lg border p-4 bg-surface-light dark:bg-surface-dark focus:ring-2 focus:ring-primary text-black dark:text-white"
                 />
               </label>
 
+              {/* Password */}
               <label className="flex flex-col gap-1">
                 <p className="pb-2 text-base font-medium">Password</p>
                 <div className="relative flex items-center">
@@ -191,7 +158,7 @@ const Login = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-14 w-full rounded-lg border p-4 focus:ring-2 focus:ring-primary text-black dark:text-white bg-surface-light dark:bg-surface-dark"
+                    className="h-14 w-full rounded-lg border p-4 bg-surface-light dark:bg-surface-dark text-black dark:text-white focus:ring-2 focus:ring-primary"
                   />
                   <button
                     type="button"
@@ -220,14 +187,15 @@ const Login = () => {
                 </div>
               </div>
 
+              {/* Google Login */}
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={googleLoading || loading}
-                className="flex items-center justify-center gap-2 h-12 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                className="flex items-center justify-center gap-2 h-12 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
               >
                 {googleLoading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-700 dark:border-gray-300"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2"></div>
                 ) : (
                   <FaGoogle className="w-5 h-5" />
                 )}

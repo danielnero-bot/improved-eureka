@@ -16,6 +16,7 @@ import RestaurantSetup from "./pages/restaurantsetu";
 import MenuManagement from "./pages/menupage";
 import AddMenuItem from "./pages/addmenuitem";
 import RestaurantDetails from "./pages/restaurantdetails"
+import AuthCallback from "./components/AuthCallBack";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -42,6 +43,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/menupage" element={<MenuManagement />} />
         <Route path="/addmenuitem" element={<AddMenuItem />} />
         <Route path="/restaurant-info" element={<RestaurantDetails />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
       </Routes>
     </HashRouter>
   </React.StrictMode>
