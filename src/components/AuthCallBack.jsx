@@ -8,25 +8,58 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const handleAuth = async () => {
-      // Check for existing session first
+      console.log("Full URL:", window.location.href);
+
+      // 1. Try standard Supabase detection
       const {
         data: { session },
         error,
       } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error("Error getting session:", error);
-        setStatus("Error checking session.");
-        return;
-      }
-
       if (session) {
-        console.log("Session found immediately:", session);
+        console.log("Session found via getSession:", session);
         redirectUser(session.user);
         return;
       }
 
-      // If no session, listen for the auth state change (which handles the URL hash)
+      // 2. Manual Token Parsing (Fix for HashRouter + OAuth)
+      // Look for access_token in the entire URL string because HashRouter can mess up window.location.hash
+      const urlStr = window.location.href;
+      if (
+        urlStr.includes("access_token=") &&
+        urlStr.includes("refresh_token=")
+      ) {
+        console.log("Manual token detection triggered");
+        try {
+          // Extract tokens using regex or string manipulation to handle double hashes
+          const accessTokenMatch = urlStr.match(/access_token=([^&]+)/);
+          const refreshTokenMatch = urlStr.match(/refresh_token=([^&]+)/);
+
+          if (accessTokenMatch && refreshTokenMatch) {
+            const access_token = accessTokenMatch[1];
+            const refresh_token = refreshTokenMatch[1];
+
+            const { data, error: setSessionError } =
+              await supabase.auth.setSession({
+                access_token,
+                refresh_token,
+              });
+
+            if (setSessionError) throw setSessionError;
+
+            if (data.session) {
+              console.log("Manually set session:", data.session);
+              redirectUser(data.session.user);
+              return;
+            }
+          }
+        } catch (err) {
+          console.error("Manual session parsing failed:", err);
+          setStatus("Error processing login details.");
+        }
+      }
+
+      // 3. Fallback listener
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((event, session) => {
@@ -36,6 +69,10 @@ export default function AuthCallback() {
         } else if (event === "SIGNED_OUT") {
           setStatus("User signed out. Redirecting to login...");
           setTimeout(() => navigate("/login"), 2000);
+        } else if (event === "INITIAL_SESSION" && !session) {
+          // If we are here, it means getSession failed AND manual parsing failed (or wasn't needed)
+          // But if we are on the callback page, we EXPECT a session.
+          console.log("No initial session found.");
         }
       });
 
