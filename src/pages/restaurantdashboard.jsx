@@ -10,8 +10,7 @@ import {
 } from "react-icons/md";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import Sidebar from "../components/Sidebar"; 
+import Sidebar from "../components/Sidebar";
 
 const RestaurantDashboard = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -26,7 +25,6 @@ const RestaurantDashboard = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const auth = getAuth();
 
   const toggleTheme = () => setDarkMode((prev) => !prev);
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
@@ -40,18 +38,13 @@ const RestaurantDashboard = () => {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        navigate("/login");
-        return;
-      }
-
+    const fetchRestaurantData = async (user) => {
       try {
         // Fetch restaurant data
         const { data, error } = await supabase
           .from("restaurants")
           .select("*")
-          .eq("firebase_uid", user.uid)
+          .eq("owner_uid", user.id) // Changed from firebase_uid to owner_uid
           .single();
 
         if (error) {
@@ -68,10 +61,31 @@ const RestaurantDashboard = () => {
       } finally {
         setLoading(false);
       }
+    };
+
+    const checkUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        fetchRestaurantData(session.user);
+      } else {
+        navigate("/login");
+      }
+    };
+
+    checkUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate("/login");
+      }
     });
 
-    return () => unsubscribe();
-  }, [auth, navigate]);
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   // Fetch dashboard statistics
   const fetchDashboardStats = async (restaurantId) => {
@@ -126,10 +140,9 @@ const RestaurantDashboard = () => {
       console.error("❌ Error fetching dashboard stats:", error);
     }
   };
-  
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
     navigate("/login");
   };
 

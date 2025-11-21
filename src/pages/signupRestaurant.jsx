@@ -2,12 +2,6 @@ import React, { useState, useEffect } from "react";
 import { MdLightMode, MdDarkMode } from "react-icons/md";
 import { FaRegEye, FaRegEyeSlash, FaGoogle } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
-import { auth } from "../firebase/config";
 import { supabase } from "../supabase";
 import PasswordChecker from "../components/PasswordChecker";
 
@@ -43,7 +37,7 @@ const RestaurantSignup = () => {
 
   // 🔹 Save restaurant info to Supabase
   const saveRestaurantData = async (
-    firebaseUid,
+    userId,
     ownerName,
     restaurantName,
     contactEmail
@@ -53,7 +47,7 @@ const RestaurantSignup = () => {
         .from("restaurants")
         .insert([
           {
-            firebase_uid: firebaseUid,
+            owner_uid: userId, // Changed from firebase_uid to owner_uid to match schema
             owner_name: ownerName,
             name: restaurantName,
             contact_email: contactEmail,
@@ -67,7 +61,7 @@ const RestaurantSignup = () => {
       return data;
     } catch (err) {
       console.error("❌ Error saving to Supabase:", err);
-      throw new Error("Failed to save restaurant details");
+      throw new Error("Failed to save restaurant details: " + err.message);
     }
   };
 
@@ -82,16 +76,33 @@ const RestaurantSignup = () => {
     setLoading(true);
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
+      // 1. Sign up with Supabase
+      const { data, error: signupError } = await supabase.auth.signUp({
         email,
-        password
-      );
-      const user = userCredential.user;
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: "restaurant", // Removing this as it might be causing the 400 error if restricted
+          },
+        },
+      });
 
-      await saveRestaurantData(user.uid, fullName, restaurantName, email);
+      if (signupError) throw signupError;
 
-      navigate("/restaurantsetup");
+      if (data?.user && data?.session) {
+        // 2. User is logged in, save data and navigate
+        await saveRestaurantData(data.user.id, fullName, restaurantName, email);
+        navigate("/restaurantsetup");
+      } else if (data?.user && !data?.session) {
+        // 3. User created but email confirmation required
+        setError(
+          "Account created! Please check your email to confirm your account before logging in."
+        );
+        // Optional: You could navigate to a specific "check email" page
+      } else {
+        setError("Something went wrong during signup.");
+      }
     } catch (err) {
       setError(err?.message || "Failed to create account");
     } finally {
@@ -110,21 +121,29 @@ const RestaurantSignup = () => {
     setLoading(true);
 
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+      const redirectUrl = `${window.location.origin}${window.location.pathname}#/auth/callback`;
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            // We can't strictly force metadata here for existing users,
+            // but for new users, we might want to handle this in the callback or via a trigger.
+            // However, we can pass custom params to handle in the callback if needed.
+            // For now, we rely on the callback to check/create the restaurant entry.
+          },
+        },
+      });
 
-      await saveRestaurantData(
-        user.uid,
-        user.displayName || "Restaurant Owner",
-        restaurantName,
-        user.email
-      );
+      if (oauthError) throw oauthError;
 
-      navigate("/restaurantsetup");
+      // Note: We can't immediately save restaurant data here because OAuth redirects.
+      // The saving must happen in AuthCallback or via a database trigger/function.
+      // For this specific flow, we might need to store the intended restaurant name in localStorage
+      // to retrieve it after the callback.
+      localStorage.setItem("pending_restaurant_name", restaurantName);
     } catch (err) {
       setError(err?.message || "Google sign-in failed");
-    } finally {
       setLoading(false);
     }
   };

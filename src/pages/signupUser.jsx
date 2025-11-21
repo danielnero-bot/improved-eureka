@@ -3,12 +3,7 @@ import { MdLightMode, MdDarkMode } from "react-icons/md";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { FaRegEye, FaRegEyeSlash, FaGoogle } from "react-icons/fa";
 import PasswordChecker from "../components/PasswordChecker";
-import { auth } from "../firebase/config";
-import {
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
+import { supabase } from "../supabase";
 import { Link, useNavigate } from "react-router-dom";
 
 const CreateUserAccount = () => {
@@ -41,25 +36,49 @@ const CreateUserAccount = () => {
     setError("");
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      navigate("/dashboard");
+      const { data, error: signupError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: "user",
+          },
+        },
+      });
+
+      if (signupError) throw signupError;
+
+      if (data?.user && !data?.session) {
+        setError(
+          "Account created! Please check your email to confirm your account before logging in."
+        );
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error) {
-      setError(error.message);
+      setError(error.message || "Failed to sign up");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
     setError("");
     setLoading(true);
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      navigate("/dashboard");
+      const redirectUrl = `${window.location.origin}${window.location.pathname}#/auth/callback`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUrl,
+        },
+      });
+      if (error) throw error;
     } catch (error) {
-      setError(error.message);
+      setError(error.message || "Google sign-in failed");
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

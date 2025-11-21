@@ -5,18 +5,23 @@ import {
   MdReceiptLong,
   MdPayments,
 } from "react-icons/md";
-import { supabase } from "../supabase"; // ✅ Make sure this is correctly initialized
+import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 
 const RestaurantDetails = () => {
   const [restaurant, setRestaurant] = useState(null);
+  const [stats, setStats] = useState({
+    menuCount: 0,
+    orderCount: 0,
+    totalRevenue: 0,
+  });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchRestaurant = async () => {
+    const fetchData = async () => {
       try {
-        // ✅ Get the logged-in user
+        // 1. Get current user
         const {
           data: { user },
           error: userError,
@@ -24,49 +29,66 @@ const RestaurantDetails = () => {
         if (userError) throw userError;
 
         if (!user) {
-          console.error("❌ No user is signed in");
-          setLoading(false);
+          navigate("/login");
           return;
         }
 
-        // ✅ Fetch the restaurant belonging to this user
-        const { data, error } = await supabase
+        // 2. Fetch restaurant details
+        const { data: restaurantData, error: restaurantError } = await supabase
           .from("restaurants")
-          .select(
-            `
-            id,
-            name,
-            category,
-            address,
-            hours,
-            phone,
-            email,
-            description,
-            logo_url,
-            gallery_urls,
-            menu_count,
-            order_count,
-            total_revenue
-          `
-          )
-          .eq("user_id", user.id)
-          .single(); // assuming one restaurant per user
+          .select("*")
+          .eq("owner_uid", user.id)
+          .single();
 
-        if (error) throw error;
-        setRestaurant(data);
+        if (restaurantError) {
+          if (restaurantError.code === "PGRST116") {
+            // No restaurant found
+            setRestaurant(null);
+          } else {
+            throw restaurantError;
+          }
+        } else {
+          setRestaurant(restaurantData);
+
+          // 3. Fetch Stats (Parallel)
+          const [menuRes, ordersRes] = await Promise.all([
+            // Menu Items Count
+            supabase
+              .from("menu_items")
+              .select("id", { count: "exact", head: true })
+              .eq("restaurant_id", restaurantData.id),
+
+            // Orders (Count & Revenue)
+            supabase
+              .from("orders")
+              .select("total_amount")
+              .eq("restaurant_id", restaurantData.id)
+              .eq("status", "completed"),
+          ]);
+
+          const menuCount = menuRes.count || 0;
+          const orders = ordersRes.data || [];
+          const orderCount = orders.length;
+          const totalRevenue = orders.reduce(
+            (sum, order) => sum + (parseFloat(order.total_amount) || 0),
+            0
+          );
+
+          setStats({ menuCount, orderCount, totalRevenue });
+        }
       } catch (err) {
-        console.error("❌ Error loading restaurant data:", err.message);
+        console.error("❌ Error loading data:", err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRestaurant();
-  }, []);
+    fetchData();
+  }, [navigate]);
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-lg text-gray-500">
+      <div className="flex h-screen items-center justify-center text-lg text-gray-500 font-display">
         Loading restaurant details...
       </div>
     );
@@ -74,10 +96,10 @@ const RestaurantDetails = () => {
 
   if (!restaurant) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center text-center text-gray-500">
+      <div className="flex h-screen flex-col items-center justify-center text-center text-gray-500 font-display">
         <p>No restaurant data found for this account.</p>
         <button
-          onClick={() => navigate("/restaurant-setup")}
+          onClick={() => navigate("/restaurantsetup")}
           className="mt-4 px-5 py-2 rounded-lg bg-primary text-black font-semibold hover:scale-105 transition"
         >
           Create Restaurant
@@ -105,12 +127,12 @@ const RestaurantDetails = () => {
                 <div>
                   <h1 className="text-3xl font-bold">{restaurant.name}</h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    #{restaurant.id}
+                    #{restaurant.id.slice(0, 8)}...
                   </p>
                 </div>
               </div>
               <button
-                onClick={() => navigate("/restaurant-setup")}
+                onClick={() => navigate("/restaurantsetup")}
                 className="flex items-center gap-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 <MdEdit size={18} />
@@ -124,17 +146,20 @@ const RestaurantDetails = () => {
                 {
                   icon: <MdRestaurantMenu size={24} />,
                   label: "Total Menu Items",
-                  value: restaurant.menu_count || "0",
+                  value: stats.menuCount,
                 },
                 {
                   icon: <MdReceiptLong size={24} />,
                   label: "Total Orders",
-                  value: restaurant.order_count || "0",
+                  value: stats.orderCount,
                 },
                 {
                   icon: <MdPayments size={24} />,
                   label: "Total Revenue",
-                  value: `₦${restaurant.total_revenue || "0"}`,
+                  value: new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  }).format(stats.totalRevenue),
                 },
               ].map((stat) => (
                 <div
@@ -167,11 +192,20 @@ const RestaurantDetails = () => {
                 <div className="grid grid-cols-1 gap-y-4 gap-x-6 sm:grid-cols-2">
                   {[
                     { label: "Name", value: restaurant.name },
-                    { label: "Category", value: restaurant.category },
                     { label: "Address", value: restaurant.address },
-                    { label: "Hours", value: restaurant.hours || "N/A" },
-                    { label: "Phone", value: restaurant.phone || "N/A" },
-                    { label: "Email", value: restaurant.email || "N/A" },
+                    {
+                      label: "Opening Hours",
+                      value: restaurant.opening_hours || "N/A",
+                    },
+                    {
+                      label: "Closing Hours",
+                      value: restaurant.closing_hours || "N/A",
+                    },
+                    { label: "Phone", value: restaurant.phone_number || "N/A" },
+                    {
+                      label: "Email",
+                      value: restaurant.contact_email || "N/A",
+                    },
                   ].map((info) => (
                     <div key={info.label}>
                       <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -197,32 +231,10 @@ const RestaurantDetails = () => {
               </div>
             </section>
 
-            {/* Image Gallery */}
-            <section>
-              <h2 className="mb-4 text-lg font-semibold">Image Gallery</h2>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                {(restaurant.gallery_urls?.length
-                  ? restaurant.gallery_urls
-                  : [
-                      "https://via.placeholder.com/300x200?text=Image+1",
-                      "https://via.placeholder.com/300x200?text=Image+2",
-                      "https://via.placeholder.com/300x200?text=Image+3",
-                    ]
-                ).map((src, idx) => (
-                  <img
-                    key={idx}
-                    alt={`Restaurant image ${idx + 1}`}
-                    className="aspect-square w-full rounded-lg object-cover"
-                    src={src}
-                  />
-                ))}
-              </div>
-            </section>
-
             {/* Buttons */}
             <section className="flex flex-wrap items-center justify-end gap-4">
               <button
-                onClick={() => navigate("/restaurant-setup")}
+                onClick={() => navigate("/restaurantsetup")}
                 className="flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-white dark:bg-gray-800 text-[#111714] dark:text-gray-200 border border-gray-200 dark:border-gray-700 text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition"
               >
                 <MdEdit size={18} />

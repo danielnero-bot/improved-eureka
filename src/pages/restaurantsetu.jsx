@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../firebase/config";
+
 import { supabase } from "../supabase";
 import { FaRegImage } from "react-icons/fa6";
 
@@ -23,17 +23,34 @@ const RestaurantSetup = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // ✅ Get Firebase UID once user is logged in
+  // ✅ Get Supabase User once logged in
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setUid(user.uid);
-        setContactEmail(user.email); // auto-fill contact email
+    const checkUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUid(session.user.id);
+        setContactEmail(session.user.email);
+      } else {
+        navigate("/login");
+      }
+    };
+
+    checkUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUid(session.user.id);
+        setContactEmail(session.user.email);
       } else {
         navigate("/login");
       }
     });
-    return unsubscribe;
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   // 🧾 Save restaurant data to Supabase

@@ -101,6 +101,47 @@ export default function AuthCallback() {
   };
 
   const redirectUser = async (user) => {
+    // Check if we have a pending restaurant creation (from Google Signup)
+    const pendingRestaurantName = localStorage.getItem(
+      "pending_restaurant_name"
+    );
+
+    if (pendingRestaurantName) {
+      console.log("Found pending restaurant creation:", pendingRestaurantName);
+      try {
+        // Create the restaurant
+        const { error } = await supabase.from("restaurants").insert([
+          {
+            owner_uid: user.id,
+            owner_name: user.user_metadata?.full_name || user.email,
+            name: pendingRestaurantName,
+            contact_email: user.email,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ]);
+
+        if (error) {
+          // Ignore duplicate key error if they already created it
+          if (error.code !== "23505") {
+            console.error("Error creating restaurant:", error);
+          }
+        }
+
+        // Update user metadata to include role (if not already there)
+        await supabase.auth.updateUser({
+          data: { role: "restaurant" },
+        });
+      } catch (err) {
+        console.error("Failed to process pending restaurant:", err);
+      } finally {
+        localStorage.removeItem("pending_restaurant_name");
+      }
+
+      navigate("/restaurantsetup");
+      return;
+    }
+
     const role = await determineUserRole(user);
     console.log("Redirecting as:", role);
     navigate(role === "restaurant" ? "/restaurantDashboard" : "/dashboard");
