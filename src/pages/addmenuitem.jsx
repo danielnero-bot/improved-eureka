@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAuth } from "firebase/auth";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { MdLightMode, MdDarkMode } from "react-icons/md";
 import { supabase } from "../supabase";
 import { FaImage } from "react-icons/fa6";
-const {
-  data: { user },
-} = await supabase.auth.getUser();
-console.log(user);
 
 const AddMenuItem = () => {
-  
   const { id } = useParams();
   const isEditing = !!id;
 
@@ -27,38 +21,46 @@ const AddMenuItem = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [existingImage, setExistingImage] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [fetchLoading, setFetchLoading] = useState(isEditing);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [restaurantData, setRestaurantData] = useState(null);
+  const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
-  const auth = getAuth();
 
   // ✅ Fetch restaurant data and menu item if editing
   useEffect(() => {
     const fetchData = async () => {
-      const user = auth.currentUser;
-
-      if (!user) {
-        alert("Please log in to continue.");
-        navigate("/login");
-        return;
-      }
-
       try {
-        // Fetch restaurant data
+        // 1. Get current Supabase user
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          alert("Please log in to continue.");
+          navigate("/login");
+          return;
+        }
+
+        setUserId(user.id);
+
+        // 2. Fetch restaurant data
         const { data: restaurant, error: restaurantError } = await supabase
           .from("restaurants")
           .select("*")
-          .eq("firebase_uid", user.uid)
+          .eq("owner_uid", user.id)
           .single();
 
         if (restaurantError) {
           console.error("❌ Error fetching restaurant:", restaurantError);
+          alert("Restaurant not found. Please complete setup.");
+          navigate("/restaurantsetup");
           return;
         }
 
         setRestaurantData(restaurant);
 
-        // Fetch menu item if editing
+        // 3. Fetch menu item if editing
         if (isEditing) {
           const { data: menuItem, error } = await supabase
             .from("menu_items")
@@ -98,7 +100,7 @@ const AddMenuItem = () => {
     };
 
     fetchData();
-  }, [id, isEditing, auth, navigate]);
+  }, [id, isEditing, navigate]);
 
   // ✅ Handle input change
   const handleInputChange = (e) => {
@@ -147,14 +149,15 @@ const AddMenuItem = () => {
 
   // ✅ Upload image to Supabase Storage and get URL
   const uploadImageToStorage = async (file) => {
-    if (!file) return null;
+    if (!file || !userId) return null;
 
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random()
         .toString(36)
         .substring(2)}_${Date.now()}.${fileExt}`;
-      const filePath = `menu-items/${fileName}`;
+      // Use userId for folder structure
+      const filePath = `menu-items/${userId}/${fileName}`;
 
       // Upload the file to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage

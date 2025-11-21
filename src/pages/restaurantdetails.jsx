@@ -127,7 +127,7 @@ const RestaurantDetails = () => {
                 <div>
                   <h1 className="text-3xl font-bold">{restaurant.name}</h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    #{restaurant.id.slice(0, 8)}...
+                    #{restaurant.id}
                   </p>
                 </div>
               </div>
