@@ -44,17 +44,19 @@ const RestaurantDashboard = () => {
         const { data, error } = await supabase
           .from("restaurants")
           .select("*")
-          .eq("owner_uid", user.id) // Changed from firebase_uid to owner_uid
-          .single();
+          .eq("owner_uid", user.id)
+          .maybeSingle(); // Use maybeSingle to avoid error if no row exists
 
         if (error) {
           console.error("❌ Error fetching restaurant:", error);
+        } else if (!data) {
+          // No restaurant found, redirect to setup
+          console.log("⚠️ No restaurant found, redirecting to setup...");
+          navigate("/restaurantsetup");
         } else {
           setRestaurantData(data);
           // Fetch dashboard stats if restaurant data is available
-          if (data) {
-            await fetchDashboardStats(data.id);
-          }
+          await fetchDashboardStats(data.id);
         }
       } catch (error) {
         console.error("❌ Error in fetchRestaurantData:", error);
