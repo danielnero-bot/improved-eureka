@@ -3,7 +3,6 @@ import { IoIosAddCircle, IoIosAdd } from "react-icons/io";
 import { MdMenu, MdDarkMode, MdLightMode } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
-import { getAuth, signOut } from "firebase/auth";
 import Sidebar from "../components/Sidebar";
 
 const MenuManagement = () => {
@@ -15,28 +14,31 @@ const MenuManagement = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(null);
   const navigate = useNavigate();
-  const auth = getAuth();
 
   useEffect(() => {
     fetchData();
-  }, [auth]);
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
-    const user = auth.currentUser;
-
-    if (!user) {
-      console.error("❌ No user logged in");
-      setLoading(false);
-      return;
-    }
-
     try {
-      // 1️⃣ Fetch restaurant by Firebase UID
+      // 1️⃣ Get current Supabase user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        console.error("❌ No user logged in");
+        navigate("/login");
+        return;
+      }
+
+      // 2️⃣ Fetch restaurant by owner_uid
       const { data: restaurant, error: restaurantError } = await supabase
         .from("restaurants")
         .select("*")
-        .eq("firebase_uid", user.uid)
+        .eq("owner_uid", user.id)
         .single();
 
       if (restaurantError) {
@@ -47,7 +49,7 @@ const MenuManagement = () => {
 
       setRestaurantData(restaurant);
 
-      // 2️⃣ Fetch menu items for the restaurant
+      // 3️⃣ Fetch menu items for the restaurant
       const { data: items, error: menuError } = await supabase
         .from("menu_items")
         .select("*")
@@ -72,7 +74,7 @@ const MenuManagement = () => {
   const toggleTheme = () => setDarkMode((prev) => !prev);
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await supabase.auth.signOut();
     navigate("/login");
   };
 
