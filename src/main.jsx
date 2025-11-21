@@ -11,11 +11,12 @@ import CreateUserAccount from "./pages/signupUser";
 import RestaurantSignup from "./pages/signupRestaurant";
 import Login from "./pages/login";
 import License from "./pages/LICENSE";
+import UserDashboard from "./pages/UserDashboard";
 import RestaurantDashboard from "./pages/restaurantdashboard";
 import RestaurantSetup from "./pages/restaurantsetu";
 import MenuManagement from "./pages/menupage";
 import AddMenuItem from "./pages/addmenuitem";
-import RestaurantDetails from "./pages/restaurantdetails"
+import RestaurantDetails from "./pages/restaurantdetails";
 import AuthCallback from "./components/AuthCallBack";
 import "./index.css";
 
@@ -38,6 +39,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/signupRestaurant" element={<RestaurantSignup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/license" element={<License />} />
+        <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/restaurantDashboard" element={<RestaurantDashboard />} />
         <Route path="/restaurantsetup" element={<RestaurantSetup />} />
         <Route path="/menupage" element={<MenuManagement />} />
