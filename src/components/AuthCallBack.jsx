@@ -92,7 +92,7 @@ export default function AuthCallback() {
         .from("restaurants")
         .select("id")
         .eq("owner_uid", user.id)
-        .single();
+        .maybeSingle();
       if (restaurant) return "restaurant";
     } catch (err) {
       console.error("Role check error:", err);
