@@ -106,34 +106,31 @@ const RestaurantSetup = () => {
         .eq("owner_uid", uid)
         .maybeSingle();
 
-      let restaurantId = existingRestaurant?.id;
+      const restaurantId = existingRestaurant?.id;
 
-      // Generate a new UUID if creating a new restaurant
-      if (!restaurantId) {
-        restaurantId = crypto.randomUUID();
+      // 🆕 Prepare payload
+      const payload = {
+        owner_uid: uid,
+        name: restaurantName,
+        address,
+        description,
+        opening_hours: openingHours,
+        closing_hours: closingHours,
+        phone_number: phoneNumber,
+        contact_email: contactEmail,
+        logo_url: logoURL,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Only include ID if updating an existing record
+      if (restaurantId) {
+        payload.id = restaurantId;
       }
 
       // 🆕 Insert or update restaurant record
       const { data, error: upsertError } = await supabase
         .from("restaurants")
-        .upsert(
-          [
-            {
-              id: restaurantId, // Ensure ID is never null
-              owner_uid: uid,
-              name: restaurantName,
-              address,
-              description,
-              opening_hours: openingHours,
-              closing_hours: closingHours,
-              phone_number: phoneNumber,
-              contact_email: contactEmail,
-              logo_url: logoURL,
-              updated_at: new Date().toISOString(),
-            },
-          ],
-          { onConflict: "owner_uid" } // prevent duplicates
-        )
+        .upsert([payload], { onConflict: "owner_uid" })
         .select()
         .single();
 
