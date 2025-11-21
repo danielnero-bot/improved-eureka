@@ -101,20 +101,25 @@ const RestaurantSetup = () => {
 
       // 🗄 Check if restaurant already exists for this user
       const { data: existingRestaurant } = await supabase
-        .from("restaurantcheck")
+        .from("restaurants")
         .select("id")
         .eq("owner_uid", uid)
         .maybeSingle();
 
       let restaurantId = existingRestaurant?.id;
 
+      // Generate a new UUID if creating a new restaurant
+      if (!restaurantId) {
+        restaurantId = crypto.randomUUID();
+      }
+
       // 🆕 Insert or update restaurant record
       const { data, error: upsertError } = await supabase
-        .from("restaurantcheck")
+        .from("restaurants")
         .upsert(
           [
             {
-              id: restaurantId, // will update if exists
+              id: restaurantId, // Ensure ID is never null
               owner_uid: uid,
               name: restaurantName,
               address,
