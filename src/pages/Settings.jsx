@@ -4,6 +4,7 @@ import { supabase } from "../supabase";
 import { useTheme } from "../context/ThemeContext";
 import Sidebar from "../components/Sidebar";
 import { MdMenu, MdLightMode, MdDarkMode } from "react-icons/md";
+import { motion } from "framer-motion";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -34,6 +35,22 @@ export default function Settings() {
 
   // Messages
   const [message, setMessage] = useState({ type: "", text: "" });
+
+  // Animation Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
 
   useEffect(() => {
     getProfile();
@@ -161,7 +178,10 @@ export default function Settings() {
         }`}
       >
         {/* Header */}
-        <header
+        <motion.header
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
           className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
             darkMode
               ? "bg-card-dark border-border-dark"
@@ -190,10 +210,16 @@ export default function Settings() {
               )}
             </button>
           </div>
-        </header>
+        </motion.header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
-          <div className="w-full max-w-4xl mx-auto">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+            className="w-full max-w-4xl mx-auto"
+          >
             {message.text && (
               <div
                 className={`mb-6 p-4 rounded-lg ${
@@ -208,7 +234,10 @@ export default function Settings() {
 
             <div className="flex flex-col gap-8">
               {/* ================= PROFILE SECTION ================= */}
-              <section className="bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm transition-colors duration-300">
+              <motion.section
+                variants={itemVariants}
+                className="bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm transition-colors duration-300"
+              >
                 <div className="p-6 border-b border-border-light dark:border-border-dark">
                   <h2 className="text-xl font-semibold">Profile</h2>
                   <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1">
@@ -323,10 +352,13 @@ export default function Settings() {
                     </div>
                   </div>
                 </form>
-              </section>
+              </motion.section>
 
               {/* ================= ACCOUNT SECTION ================= */}
-              <section className="bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm transition-colors duration-300">
+              <motion.section
+                variants={itemVariants}
+                className="bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm transition-colors duration-300"
+              >
                 <div className="p-6 border-b border-border-light dark:border-border-dark">
                   <h2 className="text-xl font-semibold">Account</h2>
                   <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1">
@@ -410,10 +442,13 @@ export default function Settings() {
                     </button>
                   </div>
                 </div>
-              </section>
+              </motion.section>
 
               {/* ================= PREFERENCES SECTION ================= */}
-              <section className="bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm transition-colors duration-300">
+              <motion.section
+                variants={itemVariants}
+                className="bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm transition-colors duration-300"
+              >
                 <div className="p-6 border-b border-border-light dark:border-border-dark">
                   <h2 className="text-xl font-semibold">Preferences</h2>
                   <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1">
@@ -527,9 +562,9 @@ export default function Settings() {
                     </div>
                   </div>
                 </div>
-              </section>
+              </motion.section>
             </div>
-          </div>
+          </motion.div>
         </main>
       </div>
     </div>

@@ -12,6 +12,7 @@ import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useTheme } from "../context/ThemeContext";
+import { motion } from "framer-motion";
 
 const RestaurantDetails = () => {
   const [restaurant, setRestaurant] = useState(null);
@@ -243,6 +244,22 @@ const RestaurantDetails = () => {
     );
   };
 
+  // Animation Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center text-lg text-gray-500 font-display">
@@ -293,9 +310,18 @@ const RestaurantDetails = () => {
         }`}
       >
         <main className="flex-1 p-4 sm:p-6 md:p-8">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+            className="mx-auto flex w-full max-w-6xl flex-col gap-8"
+          >
             {/* Header & Logo */}
-            <header className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between bg-white dark:bg-background-dark p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            <motion.header
+              variants={itemVariants}
+              className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between bg-white dark:bg-background-dark p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
+            >
               <div className="flex items-center gap-6 w-full">
                 <button
                   onClick={toggleSidebar}
@@ -380,7 +406,7 @@ const RestaurantDetails = () => {
                   </p>
                 </div>
               </div>
-            </header>
+            </motion.header>
 
             {/* Stats Section */}
             <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -404,8 +430,9 @@ const RestaurantDetails = () => {
                   }).format(stats.totalRevenue),
                 },
               ].map((stat) => (
-                <div
+                <motion.div
                   key={stat.label}
+                  variants={itemVariants}
                   className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark p-5 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center gap-4">
@@ -421,14 +448,17 @@ const RestaurantDetails = () => {
                       </p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </section>
 
             {/* Restaurant Info Grid */}
             <section className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               {/* General Info */}
-              <div className="lg:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark p-6 shadow-sm">
+              <motion.div
+                variants={itemVariants}
+                className="lg:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark p-6 shadow-sm"
+              >
                 <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold border-b border-gray-200 dark:border-gray-700 pb-3">
                   Restaurant Details
                   <span className="text-xs font-normal text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
@@ -466,10 +496,13 @@ const RestaurantDetails = () => {
                     "time"
                   )}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Description */}
-              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark p-6 shadow-sm h-fit">
+              <motion.div
+                variants={itemVariants}
+                className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark p-6 shadow-sm h-fit"
+              >
                 <h2 className="mb-6 text-lg font-semibold border-b border-gray-200 dark:border-gray-700 pb-3">
                   About
                 </h2>
@@ -480,11 +513,14 @@ const RestaurantDetails = () => {
                   "text",
                   true
                 )}
-              </div>
+              </motion.div>
             </section>
 
             {/* Action Buttons */}
-            <section className="flex justify-end">
+            <motion.section
+              variants={itemVariants}
+              className="flex justify-end"
+            >
               <button
                 onClick={() => navigate("/add-menu-item")}
                 className="flex items-center justify-center gap-2 h-12 px-6 rounded-lg bg-primary text-white text-base font-bold hover:bg-primary/90 hover:scale-105 transition-all shadow-md"
@@ -492,8 +528,8 @@ const RestaurantDetails = () => {
                 <MdRestaurantMenu size={20} />
                 Add New Menu Item
               </button>
-            </section>
-          </div>
+            </motion.section>
+          </motion.div>
         </main>
       </div>
     </div>
