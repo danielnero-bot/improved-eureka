@@ -2,11 +2,19 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import Main from "./components/Main";
+import { useTheme } from "./context/ThemeContext";
 
 const App = () => {
+  const { darkMode } = useTheme();
+
   return (
-    <div className="bg-background-light dark:bg-background-dark font-display text-[#111714] dark:text-gray-200 min-h-screen flex flex-col ">
+    <div
+      className={`font-display min-h-screen flex flex-col transition-colors duration-300 ${
+        darkMode
+          ? "bg-background-dark text-text-dark"
+          : "bg-background-light text-text-light"
+      }`}
+    >
       <Navbar />
       <Outlet />
       <Footer />

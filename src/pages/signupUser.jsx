@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { MdLightMode, MdDarkMode } from "react-icons/md";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { FaRegEye, FaRegEyeSlash, FaGoogle } from "react-icons/fa";
 import PasswordChecker from "../components/PasswordChecker";
 import { supabase } from "../supabase";
 import { Link, useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 
 const CreateUserAccount = () => {
   const navigate = useNavigate();
+  const { darkMode, toggleTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
@@ -15,21 +17,6 @@ const CreateUserAccount = () => {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-
-  // Apply the theme to <html>
-  useEffect(() => {
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -100,11 +87,7 @@ const CreateUserAccount = () => {
           onClick={toggleTheme}
           className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white dark:bg-background-dark/50 text-gray-700 dark:text-gray-300 transition-colors"
         >
-          {theme === "dark" ? (
-            <MdLightMode size={22} />
-          ) : (
-            <MdDarkMode size={22} />
-          )}
+          {darkMode ? <MdLightMode size={22} /> : <MdDarkMode size={22} />}
         </button>
       </div>
 
@@ -112,7 +95,7 @@ const CreateUserAccount = () => {
       <main className="flex w-full max-w-md flex-col items-center">
         <div className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-background-dark/50 p-6 sm:p-8 shadow-sm">
           <div className="flex flex-col items-center text-center mb-8">
-            <p className="text-[#111714] dark:text-white text-3xl sm:text-4xl font-black leading-tight tracking-[-0.033em]">
+            <p className="text-text-light dark:text-white text-3xl sm:text-4xl font-black leading-tight tracking-[-0.033em]">
               Create Your QuickPlate Account
             </p>
           </div>
@@ -126,11 +109,11 @@ const CreateUserAccount = () => {
 
             {/* Full Name */}
             <label className="flex flex-col">
-              <p className="text-[#111714] dark:text-gray-300 text-base font-medium pb-2">
+              <p className="text-text-light dark:text-gray-300 text-base font-medium pb-2">
                 Full Name
               </p>
               <input
-                className="form-input w-full rounded-lg border border-[#dce5df] dark:border-gray-700 bg-white dark:bg-gray-800 text-[#111714] dark:text-white placeholder:text-[#648772] dark:placeholder:text-gray-500 focus:outline-0 focus:ring-2 focus:ring-primary/50 h-14 p-[15px]"
+                className="form-input w-full rounded-lg border border-[#dce5df] dark:border-gray-700 bg-white dark:bg-gray-800 text-text-light dark:text-white placeholder:text-[#648772] dark:placeholder:text-gray-500 focus:outline-0 focus:ring-2 focus:ring-primary/50 h-14 p-[15px]"
                 placeholder="Enter your full name"
                 type="text"
                 value={fullName}
@@ -141,11 +124,11 @@ const CreateUserAccount = () => {
 
             {/* Email */}
             <label className="flex flex-col">
-              <p className="text-[#111714] dark:text-gray-300 text-base font-medium pb-2">
+              <p className="text-text-light dark:text-gray-300 text-base font-medium pb-2">
                 Email Address
               </p>
               <input
-                className="form-input w-full rounded-lg border border-[#dce5df] dark:border-gray-700 bg-white dark:bg-gray-800 text-[#111714] dark:text-white placeholder:text-[#648772] dark:placeholder:text-gray-500 focus:outline-0 focus:ring-2 focus:ring-primary/50 h-14 p-[15px]"
+                className="form-input w-full rounded-lg border border-[#dce5df] dark:border-gray-700 bg-white dark:bg-gray-800 text-text-light dark:text-white placeholder:text-[#648772] dark:placeholder:text-gray-500 focus:outline-0 focus:ring-2 focus:ring-primary/50 h-14 p-[15px]"
                 placeholder="Enter your email address"
                 type="email"
                 value={email}
@@ -156,12 +139,12 @@ const CreateUserAccount = () => {
 
             {/* Password */}
             <label className="flex flex-col">
-              <p className="text-[#111714] dark:text-gray-300 text-base font-medium pb-2">
+              <p className="text-text-light dark:text-gray-300 text-base font-medium pb-2">
                 Password
               </p>
               <div className="relative flex w-full">
                 <input
-                  className="form-input w-full rounded-lg border border-[#dce5df] dark:border-gray-700 bg-white dark:bg-gray-800 text-[#111714] dark:text-white placeholder:text-[#648772] dark:placeholder:text-gray-500 focus:outline-0 focus:ring-2 focus:ring-primary/50 h-14 p-[15px] pr-12"
+                  className="form-input w-full rounded-lg border border-[#dce5df] dark:border-gray-700 bg-white dark:bg-gray-800 text-text-light dark:text-white placeholder:text-[#648772] dark:placeholder:text-gray-500 focus:outline-0 focus:ring-2 focus:ring-primary/50 h-14 p-[15px] pr-12"
                   placeholder="Enter your password"
                   type={showPassword ? "text" : "password"}
                   value={password}
@@ -195,7 +178,7 @@ const CreateUserAccount = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex items-center justify-center h-12 rounded-lg bg-primary text-[#111714] hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                className="flex items-center justify-center h-12 rounded-lg bg-primary text-text-light hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed font-bold"
               >
                 {loading ? "Signing up..." : "Sign Up as User"}
               </button>

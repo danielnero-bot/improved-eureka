@@ -11,9 +11,10 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import Sidebar from "../components/Sidebar";
+import { useTheme } from "../context/ThemeContext";
 
 const RestaurantDashboard = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [restaurantData, setRestaurantData] = useState(null);
   const [dashboardStats, setDashboardStats] = useState({
@@ -26,7 +27,6 @@ const RestaurantDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const toggleTheme = () => setDarkMode((prev) => !prev);
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
   // Format currency function
@@ -175,7 +175,6 @@ const RestaurantDashboard = () => {
     >
       {/* Reusable Sidebar Component */}
       <Sidebar
-        darkMode={darkMode}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         onLogout={handleLogout}

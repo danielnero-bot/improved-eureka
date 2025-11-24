@@ -4,9 +4,10 @@ import { MdMenu, MdDarkMode, MdLightMode } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import Sidebar from "../components/Sidebar";
+import { useTheme } from "../context/ThemeContext";
 
 const MenuManagement = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleTheme } = useTheme();
   const [restaurantData, setRestaurantData] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [search, setSearch] = useState("");
@@ -71,7 +72,6 @@ const MenuManagement = () => {
   const handleAddMenuItem = () => navigate("/addmenuitem");
   const handleEditMenuItem = (itemId) => navigate(`/addmenuitem/${itemId}`);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-  const toggleTheme = () => setDarkMode((prev) => !prev);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -170,7 +170,6 @@ const MenuManagement = () => {
     >
       {/* Reusable Sidebar Component */}
       <Sidebar
-        darkMode={darkMode}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         onLogout={handleLogout}

@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 
 import { supabase } from "../supabase";
 import { FaRegImage } from "react-icons/fa6";
+import { useTheme } from "../context/ThemeContext";
 
 const RestaurantSetup = () => {
   const navigate = useNavigate();
+  const { darkMode } = useTheme();
   const [uid, setUid] = useState(null);
 
   // 🔹 Restaurant details
@@ -152,11 +154,21 @@ const RestaurantSetup = () => {
   };
 
   return (
-    <div className="bg-background-light dark:bg-background-dark font-display text-black dark:text-white min-h-screen flex items-center justify-center p-6">
+    <div
+      className={`font-display min-h-screen flex items-center justify-center p-6 transition-colors duration-300 ${
+        darkMode
+          ? "bg-background-dark text-white"
+          : "bg-background-light text-black"
+      }`}
+    >
       <div className="w-full max-w-2xl space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold">Set Up Your Restaurant</h1>
-          <p className="mt-2 text-gray-500">
+          <p
+            className={`mt-2 ${
+              darkMode ? "text-text-muted-dark" : "text-text-muted-light"
+            }`}
+          >
             Add your restaurant details to start managing your menu.
           </p>
         </div>
@@ -180,7 +192,11 @@ const RestaurantSetup = () => {
               type="text"
               value={restaurantName}
               onChange={(e) => setRestaurantName(e.target.value)}
-              className="w-full border p-3 rounded"
+              className={`w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                darkMode
+                  ? "bg-card-dark border-border-dark text-white"
+                  : "bg-card-light border-border-light text-black"
+              }`}
               required
             />
           </div>
@@ -194,7 +210,11 @@ const RestaurantSetup = () => {
               type="file"
               accept="image/*"
               onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-              className="w-full border p-3 rounded"
+              className={`w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                darkMode
+                  ? "bg-card-dark border-border-dark text-white"
+                  : "bg-card-light border-border-light text-black"
+              }`}
             />
           </div>
 
@@ -205,7 +225,11 @@ const RestaurantSetup = () => {
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="w-full border p-3 rounded"
+              className={`w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                darkMode
+                  ? "bg-card-dark border-border-dark text-white"
+                  : "bg-card-light border-border-light text-black"
+              }`}
               required
             />
           </div>
@@ -217,7 +241,11 @@ const RestaurantSetup = () => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows="4"
-              className="w-full border p-3 rounded"
+              className={`w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                darkMode
+                  ? "bg-card-dark border-border-dark text-white"
+                  : "bg-card-light border-border-light text-black"
+              }`}
               required
             />
           </div>
@@ -230,7 +258,11 @@ const RestaurantSetup = () => {
                 type="time"
                 value={openingHours}
                 onChange={(e) => setOpeningHours(e.target.value)}
-                className="w-full border p-3 rounded"
+                className={`w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                  darkMode
+                    ? "bg-card-dark border-border-dark text-white"
+                    : "bg-card-light border-border-light text-black"
+                }`}
               />
             </div>
             <div>
@@ -239,7 +271,11 @@ const RestaurantSetup = () => {
                 type="time"
                 value={closingHours}
                 onChange={(e) => setClosingHours(e.target.value)}
-                className="w-full border p-3 rounded"
+                className={`w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                  darkMode
+                    ? "bg-card-dark border-border-dark text-white"
+                    : "bg-card-light border-border-light text-black"
+                }`}
               />
             </div>
           </div>
@@ -252,7 +288,11 @@ const RestaurantSetup = () => {
                 type="tel"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                className="w-full border p-3 rounded"
+                className={`w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                  darkMode
+                    ? "bg-card-dark border-border-dark text-white"
+                    : "bg-card-light border-border-light text-black"
+                }`}
               />
             </div>
             <div>
@@ -261,7 +301,11 @@ const RestaurantSetup = () => {
                 type="email"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
-                className="w-full border p-3 rounded"
+                className={`w-full border p-3 rounded focus:outline-none focus:ring-2 focus:ring-primary ${
+                  darkMode
+                    ? "bg-card-dark border-border-dark text-white"
+                    : "bg-card-light border-border-light text-black"
+                }`}
               />
             </div>
           </div>
@@ -271,14 +315,18 @@ const RestaurantSetup = () => {
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="border border-gray-300 px-5 py-2 rounded hover:bg-gray-100"
+              className={`border px-5 py-2 rounded transition-colors ${
+                darkMode
+                  ? "border-gray-600 hover:bg-gray-800 text-gray-300"
+                  : "border-gray-300 hover:bg-gray-100 text-gray-700"
+              }`}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+              className="bg-primary text-white px-5 py-2 rounded hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               {loading ? "Saving..." : "Save & Continue"}
             </button>

@@ -4,12 +4,13 @@ import { IoMdArrowRoundBack } from "react-icons/io";
 import { MdLightMode, MdDarkMode } from "react-icons/md";
 import { supabase } from "../supabase";
 import { FaImage } from "react-icons/fa6";
+import { useTheme } from "../context/ThemeContext";
 
 const AddMenuItem = () => {
   const { id } = useParams();
   const isEditing = !!id;
 
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleTheme } = useTheme();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -265,7 +266,6 @@ const AddMenuItem = () => {
     if (window.confirm("Discard changes?")) navigate("/menupage");
   };
   const handleBack = () => navigate("/menupage");
-  const toggleTheme = () => setDarkMode((prev) => !prev);
 
   if (fetchLoading) {
     return (

@@ -7,15 +7,11 @@ import {
   MdSettings,
 } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 
-const Sidebar = ({
-  darkMode,
-  sidebarOpen,
-  setSidebarOpen,
-  onLogout,
-  restaurantData,
-}) => {
+const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
   const location = useLocation();
+  const { darkMode } = useTheme();
 
   const navItems = [
     { icon: <MdDashboard />, label: "Dashboard", path: "/restaurantdashboard" },
