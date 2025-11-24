@@ -20,6 +20,7 @@ import AddMenuItem from "./pages/addmenuitem";
 import RestaurantInfo from "./pages/restaurantdetails";
 import AuthCallback from "./components/AuthCallBack";
 import Settings from "./pages/Settings";
+import Orders from "./pages/Orders";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -53,6 +54,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/restaurant-info" element={<RestaurantInfo />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/orders" element={<Orders />} />
         </Routes>
       </HashRouter>
     </ThemeProvider>

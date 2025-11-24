@@ -5,6 +5,7 @@ import {
   MdRestaurantMenu,
   MdStorefront,
   MdSettings,
+  MdReceiptLong,
 } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
@@ -16,6 +17,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
   const navItems = [
     { icon: <MdDashboard />, label: "Dashboard", path: "/restaurantdashboard" },
     { icon: <MdRestaurantMenu />, label: "Menu", path: "/menupage" },
+    { icon: <MdReceiptLong />, label: "Orders", path: "/orders" },
     {
       icon: <MdStorefront />,
       label: "Restaurant Info",
@@ -80,10 +82,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
                     active
                       ? darkMode
                         ? "bg-white/10 text-white"
-                        : "bg-primary/10 text-primary font-medium"
+                        : "bg-primary/10 text-primary font-bold"
                       : darkMode
                       ? "text-white/70 hover:text-white hover:bg-white/5"
-                      : "text-text-muted-light hover:text-text-light hover:bg-gray-100"
+                      : "text-text-secondary-light hover:text-text-light hover:bg-gray-100"
                   }`}
                   title={label}
                 >
@@ -152,7 +154,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full ${
                   darkMode
                     ? "text-white/70 hover:text-white hover:bg-white/5"
-                    : "text-text-muted-light hover:text-text-light hover:bg-gray-100"
+                    : "text-text-secondary-light hover:text-text-light hover:bg-gray-100"
                 }`}
                 title="Logout"
               >
