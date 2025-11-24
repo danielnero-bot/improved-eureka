@@ -152,8 +152,8 @@ const RestaurantSignup = () => {
     <div
       className={`relative flex min-h-screen w-full flex-col items-center justify-center transition-colors duration-300 ${
         theme === "dark"
-          ? "bg-background-light text-black"
-          : "bg-background-dark text-white"
+          ? "bg-background-dark text-white"
+          : "bg-background-light text-black"
       }`}
     >
       {/* 🌗 Theme Toggle */}
@@ -172,8 +172,8 @@ const RestaurantSignup = () => {
         <div
           className={`p-8 sm:p-10 rounded-xl shadow-lg border transition-colors duration-300 ${
             theme === "dark"
-              ? "bg-background-light text-black"
-              : "bg-background-dark text-white"
+              ? "bg-background-dark text-white"
+              : "bg-background-light text-black"
           }`}
         >
           <h1 className="text-center text-3xl sm:text-4xl font-black mb-6">

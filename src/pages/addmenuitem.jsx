@@ -269,11 +269,7 @@ const AddMenuItem = () => {
 
   if (fetchLoading) {
     return (
-      <div
-        className={`bg-background-light dark:bg-background-dark font-display text-black dark:text-white min-h-screen flex items-center justify-center transition-colors duration-300 ${
-          darkMode ? "bg-background-light" : "bg-background-dark"
-        }`}
-      >
+      <div className="bg-background-light dark:bg-background-dark font-display text-black dark:text-white min-h-screen flex items-center justify-center transition-colors duration-300">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-lg">Loading menu item...</p>
@@ -283,11 +279,7 @@ const AddMenuItem = () => {
   }
 
   return (
-    <div
-      className={`bg-background-light dark:bg-background-dark font-display text-black dark:text-white min-h-screen flex flex-col transition-colors duration-300 ${
-        darkMode ? "bg-background-light" : "bg-background-dark"
-      }`}
-    >
+    <div className="bg-background-light dark:bg-background-dark font-display text-black dark:text-white min-h-screen flex flex-col transition-colors duration-300">
       {/* Header */}
       <header
         className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${

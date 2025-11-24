@@ -269,8 +269,8 @@ const RestaurantDetails = () => {
     <div
       className={`relative flex min-h-screen w-full flex-col font-display transition-colors duration-300 ${
         darkMode
-          ? "bg-background-light text-text-light"
-          : "bg-background-dark text-gray-200"
+          ? "bg-background-dark text-gray-200"
+          : "bg-background-light text-text-light"
       }`}
     >
       <Sidebar

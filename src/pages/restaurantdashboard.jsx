@@ -12,6 +12,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import Sidebar from "../components/Sidebar";
 import { useTheme } from "../context/ThemeContext";
+import { motion } from "framer-motion";
 
 const RestaurantDashboard = () => {
   const { darkMode, toggleTheme } = useTheme();
@@ -148,13 +149,29 @@ const RestaurantDashboard = () => {
     navigate("/login");
   };
 
+  // Animation Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
+
   if (loading) {
     return (
       <div
         className={`font-display min-h-screen flex items-center justify-center transition-colors duration-300 ${
           darkMode
-            ? "bg-background-light text-black"
-            : "bg-background-dark text-white"
+            ? "bg-background-dark text-text-dark"
+            : "bg-background-light text-text-light"
         }`}
       >
         <div className="text-center">
@@ -169,8 +186,8 @@ const RestaurantDashboard = () => {
     <div
       className={`font-display min-h-screen flex transition-colors duration-300 ${
         darkMode
-          ? "bg-background-light text-black"
-          : "bg-background-dark text-white"
+          ? "bg-background-dark text-text-dark"
+          : "bg-background-light text-text-light"
       }`}
     >
       {/* Reusable Sidebar Component */}
@@ -196,7 +213,10 @@ const RestaurantDashboard = () => {
         }`}
       >
         {/* Header */}
-        <header
+        <motion.header
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
           className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
             darkMode
               ? "bg-card-dark border-border-dark"
@@ -240,12 +260,18 @@ const RestaurantDashboard = () => {
               </div>
             )}
           </div>
-        </header>
+        </motion.header>
 
         {/* Main Section */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300">
-          <div className="mx-auto max-w-7xl space-y-8">
-            <div>
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+            className="mx-auto max-w-7xl space-y-8"
+          >
+            <motion.div variants={itemVariants}>
               <h1 className="text-3xl font-bold">Dashboard Overview</h1>
               <p
                 className={
@@ -256,7 +282,7 @@ const RestaurantDashboard = () => {
                   ? `Welcome back to ${restaurantData.name}! Here's an overview of your restaurant's performance.`
                   : "Welcome back! Here's an overview of your restaurant's performance."}
               </p>
-            </div>
+            </motion.div>
 
             {/* Overview Cards */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -277,8 +303,9 @@ const RestaurantDashboard = () => {
                   icon: <MdPersonAdd />,
                 },
               ].map(({ title, value, icon }) => (
-                <div
+                <motion.div
                   key={title}
+                  variants={itemVariants}
                   className={`rounded-2xl border p-6 shadow-md ${
                     darkMode
                       ? "bg-card-dark border-border-dark"
@@ -302,12 +329,13 @@ const RestaurantDashboard = () => {
                       {icon}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
 
             {/* Analytics Placeholder */}
-            <div
+            <motion.div
+              variants={itemVariants}
               className={`rounded-2xl border p-6 text-center shadow-md ${
                 darkMode
                   ? "bg-card-dark border-border-dark"
@@ -328,8 +356,8 @@ const RestaurantDashboard = () => {
                   displayed here soon.
                 </p>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </main>
       </div>
     </div>

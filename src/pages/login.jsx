@@ -88,7 +88,7 @@ const Login = () => {
   };
 
   return (
-    <div className="font-display bg-background-light dark:bg-background-dark text-white">
+    <div className="font-display bg-background-light dark:bg-background-dark text-black dark:text-white">
       {" "}
       <div className="relative flex min-h-screen flex-col items-center justify-center p-4">
         {/* Theme Toggle */}{" "}
