@@ -26,10 +26,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
 
   return (
     <aside
-      className={`fixed top-0 left-0 z-30 h-screen flex flex-col border-r te transition-all duration-300 overflow-hidden ${
+      className={`fixed top-0 left-0 z-30 h-screen flex flex-col border-r transition-all duration-300 overflow-hidden ${
         darkMode
-          ? "bg-gray-800 border-border-dark text-white"
-          : "bg-indigo-700 border-border-light text-black"
+          ? "bg-card-dark border-border-dark text-white"
+          : "bg-card-light border-border-light text-text-light"
       } ${
         sidebarOpen
           ? "w-64 translate-x-0"
@@ -37,8 +37,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
       } lg:group`}
     >
       {/* Logo / Header */}
-      <div className="flex h-16 items-center gap-3 border-b border-white/10 px-4">
-        <div className="text-white shrink-0">
+      <div
+        className={`flex h-16 items-center gap-3 border-b px-4 ${
+          darkMode ? "border-white/10" : "border-black/5"
+        }`}
+      >
+        <div className="shrink-0 text-primary">
           <svg
             fill="none"
             viewBox="0 0 48 48"
@@ -52,7 +56,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
           </svg>
         </div>
         <span
-          className={`text-lg font-bold text-white ${
+          className={`text-lg font-bold ${
             sidebarOpen
               ? "opacity-100"
               : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
@@ -74,8 +78,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
                     active
-                      ? "bg-white/20 text-white"
-                      : "text-white/70 hover:text-white hover:bg-white/10"
+                      ? darkMode
+                        ? "bg-white/10 text-white"
+                        : "bg-primary/10 text-primary font-medium"
+                      : darkMode
+                      ? "text-white/70 hover:text-white hover:bg-white/5"
+                      : "text-text-muted-light hover:text-text-light hover:bg-gray-100"
                   }`}
                   title={label}
                 >
@@ -100,7 +108,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
           {/* Restaurant Info */}
           {restaurantData && (
             <div
-              className={`p-3 rounded-lg bg-white/10 ${
+              className={`p-3 rounded-lg ${
+                darkMode ? "bg-white/5" : "bg-gray-100"
+              } ${
                 sidebarOpen
                   ? "opacity-100"
                   : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
@@ -115,10 +125,18 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
                   />
                 )}
                 <div className="overflow-hidden">
-                  <p className="text-white text-sm font-medium truncate">
+                  <p
+                    className={`text-sm font-medium truncate ${
+                      darkMode ? "text-white" : "text-text-light"
+                    }`}
+                  >
                     {restaurantData.name}
                   </p>
-                  <p className="text-white/70 text-xs truncate">
+                  <p
+                    className={`text-xs truncate ${
+                      darkMode ? "text-white/70" : "text-text-muted-light"
+                    }`}
+                  >
                     {restaurantData.email}
                   </p>
                 </div>
@@ -131,7 +149,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
             <li>
               <button
                 onClick={onLogout}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full text-white/70 hover:text-white hover:bg-white/10"
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full ${
+                  darkMode
+                    ? "text-white/70 hover:text-white hover:bg-white/5"
+                    : "text-text-muted-light hover:text-text-light hover:bg-gray-100"
+                }`}
                 title="Logout"
               >
                 <MdLogout className="text-xl shrink-0" />

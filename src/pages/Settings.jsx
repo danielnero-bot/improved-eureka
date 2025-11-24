@@ -182,11 +182,7 @@ export default function Settings() {
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
-            darkMode
-              ? "bg-card-dark border-border-dark"
-              : "bg-card-light border-border-light"
-          }`}
+          className="sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 bg-card-light dark:bg-card-dark border-border-light dark:border-border-dark"
         >
           <div className="flex items-center gap-4">
             <button
