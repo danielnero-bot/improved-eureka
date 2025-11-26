@@ -156,18 +156,6 @@ const RestaurantSignup = () => {
           : "bg-background-light text-black"
       }`}
     >
-      {/* 🌗 Theme Toggle */}
-      <button
-        onClick={toggleTheme}
-        className="absolute top-6 right-6 h-10 w-10 flex items-center justify-center rounded-full bg-white/70 dark:bg-black/40 text-slate-700 dark:text-slate-300 backdrop-blur-md shadow-md hover:scale-105 transition-transform"
-      >
-        {theme === "dark" ? (
-          <MdLightMode className="text-yellow-400 text-xl" />
-        ) : (
-          <MdDarkMode className="text-slate-700 text-xl" />
-        )}
-      </button>
-
       <main className="w-full max-w-md space-y-8 px-4 sm:px-0 transition-all">
         <div
           className={`p-8 sm:p-10 rounded-xl shadow-lg border transition-colors duration-300 ${

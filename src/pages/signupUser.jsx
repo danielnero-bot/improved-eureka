@@ -81,16 +81,6 @@ const CreateUserAccount = () => {
         <span className="pt-0.5">Back</span>
       </Link>
 
-      {/* Dark/Light Mode Button */}
-      <div className="absolute top-4 right-4">
-        <button
-          onClick={toggleTheme}
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white dark:bg-background-dark/50 text-gray-700 dark:text-gray-300 transition-colors"
-        >
-          {darkMode ? <MdLightMode size={22} /> : <MdDarkMode size={22} />}
-        </button>
-      </div>
-
       {/* Main Form */}
       <main className="flex w-full max-w-md flex-col items-center">
         <div className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-background-dark/50 p-6 sm:p-8 shadow-sm">

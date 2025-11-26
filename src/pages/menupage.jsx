@@ -231,17 +231,6 @@ const MenuManagement = () => {
 
           <div className="flex items-center gap-4">
             <button
-              onClick={toggleTheme}
-              className="rounded-full p-2 transition-colors"
-            >
-              {darkMode ? (
-                <MdLightMode className="text-xl" />
-              ) : (
-                <MdDarkMode className="text-xl" />
-              )}
-            </button>
-
-            <button
               onClick={handleAddMenuItem}
               className="flex items-center gap-2 px-4 py-2 h-9 rounded-md bg-primary text-white font-bold hover:scale-105 transition-transform"
             >

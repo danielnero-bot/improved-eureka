@@ -235,17 +235,6 @@ const RestaurantDashboard = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button
-              onClick={toggleTheme}
-              className="rounded-full p-2 transition-colors"
-            >
-              {darkMode ? (
-                <MdLightMode className="text-xl" />
-              ) : (
-                <MdDarkMode className="text-xl" />
-              )}
-            </button>
-
             {/* Restaurant Info */}
             {restaurantData && (
               <div className="flex items-center gap-3">

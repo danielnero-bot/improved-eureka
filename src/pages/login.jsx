@@ -91,18 +91,6 @@ const Login = () => {
     <div className="font-display bg-background-light dark:bg-background-dark text-black dark:text-white">
       {" "}
       <div className="relative flex min-h-screen flex-col items-center justify-center p-4">
-        {/* Theme Toggle */}{" "}
-        <div className="absolute top-4 right-4">
-          {" "}
-          <button
-            onClick={toggleTheme}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-light dark:bg-surface-dark shadow"
-          >
-            {" "}
-            <MdDarkMode className="block dark:hidden text-text-light-secondary" />{" "}
-            <MdLightMode className="hidden dark:block text-dark-secondary" />{" "}
-          </button>{" "}
-        </div>
         <main className="w-full max-w-md mx-auto">
           <div className="flex flex-col gap-8">
             <div className="text-center">

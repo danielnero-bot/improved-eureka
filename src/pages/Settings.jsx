@@ -154,7 +154,13 @@ export default function Settings() {
   }
 
   return (
-    <div className="bg-background-light dark:bg-background-dark font-display text-black dark:text-white min-h-screen flex transition-colors duration-300">
+    <div
+      className={`font-display min-h-screen flex transition-colors duration-300 ${
+        darkMode
+          ? "bg-background-dark text-white"
+          : "bg-background-light text-black"
+      }`}
+    >
       {/* Sidebar */}
       <Sidebar
         sidebarOpen={sidebarOpen}
@@ -182,7 +188,11 @@ export default function Settings() {
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 bg-card-light dark:bg-card-dark border-border-light dark:border-border-dark"
+          className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
+            darkMode
+              ? "bg-card-dark border-border-dark"
+              : "bg-card-light border-border-light"
+          }`}
         >
           <div className="flex items-center gap-4">
             <button
@@ -192,19 +202,6 @@ export default function Settings() {
               <MdMenu className="text-2xl" />
             </button>
             <h1 className="text-xl font-bold tracking-tight">Settings</h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={toggleTheme}
-              className="rounded-full p-2 transition-colors"
-            >
-              {darkMode ? (
-                <MdLightMode className="text-xl" />
-              ) : (
-                <MdDarkMode className="text-xl" />
-              )}
-            </button>
           </div>
         </motion.header>
 
@@ -232,7 +229,11 @@ export default function Settings() {
               {/* ================= PROFILE SECTION ================= */}
               <motion.section
                 variants={itemVariants}
-                className="bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm transition-colors duration-300"
+                className={`rounded-xl border shadow-sm transition-colors duration-300 ${
+                  darkMode
+                    ? "bg-card-dark border-border-dark"
+                    : "bg-card-light border-border-light"
+                }`}
               >
                 <div className="p-6 border-b border-border-light dark:border-border-dark">
                   <h2 className="text-xl font-semibold">Profile</h2>
@@ -301,7 +302,11 @@ export default function Settings() {
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="mt-1 block w-full rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark p-2.5 focus:border-primary focus:ring-primary outline-none transition-colors"
+                        className={`mt-1 block w-full rounded-lg p-2.5 focus:border-primary focus:ring-primary outline-none transition-colors ${
+                          darkMode
+                            ? "border-border-dark bg-background-dark"
+                            : "border-border-light bg-background-light"
+                        }`}
                       />
                     </div>
 
@@ -353,7 +358,11 @@ export default function Settings() {
               {/* ================= ACCOUNT SECTION ================= */}
               <motion.section
                 variants={itemVariants}
-                className="bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm transition-colors duration-300"
+                className={`rounded-xl border shadow-sm transition-colors duration-300 ${
+                  darkMode
+                    ? "bg-card-dark border-border-dark"
+                    : "bg-card-light border-border-light"
+                }`}
               >
                 <div className="p-6 border-b border-border-light dark:border-border-dark">
                   <h2 className="text-xl font-semibold">Account</h2>
@@ -443,7 +452,11 @@ export default function Settings() {
               {/* ================= PREFERENCES SECTION ================= */}
               <motion.section
                 variants={itemVariants}
-                className="bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm transition-colors duration-300"
+                className={`rounded-xl border shadow-sm transition-colors duration-300 ${
+                  darkMode
+                    ? "bg-card-dark border-border-dark"
+                    : "bg-card-light border-border-light"
+                }`}
               >
                 <div className="p-6 border-b border-border-light dark:border-border-dark">
                   <h2 className="text-xl font-semibold">Preferences</h2>

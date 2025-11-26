@@ -196,7 +196,11 @@ const RestaurantDetails = () => {
               <textarea
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
-                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-sm text-text-light dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                className={`w-full rounded-md border p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none ${
+                  darkMode
+                    ? "border-gray-600 bg-gray-800 text-white"
+                    : "border-gray-300 bg-white text-text-light"
+                }`}
                 rows={4}
                 autoFocus
               />
@@ -205,7 +209,11 @@ const RestaurantDetails = () => {
                 type={type}
                 value={tempValue}
                 onChange={(e) => setTempValue(e.target.value)}
-                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-2 text-sm text-text-light dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                className={`w-full rounded-md border p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none ${
+                  darkMode
+                    ? "border-gray-600 bg-gray-800 text-white"
+                    : "border-gray-300 bg-white text-text-light"
+                }`}
                 autoFocus
               />
             )}
@@ -320,7 +328,11 @@ const RestaurantDetails = () => {
             {/* Header & Logo */}
             <motion.header
               variants={itemVariants}
-              className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between bg-white dark:bg-background-dark p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
+              className={`flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between p-6 rounded-xl border shadow-sm ${
+                darkMode
+                  ? "bg-background-dark border-gray-700"
+                  : "bg-white border-gray-200"
+              }`}
             >
               <div className="flex items-center gap-6 w-full">
                 <button
@@ -433,7 +445,11 @@ const RestaurantDetails = () => {
                 <motion.div
                   key={stat.label}
                   variants={itemVariants}
-                  className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark p-5 shadow-sm hover:shadow-md transition-shadow"
+                  className={`rounded-xl border p-5 shadow-sm hover:shadow-md transition-shadow ${
+                    darkMode
+                      ? "border-gray-700 bg-background-dark"
+                      : "border-gray-200 bg-white"
+                  }`}
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -457,7 +473,11 @@ const RestaurantDetails = () => {
               {/* General Info */}
               <motion.div
                 variants={itemVariants}
-                className="lg:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark p-6 shadow-sm"
+                className={`lg:col-span-2 rounded-xl border p-6 shadow-sm ${
+                  darkMode
+                    ? "border-gray-700 bg-background-dark"
+                    : "border-gray-200 bg-white"
+                }`}
               >
                 <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold border-b border-gray-200 dark:border-gray-700 pb-3">
                   Restaurant Details
@@ -501,7 +521,11 @@ const RestaurantDetails = () => {
               {/* Description */}
               <motion.div
                 variants={itemVariants}
-                className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark p-6 shadow-sm h-fit"
+                className={`rounded-xl border p-6 shadow-sm h-fit ${
+                  darkMode
+                    ? "border-gray-700 bg-background-dark"
+                    : "border-gray-200 bg-white"
+                }`}
               >
                 <h2 className="mb-6 text-lg font-semibold border-b border-gray-200 dark:border-gray-700 pb-3">
                   About

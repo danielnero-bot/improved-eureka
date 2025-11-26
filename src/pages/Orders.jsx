@@ -122,14 +122,20 @@ const Orders = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center font-display">
+      <div className="flex h-screen items-center justify-center font-display bg-background-light dark:bg-background-dark">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark min-h-screen flex transition-colors duration-300">
+    <div
+      className={`font-display min-h-screen flex transition-colors duration-300 ${
+        darkMode
+          ? "bg-background-dark text-gray-200"
+          : "bg-background-light text-text-light"
+      }`}
+    >
       <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -158,31 +164,7 @@ const Orders = () => {
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 bg-card-light dark:bg-card-dark border-border-light dark:border-border-dark"
-        >
-          <div className="flex items-center gap-4">
-            <button
-              onClick={toggleSidebar}
-              className="lg:hidden rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <MdMenu className="text-2xl" />
-            </button>
-            <h1 className="text-xl font-bold tracking-tight">
-              Orders Management
-            </h1>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <button
-              onClick={toggleTheme}
-              className="rounded-full p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              {darkMode ? (
-                <MdLightMode className="text-xl" />
-              ) : (
-                <MdDarkMode className="text-xl" />
-              )}
-            </button>
             {restaurantData && (
               <div className="hidden sm:flex items-center gap-3">
                 <span className="text-sm font-medium">
@@ -201,35 +183,41 @@ const Orders = () => {
         </motion.header>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-x-hidden">
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
             className="mx-auto max-w-7xl"
           >
-            {/* Stats / Filter Header */}
-            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Header Section */}
+            <div className="mb-6 sm:mb-8 flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-2xl font-bold">Incoming Orders</h2>
-                <p className="text-text-secondary-light dark:text-text-secondary-dark mt-1">
+                <h2 className="text-xl sm:text-2xl font-bold">
+                  Incoming Orders
+                </h2>
+                <p className="text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1">
                   Manage and track your restaurant orders in real-time.
                 </p>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => window.location.reload()}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border transition-colors text-sm ${
+                    darkMode
+                      ? "bg-card-dark border-border-dark hover:bg-gray-800"
+                      : "bg-card-light border-border-light hover:bg-gray-50"
+                  }`}
                 >
                   <MdRefresh className="text-lg" />
-                  <span>Refresh</span>
+                  <span className="hidden sm:inline">Refresh</span>
                 </button>
               </div>
             </div>
 
             {/* Filters */}
-            <div className="mb-6 overflow-x-auto pb-2">
-              <div className="flex gap-2">
+            <div className="mb-4 sm:mb-6 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
+              <div className="flex gap-2 min-w-max sm:min-w-0">
                 {[
                   "All",
                   "Pending",
@@ -241,10 +229,12 @@ const Orders = () => {
                   <button
                     key={status}
                     onClick={() => setFilter(status)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                    className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
                       filter === status
                         ? "bg-primary text-black"
-                        : "bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-gray-800"
+                        : darkMode
+                        ? "bg-card-dark border border-border-dark hover:bg-gray-800"
+                        : "bg-card-light border border-border-light hover:bg-gray-50"
                     }`}
                   >
                     {status}
@@ -253,31 +243,43 @@ const Orders = () => {
               </div>
             </div>
 
-            {/* Orders Table */}
-            <div className="rounded-xl border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark overflow-hidden shadow-sm">
+            {/* Desktop Table View */}
+            <div
+              className={`hidden md:block rounded-xl border overflow-hidden shadow-sm ${
+                darkMode
+                  ? "border-border-dark bg-card-dark"
+                  : "border-border-light bg-card-light"
+              }`}
+            >
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-border-light dark:border-border-dark">
+                  <thead
+                    className={`border-b ${
+                      darkMode
+                        ? "bg-gray-800/50 border-border-dark"
+                        : "bg-gray-50 border-border-light"
+                    }`}
+                  >
                     <tr>
-                      <th className="px-6 py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
+                      <th className="px-4 lg:px-6 py-3 lg:py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
                         Order ID
                       </th>
-                      <th className="px-6 py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
+                      <th className="px-4 lg:px-6 py-3 lg:py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
                         Customer
                       </th>
-                      <th className="px-6 py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
+                      <th className="px-4 lg:px-6 py-3 lg:py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
                         Items
                       </th>
-                      <th className="px-6 py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
+                      <th className="px-4 lg:px-6 py-3 lg:py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
                         Total
                       </th>
-                      <th className="px-6 py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
+                      <th className="px-4 lg:px-6 py-3 lg:py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
                         Status
                       </th>
-                      <th className="px-6 py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
+                      <th className="px-4 lg:px-6 py-3 lg:py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
                         Date
                       </th>
-                      <th className="px-6 py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
+                      <th className="px-4 lg:px-6 py-3 lg:py-4 font-medium text-text-secondary-light dark:text-text-secondary-dark">
                         Actions
                       </th>
                     </tr>
@@ -290,24 +292,23 @@ const Orders = () => {
                           variants={itemVariants}
                           className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                         >
-                          <td className="px-6 py-4 font-medium">
+                          <td className="px-4 lg:px-6 py-3 lg:py-4 font-medium">
                             #{order.id.slice(0, 8)}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 lg:px-6 py-3 lg:py-4">
                             {order.customer_name || "Guest"}
                           </td>
-                          <td className="px-6 py-4 max-w-xs truncate">
-                            {/* Assuming items is stored as JSON or we just show count */}
+                          <td className="px-4 lg:px-6 py-3 lg:py-4 max-w-xs truncate">
                             {order.items
                               ? Array.isArray(order.items)
                                 ? `${order.items.length} items`
                                 : "View details"
                               : "No items"}
                           </td>
-                          <td className="px-6 py-4 font-medium">
+                          <td className="px-4 lg:px-6 py-3 lg:py-4 font-medium">
                             {formatCurrency(order.total_amount)}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 lg:px-6 py-3 lg:py-4">
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
                                 order.status
@@ -316,12 +317,12 @@ const Orders = () => {
                               {order.status || "Pending"}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-text-secondary-light dark:text-text-secondary-dark">
+                          <td className="px-4 lg:px-6 py-3 lg:py-4 text-text-secondary-light dark:text-text-secondary-dark text-xs lg:text-sm">
                             {formatDate(order.created_at)}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 lg:px-6 py-3 lg:py-4">
                             <button className="text-primary hover:text-primary-dark font-medium text-sm">
-                              View Details
+                              View
                             </button>
                           </td>
                         </motion.tr>
@@ -342,6 +343,79 @@ const Orders = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              {filteredOrders.length > 0 ? (
+                filteredOrders.map((order) => (
+                  <motion.div
+                    key={order.id}
+                    variants={itemVariants}
+                    className="rounded-lg border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-4 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-medium text-sm">
+                          #{order.id.slice(0, 8)}
+                        </p>
+                        <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-0.5">
+                          {order.customer_name || "Guest"}
+                        </p>
+                      </div>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                          order.status
+                        )}`}
+                      >
+                        {order.status || "Pending"}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-text-secondary-light dark:text-text-secondary-dark">
+                          Items:
+                        </span>
+                        <span>
+                          {order.items
+                            ? Array.isArray(order.items)
+                              ? `${order.items.length} items`
+                              : "View details"
+                            : "No items"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-text-secondary-light dark:text-text-secondary-dark">
+                          Total:
+                        </span>
+                        <span className="font-medium">
+                          {formatCurrency(order.total_amount)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-text-secondary-light dark:text-text-secondary-dark">
+                          Date:
+                        </span>
+                        <span className="text-text-secondary-light dark:text-text-secondary-dark">
+                          {formatDate(order.created_at)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button className="mt-3 w-full py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                      View Details
+                    </button>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="rounded-lg border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-12 text-center">
+                  <MdRestaurant className="text-4xl mb-3 opacity-20 mx-auto" />
+                  <p className="text-text-secondary-light dark:text-text-secondary-dark">
+                    No orders found matching this filter.
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         </main>

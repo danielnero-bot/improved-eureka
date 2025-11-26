@@ -299,17 +299,6 @@ const AddMenuItem = () => {
             {isEditing ? "Edit Menu Item" : "Add New Menu Item"}
           </h1>
         </div>
-
-        <button
-          onClick={toggleTheme}
-          className="rounded-full p-2 transition-colors"
-        >
-          {darkMode ? (
-            <MdLightMode className="text-xl" />
-          ) : (
-            <MdDarkMode className="text-xl" />
-          )}
-        </button>
       </header>
 
       {/* Main Content */}
