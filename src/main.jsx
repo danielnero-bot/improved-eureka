@@ -22,6 +22,8 @@ import AuthCallback from "./components/AuthCallBack";
 import Settings from "./pages/Settings";
 import Orders from "./pages/Orders";
 import UserOrdersPage from "./pages/UserOrders";
+import UserProfile from "./pages/UserProfile";
+import RestaurantsDirectoryPage from "./pages/restaurantview";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -57,6 +59,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/settings" element={<Settings />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/userOrders" element={<UserOrdersPage />} />
+          <Route path="/userProfile" element={<UserProfile />} />
+          <Route path="/restaurantview" element={<RestaurantsDirectoryPage />} />
         </Routes>
       </HashRouter>
     </ThemeProvider>

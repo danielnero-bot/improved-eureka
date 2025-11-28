@@ -3,6 +3,7 @@ import { MdLightMode, MdDarkMode } from "react-icons/md";
 import { FaRegEye, FaRegEyeSlash, FaGoogle } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
+import { useTheme } from "../context/ThemeContext";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,16 +14,7 @@ const Login = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [userType, setUserType] = useState("user");
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-
-  // Theme handler
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () =>
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  const { darkMode, toggleTheme } = useTheme();
 
   // Determine role
   const determineUserRole = async (user) => {

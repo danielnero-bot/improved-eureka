@@ -85,6 +85,13 @@ const Navbar = () => {
           >
             Get Started
           </Link>
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="ml-3 rounded-full p-2 bg-surface-light dark:bg-surface-dark text-[#111714] dark:text-gray-200 hover:opacity-90"
+          >
+            {darkMode ? <FaSun /> : <FaMoon />}
+          </button>
         </nav>
 
         {/* Mobile Menu Button */}

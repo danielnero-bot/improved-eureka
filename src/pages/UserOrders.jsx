@@ -1,27 +1,81 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import UserSidebar from "../components/UserSidebar";
-import { FiSearch, FiChevronDown } from "react-icons/fi";
+import { FiSearch, FiChevronDown, FiMenu } from "react-icons/fi";
 import { MdShoppingBasket } from "react-icons/md";
+import { supabase } from "../supabase";
+import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 
 const UserOrdersPage = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+  const { darkMode } = useTheme();
+
+  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) setUser(user);
+      } catch (e) {
+        // ignore
+      }
+    };
+    getUser();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
   return (
     <div className="relative flex min-h-screen w-full flex-col">
       <div className="flex h-full w-full">
         {/* SideNavBar */}
-        <UserSidebar />
+        <UserSidebar
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          user={user}
+          onLogout={handleLogout}
+        />
+
+        {/* Overlay for mobile when sidebar is open */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
         {/* Main Content */}
-        <main className="flex-1 p-6 lg:p-8">
+        <main
+          className={`flex-1 p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 transition-all duration-300 ${
+            sidebarOpen ? "lg:ml-64" : "lg:ml-16"
+          }`}
+        >
           <div className="mx-auto max-w-4xl">
             {/* PageHeading */}
             <div className="flex flex-wrap justify-between gap-4 items-center mb-6">
-              <div className="flex flex-col gap-1">
-                <p className="text-3xl lg:text-4xl font-black leading-tight tracking-[-0.033em] text-gray-900 dark:text-white">
-                  Your Orders
-                </p>
-                <p className="text-base font-normal leading-normal text-gray-500 dark:text-gray-400">
-                  Track all your past and ongoing food orders.
-                </p>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={toggleSidebar}
+                  className="lg:hidden rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <FiMenu className="text-2xl" />
+                </button>
+                <div className="flex flex-col gap-1">
+                  <p className="text-3xl lg:text-4xl font-black leading-tight tracking-[-0.033em] text-gray-900 dark:text-white">
+                    Your Orders
+                  </p>
+                  <p className="text-base font-normal leading-normal text-gray-500 dark:text-gray-400">
+                    Track all your past and ongoing food orders.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -56,158 +110,6 @@ const UserOrdersPage = () => {
 
             {/* Orders List */}
             <div className="grid grid-cols-1 gap-6">
-              {/* Card 1 */}
-              <div className="flex flex-col gap-4 rounded-xl bg-white dark:bg-black/20 p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-12 h-12 bg-center bg-no-repeat aspect-square bg-cover rounded-lg flex-shrink-0"
-                      data-alt="The Gourmet Kitchen restaurant logo"
-                      style={{
-                        backgroundImage:
-                          'url("https://lh3.googleusercontent.com/aida-public/AB6AXuA49xkXDbORrtQmWLb94kvzZknqncpYJc5R0lkLKjVVaSBqbOxwvusJQS90WmRePvjj3HoaofR8HXyuO-OweQNq-oiyJNXUz-6LvoE5mcfhtpEelaHF40Fxrv_RsdkiJQlBX2VjC_TaO9gTzi2nP8vjH946kV9fhhAFSzDLHyWWzonxNMRJyZMDzNDiCXlLWW8vlFGyEphqqZU0cuTuEOYg_bLpnTU4uGFvNvjj64rFbHDbeHwlDsco0hADMSya11S36IL4eOOwSlfF")',
-                      }}
-                    ></div>
-                    <div className="flex flex-col">
-                      <p className="text-base font-bold leading-tight text-gray-900 dark:text-white">
-                        The Gourmet Kitchen
-                      </p>
-                      <p className="text-sm font-normal leading-normal text-gray-500 dark:text-gray-400">
-                        Oct 26, 2023
-                      </p>
-                    </div>
-                  </div>
-                  <div className="rounded-full px-3 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300">
-                    Delivered
-                  </div>
-                </div>
-                <p className="text-sm font-normal leading-normal text-gray-600 dark:text-gray-300">
-                  3 items — Fried Rice, Chicken Wings, Coke
-                </p>
-                <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <p className="text-base font-bold text-gray-900 dark:text-white">
-                    $25.50
-                  </p>
-                  <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-medium leading-normal hover:opacity-90">
-                    <span>View Details</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Card 2 */}
-              <div className="flex flex-col gap-4 rounded-xl bg-white dark:bg-black/20 p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-12 h-12 bg-center bg-no-repeat aspect-square bg-cover rounded-lg flex-shrink-0"
-                      data-alt="Pizza Palace restaurant logo"
-                      style={{
-                        backgroundImage:
-                          'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBiR9zmidYTtHzZAGeQyfUHqiamXlDqqzwqemlXd6YziZCQIQnjNh1njqp9WsXKWu8huXPUcygkaoSm6nx2PvR-EpduRFPKD3bBUIHOBQzyfYuPHK6ipjF4K8TlYiB1oajqpM9cM4zCqdclbtBdNHOmVw_nyAYmezNkq-SRkltBXFavEnv4FjEhP5z2ECYbaiWp7Ogv944wIRFYTItVMAYoe6nU2t14YsbIigfOCoC4l3V5brxthg8sLeY0CoKGC12QNUf4iwbWSG1Q")',
-                      }}
-                    ></div>
-                    <div className="flex flex-col">
-                      <p className="text-base font-bold leading-tight text-gray-900 dark:text-white">
-                        Pizza Palace
-                      </p>
-                      <p className="text-sm font-normal leading-normal text-gray-500 dark:text-gray-400">
-                        Oct 25, 2023
-                      </p>
-                    </div>
-                  </div>
-                  <div className="rounded-full px-3 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
-                    In Progress
-                  </div>
-                </div>
-                <p className="text-sm font-normal leading-normal text-gray-600 dark:text-gray-300">
-                  2 items — Pepperoni Pizza, Garlic Bread
-                </p>
-                <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <p className="text-base font-bold text-gray-900 dark:text-white">
-                    $32.00
-                  </p>
-                  <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-medium leading-normal hover:opacity-90">
-                    <span>View Details</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Card 3 */}
-              <div className="flex flex-col gap-4 rounded-xl bg-white dark:bg-black/20 p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-12 h-12 bg-center bg-no-repeat aspect-square bg-cover rounded-lg flex-shrink-0"
-                      data-alt="Sushi House restaurant logo"
-                      style={{
-                        backgroundImage:
-                          'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBaIiCKvEW0X9b_PhSlb-GslQwFvUGGTXGKKB1bxLTnTb5d4229gkxuGjHIEjRA5IU1x7DodYpExmyRsW_4SHiU7PCG-H3Y-3n9FgmqqURF-aYMIb3EwpQIabNEoQjptwVUykCHlcqfs0iidY2zp5UPxN-1rjffiprngcTwNXnurJ2GtNIhDRzT-GYjhuG14sSp0gSII1zBLMjPxTu4kHxDzMZuRydRHCWp98Qm0uAflVV2cQrsT5ugX2FLvaEvWcpaYOONcJRME-Ad")',
-                      }}
-                    ></div>
-                    <div className="flex flex-col">
-                      <p className="text-base font-bold leading-tight text-gray-900 dark:text-white">
-                        Sushi House
-                      </p>
-                      <p className="text-sm font-normal leading-normal text-gray-500 dark:text-gray-400">
-                        Oct 24, 2023
-                      </p>
-                    </div>
-                  </div>
-                  <div className="rounded-full px-3 py-1 text-xs font-medium bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300">
-                    Pending
-                  </div>
-                </div>
-                <p className="text-sm font-normal leading-normal text-gray-600 dark:text-gray-300">
-                  4 items — California Roll, Tuna Nigiri, Miso Soup, Edamame
-                </p>
-                <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <p className="text-base font-bold text-gray-900 dark:text-white">
-                    $45.75
-                  </p>
-                  <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-medium leading-normal hover:opacity-90">
-                    <span>View Details</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Card 4 */}
-              <div className="flex flex-col gap-4 rounded-xl bg-white dark:bg-black/20 p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-12 h-12 bg-center bg-no-repeat aspect-square bg-cover rounded-lg flex-shrink-0"
-                      data-alt="Burger Barn restaurant logo"
-                      style={{
-                        backgroundImage:
-                          'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCB0Jz_WL2qZ7CykermW4M-RLFNCUFCRKJHyPC1LP-cfTjvsQt74DXbTMqKhTIYsaMiS1R4apdJSXID5sekh-OkvB0MpKgFewlE_mgEWxpUvflUR2OpUEHwiHO_rzcWLeSD5wbtnmDXP5V4cNN6FKEt5lXUkqp2FbG6ATNRPuZteabc6jaqxWGwzEF2WGacvTcsSOTakvi5iwUP9csHwGfmF0tEmY62z5OidbFRs0x-iRU4BCDJknsTfPAYGYUtQZmrlsB31dYUTy6b")',
-                      }}
-                    ></div>
-                    <div className="flex flex-col">
-                      <p className="text-base font-bold leading-tight text-gray-900 dark:text-white">
-                        Burger Barn
-                      </p>
-                      <p className="text-sm font-normal leading-normal text-gray-500 dark:text-gray-400">
-                        Oct 22, 2023
-                      </p>
-                    </div>
-                  </div>
-                  <div className="rounded-full px-3 py-1 text-xs font-medium bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300">
-                    Cancelled
-                  </div>
-                </div>
-                <p className="text-sm font-normal leading-normal text-gray-600 dark:text-gray-300">
-                  2 items — Cheeseburger, Fries
-                </p>
-                <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <p className="text-base font-bold text-gray-900 dark:text-white">
-                    $18.25
-                  </p>
-                  <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-medium leading-normal hover:opacity-90">
-                    <span>View Details</span>
-                  </button>
-                </div>
-              </div>
-
               {/* Empty State */}
               <div className="flex flex-col items-center justify-center text-center gap-4 py-16 px-6 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700">
                 <div className="flex items-center justify-center size-16 bg-primary/20 rounded-full">

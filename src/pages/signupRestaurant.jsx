@@ -3,6 +3,7 @@ import { MdLightMode, MdDarkMode } from "react-icons/md";
 import { FaRegEye, FaRegEyeSlash, FaGoogle } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
+import { useTheme } from "../context/ThemeContext";
 import PasswordChecker from "../components/PasswordChecker";
 
 const RestaurantSignup = () => {
@@ -18,22 +19,7 @@ const RestaurantSignup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔹 Theme state (Light / Dark)
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-
-  useEffect(() => {
-    // Apply Tailwind dark mode class to root HTML
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  };
+  const { darkMode, toggleTheme } = useTheme();
 
   // 🔹 Save restaurant info to Supabase
   const saveRestaurantData = async (
@@ -151,7 +137,7 @@ const RestaurantSignup = () => {
   return (
     <div
       className={`relative flex min-h-screen w-full flex-col items-center justify-center transition-colors duration-300 ${
-        theme === "dark"
+        darkMode
           ? "bg-background-dark text-white"
           : "bg-background-light text-black"
       }`}
@@ -159,7 +145,7 @@ const RestaurantSignup = () => {
       <main className="w-full max-w-md space-y-8 px-4 sm:px-0 transition-all">
         <div
           className={`p-8 sm:p-10 rounded-xl shadow-lg border transition-colors duration-300 ${
-            theme === "dark"
+            darkMode
               ? "bg-background-dark text-white"
               : "bg-background-light text-black"
           }`}
@@ -253,7 +239,7 @@ const RestaurantSignup = () => {
               <div className="absolute w-full border-t border-slate-300 dark:border-slate-700"></div>
               <div
                 className={`relative px-4 ${
-                  theme === "dark" ? "bg-slate-800" : "bg-white"
+                  darkMode ? "bg-slate-800" : "bg-white"
                 }`}
               >
                 <span className="text-sm text-slate-500 dark:text-slate-400">
