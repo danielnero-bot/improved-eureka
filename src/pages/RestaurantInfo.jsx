@@ -1,4 +1,6 @@
 import React from "react";
+import { FiHome, FiSettings, FiLogOut } from "react-icons/fi";
+import { MdRestaurantMenu, MdStore, MdMenu, MdDarkMode } from "react-icons/md";
 
 const RestaurantInfo = () => {
   return (
@@ -35,7 +37,7 @@ const RestaurantInfo = () => {
                 href="#"
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-text-muted-light transition-colors hover:text-text-light dark:text-text-muted-dark dark:hover:text-text-dark"
               >
-                <span className="material-symbols-outlined">dashboard</span>
+                <FiHome className="text-xl" />
                 <span>Dashboard</span>
               </a>
             </li>
@@ -44,9 +46,7 @@ const RestaurantInfo = () => {
                 href="#"
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-text-muted-light transition-colors hover:text-text-light dark:text-text-muted-dark dark:hover:text-text-dark"
               >
-                <span className="material-symbols-outlined">
-                  restaurant_menu
-                </span>
+                <MdRestaurantMenu className="text-xl" />
                 <span>Menu</span>
               </a>
             </li>
@@ -55,7 +55,7 @@ const RestaurantInfo = () => {
                 href="#"
                 className="flex items-center gap-3 rounded-lg bg-primary/10 px-3 py-2 text-primary dark:bg-primary/20"
               >
-                <span className="material-symbols-outlined">store</span>
+                <MdStore className="text-xl" />
                 <span>Restaurant Info</span>
               </a>
             </li>
@@ -64,7 +64,7 @@ const RestaurantInfo = () => {
                 href="#"
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-text-muted-light transition-colors hover:text-text-light dark:text-text-muted-dark dark:hover:text-text-dark"
               >
-                <span className="material-symbols-outlined">settings</span>
+                <FiSettings className="text-xl" />
                 <span>Settings</span>
               </a>
             </li>
@@ -76,7 +76,7 @@ const RestaurantInfo = () => {
                 href="#"
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-text-muted-light transition-colors hover:text-text-light dark:text-text-muted-dark dark:hover:text-text-dark"
               >
-                <span className="material-symbols-outlined">logout</span>
+                <FiLogOut className="text-xl" />
                 <span>Logout</span>
               </a>
             </li>
@@ -88,12 +88,12 @@ const RestaurantInfo = () => {
       <div className="flex flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border-light bg-card-light px-4 dark:border-border-dark dark:bg-card-dark sm:px-6">
           <button className="rounded-full p-2 lg:hidden">
-            <span className="material-symbols-outlined">menu</span>
+            <MdMenu className="text-xl" />
           </button>
           <div className="flex-1"></div>
           <div className="flex items-center gap-4">
             <button className="rounded-full p-2 text-text-muted-light transition-colors hover:text-text-light dark:text-text-muted-dark dark:hover:text-text-dark">
-              <span className="material-symbols-outlined">dark_mode</span>
+              <MdDarkMode className="text-xl" />
             </button>
             <button>
               <img

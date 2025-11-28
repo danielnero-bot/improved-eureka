@@ -3,24 +3,25 @@ import ReactDOM from "react-dom/client";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import App from "./App";
-import About from "./pages/about";
+import About from "./pages/About";
 import Main from "./components/Main";
-import Landing from "./pages/docs";
-import Contact from "./pages/contact";
-import JoinQuickPlate from "./pages/getStarted";
-import CreateUserAccount from "./pages/signupUser";
-import RestaurantSignup from "./pages/signupRestaurant";
-import Login from "./pages/login";
+import Landing from "./pages/Docs";
+import Contact from "./pages/Contact";
+import JoinQuickPlate from "./pages/GetStarted";
+import CreateUserAccount from "./pages/SignupUser";
+import RestaurantSignup from "./pages/SignupRestaurant";
+import Login from "./pages/Login";
 import License from "./pages/LICENSE";
 import UserDashboard from "./pages/UserDashboard";
-import RestaurantDashboard from "./pages/restaurantdashboard";
+import RestaurantDashboard from "./pages/RestaurantDashboard";
 import RestaurantSetup from "./pages/RestaurantSetup";
-import MenuManagement from "./pages/menupage";
-import AddMenuItem from "./pages/addmenuitem";
-import RestaurantInfo from "./pages/restaurantdetails";
+import MenuManagement from "./pages/MenuPage";
+import AddMenuItem from "./pages/AddMenuItem";
+import RestaurantInfo from "./pages/RestaurantDetails";
 import AuthCallback from "./components/AuthCallBack";
 import Settings from "./pages/Settings";
 import Orders from "./pages/Orders";
+import UserOrdersPage from "./pages/UserOrders";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -55,6 +56,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/userOrders" element={<UserOrdersPage />} />
         </Routes>
       </HashRouter>
     </ThemeProvider>

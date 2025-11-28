@@ -164,7 +164,27 @@ const Orders = () => {
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
+          className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
+            darkMode
+              ? "bg-card-dark border-border-dark"
+              : "bg-card-light border-border-light"
+          }`}
+        >
+          <div className="flex items-center gap-4">
+            <button
+              onClick={toggleSidebar}
+              className={`lg:hidden rounded-full p-2 transition-colors ${
+                darkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
+              }`}
+            >
+              <MdMenu className="text-2xl" />
+            </button>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight">
+              Orders
+            </h1>
+          </div>
 
+          <div className="flex items-center gap-2 sm:gap-4">
             {restaurantData && (
               <div className="hidden sm:flex items-center gap-3">
                 <span className="text-sm font-medium">
