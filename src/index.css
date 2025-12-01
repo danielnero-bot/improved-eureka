@@ -29,7 +29,13 @@
 body {
   background-color: var(--color-background-light);
   font-family: var(--font-display);
-  color: #111714;
+  color: var(--color-text-light);
+}
+
+/* Dark mode body styles */
+.dark body {
+  background-color: var(--color-background-dark);
+  color: var(--color-text-dark);
 }
 @layer base {
   

@@ -52,7 +52,7 @@ const UserProfilePage = () => {
 
       {/* Main Content */}
       <main
-        className={`flex-1 p-6 bg-gray-50 dark:bg-gray-900 transition-all duration-300 ${
+        className={`flex-1 p-6 bg-background-light dark:bg-background-dark transition-all duration-300 ${
           sidebarOpen ? "lg:ml-64" : "lg:ml-16"
         }`}
       >

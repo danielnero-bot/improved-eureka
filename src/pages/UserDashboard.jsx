@@ -53,7 +53,7 @@ const QuickPlateDashboard = () => {
 
       {/* Main Content */}
       <div
-        className={`flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 transition-all duration-300 ${
+        className={`flex-1 overflow-y-auto transition-all duration-300 ${
           sidebarOpen ? "lg:ml-64" : "lg:ml-16"
         }`}
       >

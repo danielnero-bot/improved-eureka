@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiSearch, FiStar } from "react-icons/fi";
+import { FiSearch, FiStar, FiMenu } from "react-icons/fi";
 import { MdStorefront } from "react-icons/md";
 import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
@@ -12,6 +12,8 @@ const RestaurantsDirectoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+
+  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
   useEffect(() => {
     const getUser = async () => {
@@ -114,18 +116,35 @@ const RestaurantsDirectoryPage = () => {
 
       {/* Main Content */}
       <main
-        className={`flex-1 p-6 bg-gray-50 dark:bg-gray-900 transition-all duration-300 ${
+        className={`flex-1 p-6 bg-background-light dark:bg-background-dark transition-all duration-300 ${
           sidebarOpen ? "lg:ml-64" : "lg:ml-16"
         }`}
       >
         <div className="mx-auto w-full max-w-7xl">
           <header>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Explore Restaurants
-            </h1>
-            <p className="mt-1 text-gray-600 dark:text-gray-400">
-              View and connect with other restaurants on QuickPlate.
-            </p>
+            {/* Mobile Header */}
+            <div className="lg:hidden flex items-center mb-6">
+              <button
+                onClick={toggleSidebar}
+                className="mr-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+              >
+                <FiMenu className="text-2xl text-gray-700 dark:text-gray-300" />
+              </button>
+              <h1 className="text-xl font-bold text-gray-800 dark:text-white">
+                Explore Restaurants
+              </h1>
+            </div>
+
+            {/* Desktop Header */}
+            <div className="hidden lg:block">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Explore Restaurants
+              </h1>
+              <p className="mt-1 text-gray-600 dark:text-gray-400">
+                View and connect with other restaurants on QuickPlate.
+              </p>
+            </div>
+
             <div className="relative mt-4">
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
