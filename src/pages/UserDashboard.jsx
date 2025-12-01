@@ -10,7 +10,7 @@ const QuickPlateDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  const { darkMode } = useTheme(); // eslint-disable-line no-unused-vars
+  const { darkMode } = useTheme();
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
@@ -21,7 +21,7 @@ const QuickPlateDashboard = () => {
           data: { user },
         } = await supabase.auth.getUser();
         if (user) setUser(user);
-      } catch (error) {
+      } catch {
         // ignore
       }
     };
@@ -55,10 +55,20 @@ const QuickPlateDashboard = () => {
       <div
         className={`flex-1 overflow-y-auto transition-all duration-300 ${
           sidebarOpen ? "lg:ml-64" : "lg:ml-16"
+        } ${
+          darkMode
+            ? "bg-background-dark text-white"
+            : "bg-background-light text-black"
         }`}
       >
         {/* Header */}
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-border-light dark:border-border-dark bg-card-light/80 dark:bg-card-dark/80 backdrop-blur-md px-4 md:px-8">
+        <header
+          className={`sticky top-0 z-10 flex h-16 items-center justify-between backdrop-blur-md px-4 md:px-8 transition-colors duration-300 ${
+            darkMode
+              ? "bg-card-dark/80 border-b border-border-dark"
+              : "bg-card-light/80 border-b border-border-light"
+          }`}
+        >
           <div className="flex items-center gap-4">
             <button
               onClick={toggleSidebar}
@@ -94,7 +104,13 @@ const QuickPlateDashboard = () => {
         {/* Main Content Sections */}
         <main className="p-4 md:p-8 space-y-8">
           {/* Welcome Section */}
-          <section className="rounded-xl border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-6">
+          <section
+            className={`rounded-xl p-6 transition-colors duration-300 ${
+              darkMode
+                ? "bg-card-dark border border-border-dark"
+                : "bg-card-light border border-border-light"
+            }`}
+          >
             <h2 className="text-2xl font-bold">
               Welcome back, {user?.user_metadata?.full_name || "Guest"}!
             </h2>
@@ -115,7 +131,11 @@ const QuickPlateDashboard = () => {
               ].map((action, index) => (
                 <div
                   key={index}
-                  className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-4 text-center cursor-pointer hover:shadow-lg hover:border-primary dark:hover:border-primary transition-all"
+                  className={`flex flex-col items-center justify-center gap-2 rounded-xl p-4 text-center cursor-pointer hover:shadow-lg transition-all ${
+                    darkMode
+                      ? "bg-card-dark border border-border-dark hover:border-primary"
+                      : "bg-card-light border border-border-light hover:border-primary"
+                  }`}
                 >
                   <div
                     className={`flex h-12 w-12 items-center justify-center rounded-full bg-${action.color}-100 dark:bg-${action.color}-900/20`}
@@ -133,7 +153,13 @@ const QuickPlateDashboard = () => {
           {/* Recent Orders */}
           <section>
             <h3 className="text-xl font-bold mb-4">Recent Orders</h3>
-            <div className="rounded-xl border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-8 text-center">
+            <div
+              className={`rounded-xl p-8 text-center transition-colors duration-300 ${
+                darkMode
+                  ? "bg-card-dark border border-border-dark"
+                  : "bg-card-light border border-border-light"
+              }`}
+            >
               <div className="flex justify-center mb-4">
                 <MdHistory className="text-4xl text-text-light-secondary dark:text-dark-secondary opacity-50" />
               </div>
@@ -146,7 +172,13 @@ const QuickPlateDashboard = () => {
           {/* Saved Restaurants */}
           <section>
             <h3 className="text-xl font-bold mb-4">Your Saved Restaurants</h3>
-            <div className="rounded-xl border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-8 text-center">
+            <div
+              className={`rounded-xl p-8 text-center transition-colors duration-300 ${
+                darkMode
+                  ? "bg-card-dark border border-border-dark"
+                  : "bg-card-light border border-border-light"
+              }`}
+            >
               <div className="flex justify-center mb-4">
                 <FiHeart className="text-4xl text-text-light-secondary dark:text-dark-secondary opacity-50" />
               </div>

@@ -8,6 +8,8 @@ import { useTheme } from "../context/ThemeContext";
 const UserProfilePage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
   const { darkMode, toggleTheme } = useTheme();
 
@@ -19,13 +21,101 @@ const UserProfilePage = () => {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        if (user) setUser(user);
+        if (user) {
+          setUser(user);
+          // Load avatar from storage
+          loadAvatar(user.id);
+        }
       } catch {
         // ignore
       }
     };
     getUser();
   }, []);
+
+  const loadAvatar = async (userId) => {
+    try {
+      // Check if avatar exists in storage
+      const { data, error } = await supabase.storage
+        .from("avatars")
+        .list(userId, {
+          limit: 1,
+        });
+
+      if (error) {
+        console.error("Error loading avatar:", error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        // Get public URL for the avatar
+        const { data: urlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(`${userId}/${data[0].name}`);
+
+        if (urlData) {
+          setAvatarUrl(urlData.publicUrl);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading avatar:", error);
+    }
+  };
+
+  const handleAvatarUpload = async (file) => {
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      alert("File size must be less than 2MB");
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      // Generate filename with extension
+      const fileExt = file.name.split(".").pop();
+      const fileName = `avatar.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      // Upload to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, {
+          upsert: true, // Replace if exists
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      if (urlData) {
+        setAvatarUrl(urlData.publicUrl);
+
+        // Update user metadata
+        await supabase.auth.updateUser({
+          data: { avatar_url: urlData.publicUrl },
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      alert("Error uploading photo. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -52,8 +142,12 @@ const UserProfilePage = () => {
 
       {/* Main Content */}
       <main
-        className={`flex-1 p-6 bg-background-light dark:bg-background-dark transition-all duration-300 ${
+        className={`flex-1 p-6 transition-all duration-300 ${
           sidebarOpen ? "lg:ml-64" : "lg:ml-16"
+        } ${
+          darkMode
+            ? "bg-background-dark text-white"
+            : "bg-background-light text-black"
         }`}
       >
         <div className="max-w-4xl mx-auto">
@@ -81,15 +175,26 @@ const UserProfilePage = () => {
 
           <div className="space-y-8">
             {/* Profile Header */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+            <div
+              className={`rounded-xl shadow-sm transition-colors duration-300 ${
+                darkMode
+                  ? "bg-card-dark border border-border-dark"
+                  : "bg-card-light border border-border-light"
+              }`}
+            >
               <div className="p-6 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
                 <div className="relative group cursor-pointer">
                   <img
                     alt="User profile image"
                     className="h-24 w-24 rounded-full object-cover"
                     src={
+                      avatarUrl ||
                       user?.user_metadata?.avatar_url ||
-                      "https://lh3.googleusercontent.com/aida-public/AB6AXuBRJUfDw1o7j4QSFBNpFzknkgHS6jfFfnP8DE4S5DTiAZ83SAZSxp8wMW-WEnUP0HEs9gB9hQ72wllB4O-VrMn1N7fpucVJODVOb8LQBnYIjNxIcLAz5L5QeE2WHrd9p9EovH2aSlnnx8RN_627TsYldHB3SSuFThRtBw4qAk_m_xchl5YnOOtPJ2heBijtua5f8xMlShQq1Sqh8fQ5o1XcNhpswU3caHWk1VmHblXg9_lfCAHz_Ewv--I1cvDWUSndJ6WEmNoMGapc"
+                      "https://ui-avatars.com/api/?name=" +
+                        encodeURIComponent(
+                          user?.user_metadata?.full_name || "User"
+                        ) +
+                        "&background=38e07b&color=fff&size=200"
                     }
                   />
                   <div
@@ -99,7 +204,7 @@ const UserProfilePage = () => {
                     }
                   >
                     <span className="text-white text-xs font-medium">
-                      Change
+                      {uploading ? "Uploading..." : "Change"}
                     </span>
                   </div>
                 </div>
@@ -119,24 +224,31 @@ const UserProfilePage = () => {
                   onChange={(e) => {
                     const file = e.target.files[0];
                     if (file) {
-                      // Handle file upload here
-                      console.log("File selected:", file);
+                      handleAvatarUpload(file);
                     }
                   }}
+                  disabled={uploading}
                 />
                 <button
-                  className="text-sm px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+                  className="text-sm px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors disabled:opacity-50"
                   onClick={() =>
                     document.getElementById("avatar-upload").click()
                   }
+                  disabled={uploading}
                 >
-                  Edit photo
+                  {uploading ? "Uploading..." : "Edit photo"}
                 </button>
               </div>
             </div>
 
             {/* Profile Form */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+            <div
+              className={`rounded-xl shadow-sm transition-colors duration-300 ${
+                darkMode
+                  ? "bg-card-dark border border-border-dark"
+                  : "bg-card-light border border-border-light"
+              }`}
+            >
               <div className="p-6">
                 <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -244,7 +356,13 @@ const UserProfilePage = () => {
             </div>
 
             {/* Preferences */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+            <div
+              className={`rounded-xl shadow-sm transition-colors duration-300 ${
+                darkMode
+                  ? "bg-card-dark border border-border-dark"
+                  : "bg-card-light border border-border-light"
+              }`}
+            >
               <div className="p-6">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                   Preferences

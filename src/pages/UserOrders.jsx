@@ -21,7 +21,7 @@ const UserOrdersPage = () => {
           data: { user },
         } = await supabase.auth.getUser();
         if (user) setUser(user);
-      } catch (e) {
+      } catch {
         // ignore
       }
     };
@@ -54,8 +54,12 @@ const UserOrdersPage = () => {
 
         {/* Main Content */}
         <main
-          className={`flex-1 p-6 lg:p-8 bg-background-light dark:bg-background-dark transition-all duration-300 ${
+          className={`flex-1 p-6 lg:p-8 transition-all duration-300 ${
             sidebarOpen ? "lg:ml-64" : "lg:ml-16"
+          } ${
+            darkMode
+              ? "bg-background-dark text-white"
+              : "bg-background-light text-black"
           }`}
         >
           <div className="mx-auto max-w-4xl">
@@ -85,11 +89,21 @@ const UserOrdersPage = () => {
               <div className="flex-1">
                 <label className="flex flex-col h-12 w-full">
                   <div className="flex w-full flex-1 items-stretch rounded-lg h-full">
-                    <div className="text-gray-500 dark:text-gray-400 flex border-gray-200 dark:border-gray-700 bg-white dark:bg-black/20 items-center justify-center pl-4 rounded-l-lg border-r-0">
+                    <div
+                      className={`flex items-center justify-center pl-4 rounded-l-lg border-r-0 transition-colors duration-300 ${
+                        darkMode
+                          ? "text-gray-400 bg-black/20 border-gray-700"
+                          : "text-gray-500 bg-white border-gray-200"
+                      }`}
+                    >
                       <FiSearch className="text-xl" />
                     </div>
                     <input
-                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border-gray-200 dark:border-gray-700 bg-white dark:bg-black/20 h-full placeholder:text-gray-500 dark:placeholder:text-gray-400 px-4 pl-2 text-base font-normal leading-normal"
+                      className={`form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg focus:outline-0 focus:ring-2 focus:ring-primary/50 h-full px-4 pl-2 text-base font-normal leading-normal transition-colors duration-300 ${
+                        darkMode
+                          ? "text-white bg-black/20 border-gray-700 placeholder:text-gray-400"
+                          : "text-gray-900 bg-white border-gray-200 placeholder:text-gray-500"
+                      }`}
                       placeholder="Search by restaurant or item..."
                       defaultValue=""
                     />
@@ -99,11 +113,25 @@ const UserOrdersPage = () => {
 
               {/* Chips / Filter */}
               <div className="flex items-center">
-                <button className="flex h-12 w-full md:w-auto shrink-0 items-center justify-between gap-x-2 rounded-lg bg-white dark:bg-black/20 border border-gray-200 dark:border-gray-700 px-4">
-                  <p className="text-gray-800 dark:text-gray-200 text-sm font-medium leading-normal">
+                <button
+                  className={`flex h-12 w-full md:w-auto shrink-0 items-center justify-between gap-x-2 rounded-lg px-4 transition-colors duration-300 ${
+                    darkMode
+                      ? "bg-black/20 border border-gray-700"
+                      : "bg-white border border-gray-200"
+                  }`}
+                >
+                  <p
+                    className={`text-sm font-medium leading-normal ${
+                      darkMode ? "text-gray-200" : "text-gray-800"
+                    }`}
+                  >
                     All Orders
                   </p>
-                  <FiChevronDown className="text-gray-500 dark:text-gray-400 text-xl" />
+                  <FiChevronDown
+                    className={`text-xl ${
+                      darkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  />
                 </button>
               </div>
             </div>
@@ -111,7 +139,11 @@ const UserOrdersPage = () => {
             {/* Orders List */}
             <div className="grid grid-cols-1 gap-6">
               {/* Empty State */}
-              <div className="flex flex-col items-center justify-center text-center gap-4 py-16 px-6 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700">
+              <div
+                className={`flex flex-col items-center justify-center text-center gap-4 py-16 px-6 rounded-xl border-2 border-dashed transition-colors duration-300 ${
+                  darkMode ? "border-gray-700" : "border-gray-300"
+                }`}
+              >
                 <div className="flex items-center justify-center size-16 bg-primary/20 rounded-full">
                   <MdShoppingBasket className="text-3xl text-primary" />
                 </div>

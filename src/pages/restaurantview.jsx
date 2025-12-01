@@ -4,6 +4,7 @@ import { MdStorefront } from "react-icons/md";
 import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 
 const RestaurantsDirectoryPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -12,6 +13,7 @@ const RestaurantsDirectoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  const { darkMode } = useTheme();
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
@@ -39,7 +41,19 @@ const RestaurantsDirectoryPage = () => {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setRestaurants(data || []);
+
+        // Load logos from storage for each restaurant
+        const restaurantsWithLogos = await Promise.all(
+          (data || []).map(async (restaurant) => {
+            const logoUrl = await loadRestaurantLogo(restaurant.id);
+            return {
+              ...restaurant,
+              logo_url: logoUrl || restaurant.logo_url, // Use storage URL or fallback to DB URL
+            };
+          })
+        );
+
+        setRestaurants(restaurantsWithLogos);
       } catch (error) {
         console.error("Error fetching restaurants:", error);
         setRestaurants([]);
@@ -50,6 +64,37 @@ const RestaurantsDirectoryPage = () => {
 
     fetchRestaurants();
   }, []);
+
+  const loadRestaurantLogo = async (restaurantId) => {
+    try {
+      // Check if logo exists in storage
+      const { data, error } = await supabase.storage
+        .from("restaurant-logos")
+        .list(restaurantId, {
+          limit: 1,
+        });
+
+      if (error) {
+        console.error("Error loading restaurant logo:", error);
+        return null;
+      }
+
+      if (data && data.length > 0) {
+        // Get public URL for the logo
+        const { data: urlData } = supabase.storage
+          .from("restaurant-logos")
+          .getPublicUrl(`${restaurantId}/${data[0].name}`);
+
+        if (urlData) {
+          return urlData.publicUrl;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error("Error loading restaurant logo:", error);
+      return null;
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -116,8 +161,12 @@ const RestaurantsDirectoryPage = () => {
 
       {/* Main Content */}
       <main
-        className={`flex-1 p-6 bg-background-light dark:bg-background-dark transition-all duration-300 ${
+        className={`flex-1 p-6 transition-all duration-300 ${
           sidebarOpen ? "lg:ml-64" : "lg:ml-16"
+        } ${
+          darkMode
+            ? "bg-background-dark text-white"
+            : "bg-background-light text-black"
         }`}
       >
         <div className="mx-auto w-full max-w-7xl">
@@ -148,7 +197,11 @@ const RestaurantsDirectoryPage = () => {
             <div className="relative mt-4">
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
-                className="w-full max-w-md rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 p-3 pl-10 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-500"
+                className={`w-full max-w-md rounded-xl p-3 pl-10 focus:ring-2 focus:ring-green-500 transition-colors duration-300 ${
+                  darkMode
+                    ? "border border-white/10 bg-white/5 text-white placeholder-gray-400 focus:border-green-500"
+                    : "border border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:border-green-500"
+                }`}
                 placeholder="Search restaurants..."
                 type="search"
                 value={searchQuery}
@@ -187,7 +240,11 @@ const RestaurantsDirectoryPage = () => {
               {filteredRestaurants.map((restaurant) => (
                 <div
                   key={restaurant.id}
-                  className="flex flex-col rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 p-4 shadow-sm transition hover:shadow-md"
+                  className={`flex flex-col rounded-xl p-4 shadow-sm transition hover:shadow-md ${
+                    darkMode
+                      ? "bg-gray-800 border border-white/10"
+                      : "bg-white border border-gray-200"
+                  }`}
                 >
                   <div
                     className="h-40 w-full rounded-xl bg-cover bg-center bg-gray-200 dark:bg-gray-700"
