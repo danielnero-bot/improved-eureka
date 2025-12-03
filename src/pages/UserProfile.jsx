@@ -10,6 +10,18 @@ const UserProfilePage = () => {
   const [user, setUser] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    full_name: "",
+    phone: "",
+    address_line1: "",
+    city: "",
+    country: "United States",
+    delivery_instructions: "",
+    email_notifications: true,
+    push_notifications: false,
+    order_updates: true,
+  });
   const navigate = useNavigate();
   const { darkMode, toggleTheme } = useTheme();
 
@@ -25,6 +37,8 @@ const UserProfilePage = () => {
           setUser(user);
           // Load avatar from storage
           loadAvatar(user.id);
+          // Load user details from table
+          loadUserDetails(user.id, user);
         }
       } catch {
         // ignore
@@ -32,6 +46,49 @@ const UserProfilePage = () => {
     };
     getUser();
   }, []);
+
+  const loadUserDetails = async (userId, authUser) => {
+    try {
+      setLoadingProfile(true);
+      const { data, error } = await supabase
+        .from("user_details")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error loading user details:", error);
+      }
+
+      if (data) {
+        setProfileData({
+          full_name: data.full_name || authUser.user_metadata?.full_name || "",
+          phone: data.phone || authUser.phone || "",
+          address_line1: data.address_line1 || "",
+          city: data.city || "",
+          country: data.country || "United States",
+          delivery_instructions: data.delivery_instructions || "",
+          email_notifications: data.email_notifications ?? true,
+          push_notifications: data.push_notifications ?? false,
+          order_updates: data.order_updates ?? true,
+        });
+        if (data.avatar_url) {
+          setAvatarUrl(data.avatar_url);
+        }
+      } else {
+        // Initialize with auth data if no record exists
+        setProfileData((prev) => ({
+          ...prev,
+          full_name: authUser.user_metadata?.full_name || "",
+          phone: authUser.phone || "",
+        }));
+      }
+    } catch (error) {
+      console.error("Error loading user details:", error);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   const loadAvatar = async (userId) => {
     try {
@@ -108,12 +165,80 @@ const UserProfilePage = () => {
         await supabase.auth.updateUser({
           data: { avatar_url: urlData.publicUrl },
         });
+
+        // Update user_details table
+        await supabase.from("user_details").upsert(
+          {
+            user_id: user.id,
+            avatar_url: urlData.publicUrl,
+            updated_at: new Date(),
+          },
+          { onConflict: "user_id" }
+        );
       }
     } catch (error) {
       console.error("Error uploading avatar:", error);
       alert("Error uploading photo. Please try again.");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { id, value, type, checked } = e.target;
+    setProfileData((prev) => ({
+      ...prev,
+      [id]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleToggleChange = (field) => {
+    setProfileData((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      setLoadingProfile(true);
+
+      const updates = {
+        user_id: user.id,
+        full_name: profileData.full_name,
+        phone: profileData.phone,
+        address_line1: profileData.address_line1,
+        city: profileData.city,
+        country: profileData.country,
+        delivery_instructions: profileData.delivery_instructions,
+        email_notifications: profileData.email_notifications,
+        push_notifications: profileData.push_notifications,
+        order_updates: profileData.order_updates,
+        updated_at: new Date(),
+      };
+
+      const { error } = await supabase.from("user_details").upsert(updates, {
+        onConflict: "user_id",
+      });
+
+      if (error) throw error;
+
+      // Also update auth metadata for full_name consistency
+      if (profileData.full_name !== user.user_metadata?.full_name) {
+        await supabase.auth.updateUser({
+          data: { full_name: profileData.full_name },
+        });
+      }
+
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Error updating profile. Please try again.");
+    } finally {
+      setLoadingProfile(false);
     }
   };
 
@@ -210,7 +335,9 @@ const UserProfilePage = () => {
                 </div>
                 <div className="text-center sm:text-left flex-1">
                   <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-                    {user?.user_metadata?.full_name || "Guest User"}
+                    {profileData.full_name ||
+                      user?.user_metadata?.full_name ||
+                      "Guest User"}
                   </h2>
                   <p className="text-gray-500 dark:text-gray-400">
                     {user?.email || "No email provided"}
@@ -250,20 +377,24 @@ const UserProfilePage = () => {
               }`}
             >
               <div className="p-6">
-                <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  onSubmit={handleSaveProfile}
+                >
                   <div>
                     <label
                       className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      htmlFor="full-name"
+                      htmlFor="full_name"
                     >
                       Full Name
                     </label>
                     <input
                       className="w-full p-3 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      id="full-name"
+                      id="full_name"
                       type="text"
-                      defaultValue={user?.user_metadata?.full_name || ""}
-                      key={user?.user_metadata?.full_name} // Force re-render when data loads
+                      value={profileData.full_name}
+                      onChange={handleInputChange}
+                      placeholder="John Doe"
                     />
                   </div>
                   <div>
@@ -292,21 +423,25 @@ const UserProfilePage = () => {
                       className="w-full p-3 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       id="phone"
                       type="tel"
-                      defaultValue={user?.phone || ""}
+                      value={profileData.phone}
+                      onChange={handleInputChange}
+                      placeholder="+1 (555) 000-0000"
                     />
                   </div>
                   <div>
                     <label
                       className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      htmlFor="address"
+                      htmlFor="address_line1"
                     >
                       Delivery Address
                     </label>
                     <input
                       className="w-full p-3 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      id="address"
+                      id="address_line1"
                       type="text"
-                      defaultValue="123 Flavor Street" // Placeholder as we don't have address in metadata yet
+                      value={profileData.address_line1}
+                      onChange={handleInputChange}
+                      placeholder="123 Main St"
                     />
                   </div>
                   <div>
@@ -320,7 +455,9 @@ const UserProfilePage = () => {
                       className="w-full p-3 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       id="city"
                       type="text"
-                      defaultValue="Foodville"
+                      value={profileData.city}
+                      onChange={handleInputChange}
+                      placeholder="New York"
                     />
                   </div>
                   <div>
@@ -334,21 +471,25 @@ const UserProfilePage = () => {
                       className="w-full p-3 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       id="country"
                       type="text"
-                      defaultValue="United States"
+                      value={profileData.country}
+                      onChange={handleInputChange}
+                      placeholder="United States"
                     />
                   </div>
                   <div className="md:col-span-2">
                     <label
                       className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      htmlFor="notes"
+                      htmlFor="delivery_instructions"
                     >
                       Additional Notes (Optional)
                     </label>
                     <textarea
                       className="w-full p-3 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      id="notes"
+                      id="delivery_instructions"
                       placeholder="e.g., gate code, delivery instructions"
                       rows="3"
+                      value={profileData.delivery_instructions}
+                      onChange={handleInputChange}
                     ></textarea>
                   </div>
                 </form>
@@ -405,12 +546,23 @@ const UserProfilePage = () => {
                       </p>
                     </div>
                     <button
-                      aria-checked="true"
-                      className="relative inline-flex h-6 w-11 items-center rounded-full bg-green-600"
+                      aria-checked={profileData.email_notifications}
+                      onClick={() => handleToggleChange("email_notifications")}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        profileData.email_notifications
+                          ? "bg-green-600"
+                          : "bg-gray-200 dark:bg-gray-600"
+                      }`}
                       role="switch"
                       type="button"
                     >
-                      <span className="inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-6"></span>
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                          profileData.email_notifications
+                            ? "translate-x-6"
+                            : "translate-x-1"
+                        }`}
+                      ></span>
                     </button>
                   </div>
                   <div className="flex items-center justify-between">
@@ -423,12 +575,23 @@ const UserProfilePage = () => {
                       </p>
                     </div>
                     <button
-                      aria-checked="false"
-                      className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 dark:bg-gray-600"
+                      aria-checked={profileData.push_notifications}
+                      onClick={() => handleToggleChange("push_notifications")}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        profileData.push_notifications
+                          ? "bg-green-600"
+                          : "bg-gray-200 dark:bg-gray-600"
+                      }`}
                       role="switch"
                       type="button"
                     >
-                      <span className="inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-1"></span>
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                          profileData.push_notifications
+                            ? "translate-x-6"
+                            : "translate-x-1"
+                        }`}
+                      ></span>
                     </button>
                   </div>
                   <div className="flex items-center justify-between">
@@ -441,12 +604,23 @@ const UserProfilePage = () => {
                       </p>
                     </div>
                     <button
-                      aria-checked="true"
-                      className="relative inline-flex h-6 w-11 items-center rounded-full bg-green-600"
+                      aria-checked={profileData.order_updates}
+                      onClick={() => handleToggleChange("order_updates")}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        profileData.order_updates
+                          ? "bg-green-600"
+                          : "bg-gray-200 dark:bg-gray-600"
+                      }`}
                       role="switch"
                       type="button"
                     >
-                      <span className="inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-6"></span>
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                          profileData.order_updates
+                            ? "translate-x-6"
+                            : "translate-x-1"
+                        }`}
+                      ></span>
                     </button>
                   </div>
                 </div>
@@ -456,10 +630,12 @@ const UserProfilePage = () => {
             {/* Save Button */}
             <div className="flex justify-end">
               <button
-                className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+                className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
                 type="submit"
+                onClick={handleSaveProfile}
+                disabled={loadingProfile}
               >
-                Save Changes
+                {loadingProfile ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>

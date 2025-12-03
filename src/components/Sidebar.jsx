@@ -78,7 +78,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
                 <Link
                   to={path}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+                  className={`flex items-center gap-3 rounded-lg transition-colors ${
+                    sidebarOpen
+                      ? "px-3 py-2"
+                      : "p-2 lg:p-2 lg:group-hover:px-3 lg:group-hover:py-2"
+                  } ${
                     active
                       ? darkMode
                         ? "bg-white/10 text-white"
@@ -151,7 +155,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
             <li>
               <button
                 onClick={onLogout}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors w-full ${
+                className={`flex items-center gap-3 rounded-lg transition-colors w-full ${
+                  sidebarOpen
+                    ? "px-3 py-2"
+                    : "p-2 lg:p-2 lg:group-hover:px-3 lg:group-hover:py-2"
+                } ${
                   darkMode
                     ? "text-white/70 hover:text-white hover:bg-white/5"
                     : "text-text-secondary-light hover:text-text-light hover:bg-gray-100"
