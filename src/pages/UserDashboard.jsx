@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FiHeart, FiBell, FiSearch, FiMapPin, FiTruck } from "react-icons/fi";
-import { MdFastfood, MdHistory, MdMenu } from "react-icons/md";
+import { MdFastfood, MdHistory, MdMenu, MdShoppingCart } from "react-icons/md";
 import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
@@ -87,7 +87,7 @@ const QuickPlateDashboard = () => {
           </div>
           <div className="flex items-center gap-4">
             <button className="relative rounded-full p-2 text-text-light-secondary dark:text-dark-secondary hover:bg-gray-100 dark:hover:bg-white/10">
-              <FiBell className="text-lg" />
+              <MdShoppingCart className="text-lg" />
               <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500"></span>
             </button>
             <img
