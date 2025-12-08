@@ -1,12 +1,20 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FiHome, FiHeart, FiUser, FiLogOut } from "react-icons/fi";
+import {
+  FiHome,
+  FiHeart,
+  FiUser,
+  FiLogOut,
+  FiShoppingCart,
+} from "react-icons/fi";
 import { MdStorefront, MdReceiptLong } from "react-icons/md";
 import { useTheme } from "../context/ThemeContext";
+import { useCart } from "../context/CartContext";
 
 const UserSidebar = ({ sidebarOpen, setSidebarOpen, user, onLogout }) => {
   const location = useLocation();
   const { darkMode } = useTheme();
+  const { getCartItemsCount, setIsCartOpen } = useCart();
 
   const navItems = [
     { path: "/dashboard", label: "Home", icon: <FiHome /> },
@@ -89,7 +97,7 @@ const UserSidebar = ({ sidebarOpen, setSidebarOpen, user, onLogout }) => {
                       sidebarOpen
                         ? "opacity-100"
                         : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
-                    } transition-opacity duration-300 whitespace-nowrap overflow-hidden`}
+                    } transition-opacity duration-300 whitespace-nowrap overflow-hidden text-inherit`}
                   >
                     {label}
                   </span>
@@ -99,8 +107,46 @@ const UserSidebar = ({ sidebarOpen, setSidebarOpen, user, onLogout }) => {
           })}
         </ul>
 
+        {/* Cart Button */}
+        <div className="mt-4">
+          <button
+            onClick={() => {
+              setIsCartOpen(true);
+              setSidebarOpen(false);
+            }}
+            className={`flex items-center gap-3 rounded-lg transition-colors w-full relative ${
+              sidebarOpen
+                ? "px-3 py-2"
+                : "p-2 lg:p-2 lg:group-hover:px-3 lg:group-hover:py-2"
+            } ${
+              darkMode
+                ? "text-white/70 hover:text-white hover:bg-white/5"
+                : "text-text-secondary-light hover:text-text-light hover:bg-gray-100"
+            }`}
+            title="Cart"
+          >
+            <span className="text-xl shrink-0 relative">
+              <FiShoppingCart />
+              {getCartItemsCount() > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                  {getCartItemsCount()}
+                </span>
+              )}
+            </span>
+            <span
+              className={`${
+                sidebarOpen
+                  ? "opacity-100"
+                  : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
+              } transition-opacity duration-300 whitespace-nowrap overflow-hidden text-inherit`}
+            >
+              Cart {getCartItemsCount() > 0 && `(${getCartItemsCount()})`}
+            </span>
+          </button>
+        </div>
+
         {/* User Info & Logout */}
-        <div className="space-y-4">
+        <div className="space-y-4 mt-auto">
           {/* User Info */}
           {user && (
             <div
@@ -113,7 +159,7 @@ const UserSidebar = ({ sidebarOpen, setSidebarOpen, user, onLogout }) => {
               } transition-opacity duration-300`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 shrink-0">
                   {user?.user_metadata?.avatar_url ? (
                     <img
                       src={user.user_metadata.avatar_url}
@@ -164,7 +210,7 @@ const UserSidebar = ({ sidebarOpen, setSidebarOpen, user, onLogout }) => {
                     sidebarOpen
                       ? "opacity-100"
                       : "opacity-0 lg:opacity-0 lg:group-hover:opacity-100"
-                  } transition-opacity duration-300 whitespace-nowrap overflow-hidden`}
+                  } transition-opacity duration-300 whitespace-nowrap overflow-hidden text-inherit`}
                 >
                   Logout
                 </span>

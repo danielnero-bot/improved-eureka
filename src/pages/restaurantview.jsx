@@ -3,7 +3,7 @@ import { FiSearch, FiStar, FiMenu } from "react-icons/fi";
 import { MdStorefront } from "react-icons/md";
 import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 
 const RestaurantsDirectoryPage = () => {
@@ -265,9 +265,13 @@ const RestaurantsDirectoryPage = () => {
                     <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                       {restaurant.name}
                     </h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {restaurant.cuisine || "Cuisine not specified"}
+                    <p className="text-xs text-gray-400 mt-1">
+                      ID:{" "}
+                      <span className="font-mono text-[11px]">
+                        {restaurant.id}
+                      </span>
                     </p>
+                    
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                       {restaurant.location ||
                         restaurant.address ||
@@ -283,9 +287,13 @@ const RestaurantsDirectoryPage = () => {
                   </div>
 
                   <div className="mt-auto flex gap-3 pt-4">
-                    <button className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors">
+                    <Link
+                      className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"
+                      to={`/restaurant/${restaurant.id}`}
+                      state={{ restaurant }}
+                    >
                       View Profile
-                    </button>
+                    </Link>
                     <button className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                       Message
                     </button>

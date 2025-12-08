@@ -284,13 +284,13 @@ const UserProfilePage = () => {
             >
               <FiMenu className="text-2xl text-gray-700 dark:text-gray-300" />
             </button>
-            <h1 className="text-xl font-bold text-gray-800 dark:text-white">
+            <h1 className="text-xl font-bold text-black dark:text-white">
               Your Profile
             </h1>
           </div>
 
           <div className="mb-8 hidden lg:block">
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+            <h1 className="text-3xl font-bold text-black dark:text-white">
               Your Profile
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
