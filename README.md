@@ -232,7 +232,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 👨‍💻 Author
 
-Built with ❤️ by [Your Name]
+Built with ❤️ by Daniel Nero
 
 ---
 
@@ -248,7 +248,7 @@ Built with ❤️ by [Your Name]
 
 ## 📞 Support
 
-For support, email your-email@example.com or open an issue in the GitHub repository.
+For support, email nero80311@gmail.com or open an issue in the GitHub repository.
 
 ---
 
