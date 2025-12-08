@@ -1,20 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { MdLightMode, MdDarkMode } from "react-icons/md";
+import React, { useState } from "react";
 import { FaRegEye, FaRegEyeSlash, FaGoogle } from "react-icons/fa";
+import { IoMdArrowRoundBack } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import { useTheme } from "../context/ThemeContext";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { darkMode } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
-  const [userType, setUserType] = useState("user");
-  const { darkMode, toggleTheme } = useTheme();
 
   // Determine role
   const determineUserRole = async (user) => {
@@ -28,12 +26,7 @@ const Login = () => {
         .single();
       if (restaurant) return "restaurant";
 
-      const { data: normalUser } = await supabase
-        .from("users")
-        .select("id")
-        .eq("user_uid", user.id)
-        .single();
-      return normalUser ? "user" : "user";
+      return "user";
     } catch {
       return "user";
     }
@@ -62,10 +55,10 @@ const Login = () => {
     }
   };
 
-  // Google OAuth for GitHub Pages + HashRouter
+  // Google OAuth
   const handleGoogleSignIn = async () => {
     setError("");
-    setGoogleLoading(true);
+    setLoading(true);
     try {
       const redirectUrl = `${window.location.origin}${window.location.pathname}#/auth/callback`;
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -75,107 +68,121 @@ const Login = () => {
       if (oauthError) throw oauthError;
     } catch (err) {
       setError(err.message || "Google login failed");
-      setGoogleLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="font-display bg-background-light dark:bg-background-dark text-black dark:text-white">
-      {" "}
-      <div className="relative flex min-h-screen flex-col items-center justify-center p-4">
-        <main className="w-full max-w-md mx-auto">
-          <div className="flex flex-col gap-8">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold tracking-tighter">
-                Welcome Back to QuickPlate
+    <div className="relative flex min-h-screen w-full bg-background-light dark:bg-background-dark font-display transition-colors duration-300">
+      {/* Back Button */}
+      <Link
+        to="/"
+        className="absolute top-6 left-6 z-10 inline-flex items-center gap-2 text-text-light dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
+      >
+        <IoMdArrowRoundBack className="text-xl" />
+        <span className="font-medium">Back</span>
+      </Link>
+
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <main className="w-full max-w-md">
+          <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-8 shadow-lg transition-colors duration-300">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl sm:text-4xl font-black text-text-light dark:text-white mb-2">
+                Welcome Back
               </h1>
-              <p className="text-base text-text-light-secondary dark:text-dark-secondary">
-                Sign in to continue your journey.
+              <p className="text-text-secondary-light dark:text-gray-400">
+                Sign in to continue to QuickPlate
               </p>
             </div>
 
-            <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            {/* Form */}
+            <form onSubmit={handleLogin} className="space-y-5">
               {error && (
-                <div className="bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded">
+                <div className="px-4 py-3 rounded-lg bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400">
                   {error}
                 </div>
               )}
 
               {/* Email */}
-              <label className="flex flex-col gap-1">
-                <p className="pb-2 text-base font-medium">Email</p>
+              <div>
+                <label className="block text-sm font-medium text-text-light dark:text-gray-300 mb-2">
+                  Email Address
+                </label>
                 <input
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-14 rounded-lg border p-4 bg-surface-light dark:bg-surface-dark focus:ring-2 focus:ring-primary text-black dark:text-white"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-text-light dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                  required
                 />
-              </label>
+              </div>
 
               {/* Password */}
-              <label className="flex flex-col gap-1">
-                <p className="pb-2 text-base font-medium">Password</p>
-                <div className="relative flex items-center">
+              <div>
+                <label className="block text-sm font-medium text-text-light dark:text-gray-300 mb-2">
+                  Password
+                </label>
+                <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-14 w-full rounded-lg border p-4 bg-surface-light dark:bg-surface-dark text-black dark:text-white focus:ring-2 focus:ring-primary"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-text-light dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors pr-12"
+                    required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 text-gray-400 dark:text-gray-500"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                   >
-                    {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
+                    {showPassword ? (
+                      <FaRegEyeSlash size={20} />
+                    ) : (
+                      <FaRegEye size={20} />
+                    )}
                   </button>
                 </div>
-              </label>
+              </div>
 
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="h-12 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 disabled:opacity-50"
+                className="w-full py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? "Signing in..." : "Sign In"}
               </button>
 
-              <div className="relative flex items-center justify-center mt-2">
+              {/* Divider */}
+              <div className="relative flex items-center justify-center my-6">
                 <div className="absolute w-full border-t border-gray-300 dark:border-gray-700"></div>
-                <div className="relative bg-background-light dark:bg-background-dark px-4">
-                  <span className="text-sm text-text-light-secondary dark:text-dark-secondary">
+                <div className="relative bg-card-light dark:bg-card-dark px-4">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     Or continue with
                   </span>
                 </div>
               </div>
 
-              {/* Google Login */}
+              {/* Google Sign In */}
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
-                disabled={googleLoading || loading}
-                className="flex items-center justify-center gap-2 h-12 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 dark:border-gray-700 rounded-lg text-text-light dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 transition-colors"
               >
-                {googleLoading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2"></div>
-                ) : (
-                  <FaGoogle className="w-5 h-5" />
-                )}
-                <span>
-                  {googleLoading ? "Signing in..." : "Sign in with Google"}
-                </span>
+                <FaGoogle className="w-5 h-5" />
+                <span className="font-medium">Sign in with Google</span>
               </button>
 
-              <p className="text-center text-sm text-text-light-secondary dark:text-dark-secondary">
+              {/* Sign Up Link */}
+              <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
                 Don't have an account?{" "}
                 <Link
-                  to={
-                    userType === "restaurant"
-                      ? "/signupRestaurant"
-                      : "/signupUser"
-                  }
+                  to="/getStarted"
                   className="font-semibold text-primary hover:underline"
                 >
                   Sign up
@@ -183,10 +190,12 @@ const Login = () => {
               </p>
             </form>
           </div>
+
+          {/* Footer */}
+          <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-6">
+            Powered by QuickPlate Open Source
+          </p>
         </main>
-        <footer className="absolute bottom-6 text-center text-sm text-text-light-secondary dark:text-dark-secondary">
-          Powered by QuickPlate Open Source
-        </footer>
       </div>
     </div>
   );

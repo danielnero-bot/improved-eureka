@@ -28,6 +28,8 @@ import RestaurantsDirectoryPage from "./pages/restaurantview";
 import UserRestaurantDetailsPage from "./pages/UserRestaurantDetails";
 import RestaurantPublicView from "./pages/RestaurantPublicView";
 import Checkout from "./pages/Checkout";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -75,6 +77,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             />
             <Route path="/restaurant/:id" element={<RestaurantPublicView />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
           </Routes>
         </HashRouter>
       </CartProvider>

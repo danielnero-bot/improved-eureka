@@ -58,54 +58,36 @@ const About = () => {
               </div>
             </section>
 
-            {/* ====== CONTRIBUTORS ====== */}
+            {/* ====== CONTRIBUTOR ====== */}
             <section className="px-4 py-16 sm:py-20 md:py-24 text-center">
               <div className="mx-auto max-w-3xl">
                 <h2 className="text-3xl font-bold tracking-tight text-[#111714] dark:text-gray-100 sm:text-4xl">
-                  Meet the Contributors
+                  Meet the Creator
                 </h2>
                 <p className="mt-4 text-base leading-relaxed text-[#648772] dark:text-gray-400 sm:text-lg">
-                  QuickPlate is powered by a passionate global community —
-                  developers, designers, and creators who believe in building
-                  tools that help local businesses thrive.
+                  QuickPlate is built and maintained by a passionate developer
+                  who believes in creating tools that help local businesses
+                  thrive.
                 </p>
               </div>
 
-              <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2">
-                {[
-                  {
-                    name: "Daniel Oghenero",
-                    role: "Lead Developer",
-                    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB51QXV_OheVaxfs3cOADp-xXwAXw46m8KgPot13ubViAUQZhBeiZX7b9jNjawOrvBUTs5roeBYoXrgmupCzc4mLVKaqx8VvAM3yO3j4E3pSrmYJ8KuZxNuqEeNwy0Ud9A_342TWTzhVCuXtC94-OJB6q0c_wgTA8rIGuN3WJez0lGG9YPwp-5fwBl6Zngl2YO9uOnD6AQGVilDVHrCuI7cX4dSCDW9omYGoYHOs6Yy3D8sKsY_tlUVXQf9jQb6J1BrgvC6z6u5xlN0",
-                  },
-                  {
-                    name: "Favour Benson",
-                    role: "Co-Founder",
-                    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCj_fPjBvjG2XQxj9BC7J2KN3BGSuiGZjxWbx2kTzmfKPqFU-Ow7VuQShmTipwKJuhTbwhfkY021y8qCVkEQ4DjAyDgV0KM-WjVB7VtP2s7FdL2CsC9r8bj0ZQoC5dLtFKHFrG1cx9soFm4n0liufg-bT4YYMhhMC85Gdt6C1nMph_w59m_sUPKz3PaFxar2m0Z14BJjZsxYlKFWB1DhTzQgId2-Z9Rv1Kyz-_wzhEx_eWRH1Pkd8fyiM3xHlrQfk6oSI3hFm5k8S6O",
-                  },
-                  {
-                    name: "Tolu Bakare",
-                    role: "Backend Engineer",
-                    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCIpMtzVpAdT5Y6buzPwQ4XpVq2glY4YMi6cCVhnvsuPVQBXYE0l1eK_-tNgypBsJgBHDtFNKyb03BeNsWESJr4-Q2ZnRX79TOlIR1BxMDBANh0bS4IZSFmeOMxu5y8Mqdcsow7O1_K0_ZKCT5TkT5_oTyAx6M5vqBfHkCuAOH2vjLR87yr8TNAslwvbUTUOoM-w4xXQQEqyhAh9YmgJPcX48MeC7AkbS4RxqEM7lJ-SRQtwLXSWWCTDxAvsdnHuRwO6PX_7RvZaq0l",
-                  },
-                  {
-                    name: "Sarah Lee",
-                    role: "Community Manager",
-                    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuDKCSz-gN5CSTI4iQ6xFYD1T8LG-Vs44Numj5RChXqmyNoH8x9mPkjara3seLdZEQhwjrH5ehYlq6MTnEtpiEa4HInWqDfEejSMzaM8DtNNpuGESLX9po-oOdylFxgvvgoedDne3hHxI02sXK4-8XafUoeyBDwlpv-C5ucWo7q4CHa2N0MXaWZnR-NQGUfVsYthqOKGARg8VHXukrOKvpm25CZY-hRPEP8k_dZDiM-NAjFa4MygBesVcqDrKq3_KBh4WAgsJsZdp-5q",
-                  },
-                ].map((contributor) => (
-                  <div key={contributor.name} className="text-center">
-                    <img
-                      alt={contributor.name}
-                      src={contributor.img}
-                      className="mx-auto h-24 w-24 rounded-full object-cover"
-                    />
-                    <h3 className="mt-4 text-lg font-bold text-[#111714] dark:text-gray-100">
-                      {contributor.name}
-                    </h3>
-                    <p className="text-sm text-primary">{contributor.role}</p>
-                  </div>
-                ))}
+              <div className="mt-12 flex justify-center">
+                <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl p-8 max-w-sm transition-colors duration-300">
+                  <img
+                    alt="Daniel Oghenero"
+                    src="https://i.pinimg.com/1200x/0f/ae/04/0fae04c2b8cd52e0ee6b3fb4c254bb21.jpg"
+                    className="mx-auto h-32 w-32 rounded-full object-cover border-4 border-primary/20"
+                  />
+                  <h3 className="mt-6 text-xl font-bold text-[#111714] dark:text-gray-100">
+                    Daniel Oghenero
+                  </h3>
+                  <p className="mt-2 text-sm font-medium text-primary">
+                    Lead Developer & Creator
+                  </p>
+                  <p className="mt-3 text-sm text-[#648772] dark:text-gray-400">
+                    Building innovative solutions for the food industry
+                  </p>
+                </div>
               </div>
             </section>
           </div>
