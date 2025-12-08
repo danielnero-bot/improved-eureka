@@ -40,6 +40,8 @@ const scaleIn = {
 const QuickPlateDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
   const navigate = useNavigate();
   const { darkMode } = useTheme();
 
@@ -58,6 +60,42 @@ const QuickPlateDashboard = () => {
     };
     getUser();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchFavorites = async () => {
+      try {
+        setLoadingFavorites(true);
+        const { data, error } = await supabase
+          .from("favorites")
+          .select(
+            `
+            id,
+            restaurants (
+              id,
+              name,
+              logo_url
+            )
+          `
+          )
+          .eq("user_id", user.id)
+          .limit(3);
+
+        if (error) throw error;
+
+        const validFavorites = (data || [])
+          .map((f) => f.restaurants)
+          .filter((r) => r !== null);
+
+        setFavorites(validFavorites);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingFavorites(false);
+      }
+    };
+    fetchFavorites();
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -108,16 +146,21 @@ const QuickPlateDashboard = () => {
               <MdMenu className="text-2xl" />
             </button>
             <div className="relative w-full max-w-md hidden md:block">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light-secondary dark:text-dark-secondary" />
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted-light dark:text-text-muted-dark" />
               <input
-                className="w-full rounded-full border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark py-2 pl-10 pr-4 focus:border-primary focus:ring-1 focus:ring-primary"
-                placeholder="Search for restaurants or dishes..."
+                className="w-full rounded-full border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark py-2 pl-10 pr-4 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+                placeholder="Search for restaurants..."
                 type="text"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    // Implement search navigation if needed, or just visual
+                  }
+                }}
               />
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative rounded-full p-2 text-text-light-secondary dark:text-dark-secondary hover:bg-gray-100 dark:hover:bg-white/10">
+            <button className="relative rounded-full p-2 text-text-secondary-light dark:text-text-secondary-dark hover:bg-gray-100 dark:hover:bg-white/10">
               <MdShoppingCart className="text-lg" />
               <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500"></span>
             </button>
@@ -149,7 +192,7 @@ const QuickPlateDashboard = () => {
             <h2 className="text-2xl font-bold">
               Welcome back, {user?.user_metadata?.full_name || "Guest"}!
             </h2>
-            <p className="text-text-light-secondary dark:text-dark-secondary mt-1">
+            <p className="text-text-secondary-light dark:text-text-secondary-dark mt-1">
               What would you like to eat today?
             </p>
           </motion.section>
@@ -165,15 +208,36 @@ const QuickPlateDashboard = () => {
               className="grid grid-cols-2 md:grid-cols-4 gap-4"
             >
               {[
-                { icon: MdFastfood, label: "Order Food", color: "primary" },
-                { icon: FiTruck, label: "Track Order", color: "blue" },
-                { icon: FiHeart, label: "Saved", color: "red" },
-                { icon: MdHistory, label: "Past Orders", color: "purple" },
+                {
+                  icon: MdFastfood,
+                  label: "Order Food",
+                  color: "primary",
+                  path: "/restaurantview",
+                },
+                {
+                  icon: FiTruck,
+                  label: "Track Order",
+                  color: "blue",
+                  path: "/userOrders",
+                },
+                {
+                  icon: FiHeart,
+                  label: "Saved",
+                  color: "red",
+                  path: "/favorites",
+                },
+                {
+                  icon: MdHistory,
+                  label: "Past Orders",
+                  color: "purple",
+                  path: "/userOrders",
+                },
               ].map((action, index) => (
                 <motion.div
                   key={index}
                   variants={scaleIn}
                   whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+                  onClick={() => navigate(action.path)}
                   className={`flex flex-col items-center justify-center gap-2 rounded-xl p-4 text-center cursor-pointer hover:shadow-lg transition-all ${
                     darkMode
                       ? "bg-card-dark border border-border-dark hover:border-primary"
@@ -208,9 +272,9 @@ const QuickPlateDashboard = () => {
               }`}
             >
               <div className="flex justify-center mb-4">
-                <MdHistory className="text-4xl text-text-light-secondary dark:text-dark-secondary opacity-50" />
+                <MdHistory className="text-4xl text-text-muted-light dark:text-text-muted-dark opacity-50" />
               </div>
-              <p className="text-text-light-secondary dark:text-dark-secondary">
+              <p className="text-text-secondary-light dark:text-text-secondary-dark">
                 No recent orders found.
               </p>
             </motion.div>
@@ -224,18 +288,49 @@ const QuickPlateDashboard = () => {
               whileInView="visible"
               viewport={{ once: true, amount: 0.3 }}
               variants={scaleIn}
-              className={`rounded-xl p-8 text-center transition-colors duration-300 ${
+              className={`rounded-xl p-6 transition-colors duration-300 min-h-[150px] flex flex-col justify-center ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
                   : "bg-card-light border border-border-light"
               }`}
             >
-              <div className="flex justify-center mb-4">
-                <FiHeart className="text-4xl text-text-light-secondary dark:text-dark-secondary opacity-50" />
-              </div>
-              <p className="text-text-light-secondary dark:text-dark-secondary">
-                You haven't saved any restaurants yet.
-              </p>
+              {loadingFavorites ? (
+                <p className="text-text-secondary-light dark:text-text-secondary-dark text-center">
+                  Loading...
+                </p>
+              ) : favorites.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                  {favorites.map((fav) => (
+                    <div
+                      key={fav.id}
+                      className="flex items-center justify-between border-b border-border-light dark:border-border-dark pb-2 last:border-0 last:pb-0"
+                    >
+                      <span className="font-semibold text-lg">{fav.name}</span>
+                      <button
+                        onClick={() => navigate(`/restaurant/${fav.id}`)}
+                        className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-bold hover:bg-primary hover:text-white transition-colors"
+                      >
+                        View
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => navigate("/favorites")}
+                    className="mt-2 text-sm text-primary font-bold hover:underline self-center"
+                  >
+                    View All Favorites
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <div className="flex justify-center mb-4">
+                    <FiHeart className="text-4xl text-text-muted-light dark:text-text-muted-dark opacity-50" />
+                  </div>
+                  <p className="text-text-secondary-light dark:text-text-secondary-dark">
+                    You haven't saved any restaurants yet.
+                  </p>
+                </div>
+              )}
             </motion.div>
           </section>
         </main>

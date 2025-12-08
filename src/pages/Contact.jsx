@@ -112,7 +112,7 @@ const Contact = () => {
                 <div className="space-y-6">
                   {/* Email */}
                   <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <div className="shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                       <FaEnvelope className="text-primary text-lg" />
                     </div>
                     <div>
@@ -133,7 +133,7 @@ const Contact = () => {
 
                   {/* GitHub */}
                   <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <div className="shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                       <FaGithub className="text-primary text-lg" />
                     </div>
                     <div>

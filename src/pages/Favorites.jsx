@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { FiSearch, FiStar, FiMenu } from "react-icons/fi";
-import { MdStorefront } from "react-icons/md";
+import { FiSearch, FiStar, FiMenu, FiHeart } from "react-icons/fi";
+import { MdStorefront, MdOutlineFavoriteBorder } from "react-icons/md";
 import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
 import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 
-const RestaurantsDirectoryPage = () => {
+const Favorites = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [restaurants, setRestaurants] = useState([]);
@@ -23,75 +23,83 @@ const RestaurantsDirectoryPage = () => {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        if (user) setUser(user);
+        if (user) {
+          setUser(user);
+        } else {
+          navigate("/login");
+        }
       } catch {
-        // ignore
+        navigate("/login");
       }
     };
     getUser();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
-    const fetchRestaurants = async () => {
+    if (!user) return;
+
+    const fetchFavorites = async () => {
       try {
         setLoading(true);
+        // Fetch favorites joined with restaurants
         const { data, error } = await supabase
-          .from("restaurants")
-          .select("*")
-          .order("created_at", { ascending: false });
+          .from("favorites")
+          .select(
+            `
+            id,
+            restaurants (
+              *
+            )
+          `
+          )
+          .eq("user_id", user.id);
 
         if (error) throw error;
 
-        // Load logos from storage for each restaurant
-        const restaurantsWithLogos = await Promise.all(
-          (data || []).map(async (restaurant) => {
-            const logoUrl = await loadRestaurantLogo(restaurant.id);
-            return {
-              ...restaurant,
-              logo_url: logoUrl || restaurant.logo_url, // Use storage URL or fallback to DB URL
-            };
-          })
+        // Extract restaurant data and handle logos
+        const favoriteRestaurants = await Promise.all(
+          (data || [])
+            .map((item) => item.restaurants)
+            .filter((r) => r !== null) // Filter out any nulls if join failed
+            .map(async (restaurant) => {
+              const logoUrl = await loadRestaurantLogo(restaurant.id);
+              return {
+                ...restaurant,
+                logo_url: logoUrl || restaurant.logo_url,
+              };
+            })
         );
 
-        setRestaurants(restaurantsWithLogos);
+        setRestaurants(favoriteRestaurants);
       } catch (error) {
-        console.error("Error fetching restaurants:", error);
+        console.error("Error fetching favorites:", error);
         setRestaurants([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRestaurants();
-  }, []);
+    fetchFavorites();
+  }, [user]);
 
   const loadRestaurantLogo = async (restaurantId) => {
     try {
-      // Check if logo exists in storage
       const { data, error } = await supabase.storage
         .from("restaurant-logos")
         .list(restaurantId, {
           limit: 1,
         });
 
-      if (error) {
-        console.error("Error loading restaurant logo:", error);
-        return null;
-      }
+      if (error) return null;
 
       if (data && data.length > 0) {
-        // Get public URL for the logo
         const { data: urlData } = supabase.storage
           .from("restaurant-logos")
           .getPublicUrl(`${restaurantId}/${data[0].name}`);
-
-        if (urlData) {
-          return urlData.publicUrl;
-        }
+        return urlData?.publicUrl;
       }
       return null;
-    } catch (error) {
-      console.error("Error loading restaurant logo:", error);
+    } catch {
       return null;
     }
   };
@@ -137,12 +145,11 @@ const RestaurantsDirectoryPage = () => {
   const filteredRestaurants = restaurants.filter(
     (restaurant) =>
       restaurant.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      restaurant.cuisine?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      restaurant.location?.toLowerCase().includes(searchQuery.toLowerCase())
+      restaurant.cuisine?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="relative flex min-h-screen w-full">
+    <div className="relative flex min-h-screen w-full bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark transition-colors duration-300">
       {/* Sidebar */}
       <UserSidebar
         sidebarOpen={sidebarOpen}
@@ -151,7 +158,7 @@ const RestaurantsDirectoryPage = () => {
         onLogout={handleLogout}
       />
 
-      {/* Overlay for mobile when sidebar is open */}
+      {/* Overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
@@ -163,7 +170,7 @@ const RestaurantsDirectoryPage = () => {
       <main
         className={`flex-1 p-6 transition-all duration-300 ${
           sidebarOpen ? "lg:ml-64" : "lg:ml-16"
-        } bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark`}
+        }`}
       >
         <div className="mx-auto w-full max-w-7xl">
           <header>
@@ -176,29 +183,28 @@ const RestaurantsDirectoryPage = () => {
                 <FiMenu className="text-2xl text-text-light dark:text-text-dark" />
               </button>
               <h1 className="text-xl font-bold text-text-light dark:text-text-dark">
-                Explore Restaurants
+                Your Favorites
               </h1>
             </div>
 
-            {/* Desktop Header */}
             <div className="hidden lg:block">
               <h1 className="text-3xl font-bold text-text-light dark:text-text-dark">
-                Explore Restaurants
+                Your Favorites
               </h1>
               <p className="mt-1 text-text-secondary-light dark:text-text-secondary-dark">
-                View and connect with other restaurants on QuickPlate.
+                Restaurants you have saved.
               </p>
             </div>
 
             <div className="relative mt-4">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted-light dark:text-text-muted-dark" />
               <input
                 className={`w-full max-w-md rounded-xl p-3 pl-10 focus:ring-2 focus:ring-primary transition-colors duration-300 outline-none ${
                   darkMode
                     ? "border border-border-dark bg-card-dark text-text-dark placeholder-text-muted-dark"
                     : "border border-border-light bg-card-light text-text-light placeholder-text-muted-light"
                 }`}
-                placeholder="Search restaurants..."
+                placeholder="Search favorites..."
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -206,31 +212,37 @@ const RestaurantsDirectoryPage = () => {
             </div>
           </header>
 
-          {/* Loading State */}
           {loading && (
-            <div className="mt-6 text-center">
-              <p className="text-text-secondary-light dark:text-text-secondary-dark">
-                Loading restaurants...
-              </p>
+            <div className="mt-12 flex flex-col items-center justify-center text-text-secondary-light dark:text-text-secondary-dark">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+              <p>Loading favorites...</p>
             </div>
           )}
 
-          {/* Empty State */}
           {!loading && filteredRestaurants.length === 0 && (
-            <div className="mt-12 text-center">
-              <MdStorefront className="mx-auto text-6xl text-text-muted-light dark:text-text-muted-dark" />
-              <h3 className="mt-4 text-lg font-medium text-text-light dark:text-text-dark">
-                No restaurants found
+            <div className="mt-12 text-center flex flex-col items-center">
+              <div className="w-20 h-20 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
+                <FiHeart className="text-4xl text-text-muted-light dark:text-text-muted-dark" />
+              </div>
+              <h3 className="text-lg font-bold text-text-light dark:text-text-dark">
+                No favorites yet
               </h3>
-              <p className="mt-2 text-text-secondary-light dark:text-text-secondary-dark">
+              <p className="mt-2 text-text-secondary-light dark:text-text-secondary-dark max-w-xs mx-auto">
                 {searchQuery
-                  ? "Try adjusting your search criteria"
-                  : "No restaurants are currently registered on the platform"}
+                  ? "No matches found for your search."
+                  : "Start exploring and heart your favorite restaurants to see them here!"}
               </p>
+              {!searchQuery && (
+                <Link
+                  to="/restaurantview"
+                  className="mt-6 px-6 py-2 bg-primary text-white font-bold rounded-full hover:bg-green-600 transition-colors"
+                >
+                  Explore Restaurants
+                </Link>
+              )}
             </div>
           )}
 
-          {/* Restaurants Grid */}
           {!loading && filteredRestaurants.length > 0 && (
             <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredRestaurants.map((restaurant) => (
@@ -243,7 +255,7 @@ const RestaurantsDirectoryPage = () => {
                   }`}
                 >
                   <div
-                    className="h-40 w-full rounded-xl bg-cover bg-center bg-gray-200 dark:bg-gray-700"
+                    className="h-40 w-full rounded-xl bg-cover bg-center bg-gray-200 dark:bg-gray-800 relative"
                     style={{
                       backgroundImage: restaurant.logo_url
                         ? `url('${restaurant.logo_url}')`
@@ -252,47 +264,44 @@ const RestaurantsDirectoryPage = () => {
                   >
                     {!restaurant.logo_url && (
                       <div className="flex h-full items-center justify-center">
-                        <MdStorefront className="text-4xl text-gray-400 dark:text-gray-500" />
+                        <MdStorefront className="text-4xl text-text-muted-light dark:text-text-muted-dark" />
                       </div>
                     )}
+                    <div className="absolute top-2 right-2 bg-white dark:bg-black/50 backdrop-blur-sm p-1.5 rounded-full">
+                      <FiHeart className="text-red-500 fill-red-500" />
+                    </div>
                   </div>
 
-                  <div className="mt-4 flex flex-col">
+                  <div className="mt-4 flex flex-col flex-1">
                     <h2 className="text-lg font-bold text-text-light dark:text-text-dark">
                       {restaurant.name}
                     </h2>
-                    <p className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1">
-                      ID:{" "}
-                      <span className="font-mono text-[11px]">
-                        {restaurant.id}
-                      </span>
+                    <p className="mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark line-clamp-1">
+                      {restaurant.cuisine || "Cuisine not specified"}
+                    </p>
+                    <p className="mt-1 text-sm text-text-muted-light dark:text-text-muted-dark line-clamp-1">
+                      {restaurant.location || "Location not specified"}
                     </p>
 
-                    <p className="mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark">
-                      {restaurant.location ||
-                        restaurant.address ||
-                        "Location not specified"}
-                    </p>
-
-                    <div className="mt-3 flex items-center gap-1 text-text-light dark:text-text-dark">
+                    <div className="mt-3 flex items-center gap-1">
                       {renderStars(restaurant.rating || 0)}
-                      <span className="ml-1 text-sm font-medium">
+                      <span className="ml-1 text-sm font-medium text-text-light dark:text-text-dark">
                         {restaurant.rating?.toFixed(1) || "0.0"}
+                      </span>
+                      <span className="text-text-muted-light dark:text-text-muted-dark text-sm ml-1">
+                        ({restaurant.review_count || 0})
                       </span>
                     </div>
                   </div>
 
-                  <div className="mt-auto flex gap-3 pt-4">
+                  <div className="mt-4 pt-4 border-t border-border-light dark:border-border-dark">
                     <Link
-                      className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-green-600 transition-colors text-center"
                       to={`/restaurant/${restaurant.id}`}
                       state={{ restaurant }}
+                      className="flex items-center justify-center w-full rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white px-4 py-2 text-sm font-bold transition-colors"
                     >
-                      View Profile
+                      View Menu
                     </Link>
-                    <button className="flex-1 rounded-lg border border-border-light dark:border-border-dark px-4 py-2 text-sm text-text-light dark:text-text-dark hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
-                      Message
-                    </button>
                   </div>
                 </div>
               ))}
@@ -304,4 +313,4 @@ const RestaurantsDirectoryPage = () => {
   );
 };
 
-export default RestaurantsDirectoryPage;
+export default Favorites;

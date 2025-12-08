@@ -30,6 +30,7 @@ import RestaurantPublicView from "./pages/RestaurantPublicView";
 import Checkout from "./pages/Checkout";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Favorites from "./pages/Favorites";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -66,6 +67,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/settings" element={<Settings />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/userOrders" element={<UserOrdersPage />} />
+            <Route path="/favorites" element={<Favorites />} />
             <Route path="/userProfile" element={<UserProfile />} />
             <Route
               path="/restaurantview"

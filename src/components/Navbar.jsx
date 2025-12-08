@@ -44,7 +44,7 @@ const Navbar = () => {
               </defs>
             </svg>
           </div>
-          <h2 className="text-[#111714] dark:text-gray-100 text-lg font-bold">
+          <h2 className="text-text-light dark:text-gray-100 text-lg font-bold">
             QuickPlate
           </h2>
         </Link>
@@ -58,7 +58,7 @@ const Navbar = () => {
                 href={item.path}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#111714] dark:text-gray-300 dark:hover:text-white text-sm font-medium hover:text-primary transition-colors"
+                className="text-text-light dark:text-gray-300 dark:hover:text-white text-sm font-medium hover:text-primary transition-colors"
               >
                 {item.name}
               </a>
@@ -70,7 +70,7 @@ const Navbar = () => {
                   `text-sm font-medium transition-colors ${
                     isActive
                       ? "text-primary"
-                      : "text-[#111714] dark:text-gray-300 hover:text-primary dark:hover:text-white"
+                      : "text-text-light dark:text-gray-300 hover:text-primary dark:hover:text-white"
                   }`
                 }
               >
@@ -81,14 +81,14 @@ const Navbar = () => {
 
           <Link
             to="/getStarted"
-            className="bg-primary text-[#111714] font-bold rounded-lg px-5 h-10 flex items-center justify-center hover:scale-105 transition-transform"
+            className="bg-primary text-text-light font-bold rounded-lg px-5 h-10 flex items-center justify-center hover:scale-105 transition-transform"
           >
             Get Started
           </Link>
           <button
             onClick={toggleTheme}
             aria-label="Toggle theme"
-            className="ml-3 rounded-full p-2 bg-surface-light dark:bg-surface-dark text-[#111714] dark:text-gray-200 hover:opacity-90"
+            className="ml-3 rounded-full p-2 bg-surface-light dark:bg-surface-dark text-text-light dark:text-gray-200 hover:opacity-90"
           >
             {darkMode ? <FaSun /> : <FaMoon />}
           </button>
@@ -96,7 +96,7 @@ const Navbar = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden text-[#111714] dark:text-gray-300 z-50"
+          className="md:hidden text-text-light dark:text-gray-300 z-50"
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle menu"
         >
@@ -112,7 +112,7 @@ const Navbar = () => {
             onClick={() => setIsOpen(false)}
           ></div>
           <div
-            className={`fixed top-0 right-0 h-full w-2/3 sm:w-1/2 bg-white dark:bg-[#111714] shadow-lg transform transition-transform duration-300 ease-in-out z-50 ${
+            className={`fixed top-0 right-0 h-full w-2/3 sm:w-1/2 bg-white dark:bg-texttext-text-light shadow-lg transform transition-transform duration-300 ease-in-out z-50 ${
               isOpen ? "translate-x-0" : "translate-x-full"
             } md:hidden`}
           >
@@ -128,7 +128,7 @@ const Navbar = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setIsOpen(false)}
-                    className="text-[#111714] dark:text-gray-300 text-lg font-medium hover:text-primary transition-colors"
+                    className="text-text-light dark:text-gray-300 text-lg font-medium hover:text-primary transition-colors"
                   >
                     {item.name}
                   </a>
@@ -141,7 +141,7 @@ const Navbar = () => {
                       `text-lg font-medium transition-colors ${
                         isActive
                           ? "text-primary"
-                          : "text-[#111714] dark:text-gray-300 hover:text-primary dark:hover:text-white"
+                          : "text-text-light dark:text-gray-300 hover:text-primary dark:hover:text-white"
                       }`
                     }
                   >
@@ -152,7 +152,7 @@ const Navbar = () => {
               <Link
                 to="/getStarted"
                 onClick={() => setIsOpen(false)}
-                className="bg-primary text-[#111714] font-bold rounded-lg px-5 py-3 text-center hover:scale-105 transition-transform"
+                className="bg-primary text-text-light font-bold rounded-lg px-5 py-3 text-center hover:scale-105 transition-transform"
               >
                 Get Started
               </Link>

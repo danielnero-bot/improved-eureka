@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
 import { FiHeart, FiShoppingCart } from "react-icons/fi";
+import { FaHeart } from "react-icons/fa";
 import {
   MdOutlineDeliveryDining,
   MdOutlineLocationOn,
@@ -9,10 +10,13 @@ import {
   MdStorefront,
 } from "react-icons/md";
 import { IoStar, IoStarHalfOutline } from "react-icons/io5";
+import { AiOutlineClose } from "react-icons/ai";
+import { BsStarFill, BsStar } from "react-icons/bs";
 import { supabase } from "../supabase";
 import UserSidebar from "../components/UserSidebar";
 import Cart from "../components/Cart";
 import { useCart } from "../context/CartContext";
+import { useTheme } from "../context/ThemeContext";
 import { motion } from "framer-motion";
 
 // Animation variants
@@ -68,25 +72,29 @@ const RestaurantPublicView = () => {
   const STORAGE_FILE_LIMIT = 1;
 
   // CSS Classes
-  const ICON_CLASSES = "text-gray-500 dark:text-gray-400 mt-1";
+  // CSS Classes - USING GLOBAL THEME VARIABLES
+  const ICON_CLASSES =
+    "text-text-secondary-light dark:text-text-secondary-dark mt-1";
   const CARD_CLASSES =
-    "p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm";
+    "p-6 rounded-lg bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm";
   const BUTTON_PRIMARY_CLASSES =
-    "bg-primary text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 font-bold hover:bg-orange-600 transition-all hover:scale-105";
+    "bg-primary text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 font-bold hover:bg-green-600 transition-all hover:scale-105";
   const BUTTON_SECONDARY_CLASSES =
-    "flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors";
+    "flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium text-text-light dark:text-text-dark border-border-light dark:border-border-dark hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors";
   const HEADING_PRIMARY_CLASSES =
-    "text-gray-900 dark:text-white text-4xl font-bold leading-tight";
+    "text-text-light dark:text-text-dark text-4xl font-bold leading-tight";
   const HEADING_SECONDARY_CLASSES =
-    "text-gray-900 dark:text-white text-xl font-bold";
-  const TEXT_MUTED_CLASSES = "text-gray-600 dark:text-gray-400";
+    "text-text-light dark:text-text-dark text-xl font-bold";
+  const TEXT_MUTED_CLASSES =
+    "text-text-secondary-light dark:text-text-secondary-dark";
   const MENU_ITEM_CARD_CLASSES =
-    "flex flex-col rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/10 hover:shadow-lg transition-shadow overflow-hidden";
+    "flex flex-col rounded-lg border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark hover:shadow-lg transition-shadow overflow-hidden";
 
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { addToCart, getCartItemsCount, setIsCartOpen } = useCart();
+  const { darkMode } = useTheme();
 
   const [restaurant, setRestaurant] = useState(
     location.state?.restaurant || null
@@ -96,6 +104,8 @@ const RestaurantPublicView = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [menuLoading, setMenuLoading] = useState(false);
   const [user, setUser] = useState(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
 
   const details = [
     {
@@ -201,6 +211,57 @@ const RestaurantPublicView = () => {
     fetchMenuItems();
   }, [restaurant?.id]);
 
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (!user || !restaurant?.id) return;
+      try {
+        const { data, error } = await supabase
+          .from("favorites")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("restaurant_id", restaurant.id)
+          .maybeSingle();
+
+        if (error) throw error;
+        setIsFavorite(!!data);
+      } catch (err) {
+        console.error("Error checking favorite:", err);
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [user, restaurant?.id]);
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    if (favLoading) return;
+    setFavLoading(true);
+    try {
+      if (isFavorite) {
+        const { error } = await supabase
+          .from("favorites")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("restaurant_id", restaurant.id);
+        if (error) throw error;
+        setIsFavorite(false);
+      } else {
+        const { error } = await supabase
+          .from("favorites")
+          .insert([{ user_id: user.id, restaurant_id: restaurant.id }]);
+        if (error) throw error;
+        setIsFavorite(true);
+      }
+    } catch (err) {
+      console.error("Error toggling favorite:", err);
+    } finally {
+      setFavLoading(false);
+    }
+  };
+
   const renderStars = () => {
     const rating = restaurant?.rating || DEFAULT_RATING;
     const stars = [];
@@ -263,7 +324,7 @@ const RestaurantPublicView = () => {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-row bg-gray-50 dark:bg-gray-900">
+    <div className="relative flex min-h-screen w-full flex-row bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
       {/* SideNavBar */}
       <UserSidebar
         sidebarOpen={sidebarOpen}
@@ -303,7 +364,7 @@ const RestaurantPublicView = () => {
               whileInView="visible"
               viewport={{ once: true, amount: 0.3 }}
               variants={fadeIn}
-              className="w-full h-60 md:h-72 rounded-xl bg-gradient-to-r from-primary/20 to-blue-500/20 mb-6 flex items-center justify-center"
+              className="w-full h-60 md:h-72 rounded-xl bg-linear-to-r from-primary/20 to-blue-500/20 mb-6 flex items-center justify-center"
             >
               <MdStorefront className="text-6xl text-gray-400" />
             </motion.div>
@@ -328,7 +389,7 @@ const RestaurantPublicView = () => {
               {/* RatingSummary (inline) */}
               <div className="flex items-center gap-2 mt-1">
                 <div className="flex gap-0.5">{renderStars()}</div>
-                <p className="text-gray-800 dark:text-gray-200 text-sm font-medium">
+                <p className="text-text-light dark:text-text-dark text-sm font-medium">
                   {restaurant.rating || DEFAULT_RATING}
                 </p>
                 <p className={`${TEXT_MUTED_CLASSES} text-sm font-normal`}>
@@ -337,10 +398,25 @@ const RestaurantPublicView = () => {
               </div>
             </div>
 
-            <button className={BUTTON_SECONDARY_CLASSES}>
-              <FiHeart />
-              <span className="truncate">Favorite</span>
-            </button>
+            {/* Actions: Favorite */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleToggleFavorite}
+                disabled={favLoading}
+                className={`${BUTTON_SECONDARY_CLASSES} ${
+                  isFavorite ? "bg-red-50 text-red-500 border-red-200" : ""
+                }`}
+              >
+                {isFavorite ? (
+                  <FaHeart className="text-red-500" />
+                ) : (
+                  <FiHeart />
+                )}
+                <span className="truncate">
+                  {isFavorite ? "Favorited" : "Favorite"}
+                </span>
+              </button>
+            </div>
           </motion.div>
 
           {/* Restaurant Info Section */}
@@ -371,7 +447,7 @@ const RestaurantPublicView = () => {
                     <li key={index} className="flex items-start gap-4">
                       {detail.icon}
                       <div className="flex flex-col">
-                        <span className="text-gray-800 dark:text-gray-200 text-sm font-medium">
+                        <span className="text-text-light dark:text-text-dark text-sm font-medium">
                           {detail.title}
                         </span>
                         <span className={`${TEXT_MUTED_CLASSES} text-sm`}>
@@ -425,11 +501,11 @@ const RestaurantPublicView = () => {
                         ></div>
                       ) : (
                         <div className="w-full h-40 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                          <MdStorefront className="text-4xl text-gray-400 dark:text-gray-600" />
+                          <MdStorefront className="text-4xl text-text-muted-light dark:text-text-muted-dark" />
                         </div>
                       )}
                       <div className="p-4 flex flex-col grow">
-                        <h3 className="text-gray-800 dark:text-gray-200 font-bold">
+                        <h3 className="text-text-light dark:text-text-dark font-bold">
                           {item.name}
                         </h3>
                         <p
@@ -438,7 +514,7 @@ const RestaurantPublicView = () => {
                           {item.description || DEFAULT_ITEM_DESCRIPTION}
                         </p>
                         <div className="mt-auto pt-4 flex items-center justify-between">
-                          <p className="text-gray-800 dark:text-gray-200 font-semibold">
+                          <p className="text-text-light dark:text-text-dark font-semibold">
                             {item.price
                               ? `$${Number(item.price).toFixed(2)}`
                               : "—"}

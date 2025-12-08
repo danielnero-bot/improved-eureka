@@ -2,14 +2,14 @@ import React from "react";
 
 const About = () => {
   return (
-    <div className="bg-background-light dark:bg-background-dark font-display text-[#111714] dark:text-gray-200">
+    <div className="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
       <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
         {/* ====== MAIN CONTENT ====== */}
         <main className="flex flex-col flex-1 px-4 sm:px-8 md:px-10 lg:px-20 xl:px-40 py-5">
           <div className="mx-auto w-full max-w-[960px] flex-1">
             {/* ====== HERO SECTION ====== */}
             <section className="px-4 py-12 sm:py-16 md:py-20 text-center">
-              <h1 className="text-3xl font-bold tracking-tight text-[#111714] dark:text-gray-100 sm:text-4xl md:text-5xl">
+              <h1 className="text-3xl font-bold tracking-tight text-text-light dark:text-gray-100 sm:text-4xl md:text-5xl">
                 Empowering Restaurants to Go Digital — Effortlessly
               </h1>
               <p className="mt-4 text-base leading-relaxed text-[#648772] dark:text-gray-400 sm:text-lg">
@@ -23,7 +23,7 @@ const About = () => {
             {/* ====== STORY & PURPOSE SECTIONS ====== */}
             <section className="grid grid-cols-1 gap-12 px-4 md:grid-cols-2 md:gap-16">
               <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-[#111714] dark:text-gray-100">
+                <h2 className="text-2xl font-bold text-text-light dark:text-text-dark">
                   Our Story
                 </h2>
                 <p className="text-[#648772] dark:text-gray-400">
@@ -41,7 +41,7 @@ const About = () => {
               </div>
 
               <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-[#111714] dark:text-gray-100">
+                <h2 className="text-2xl font-bold text-text-light dark:text-text-dark">
                   Why We’re Open Source
                 </h2>
                 <p className="text-[#648772] dark:text-gray-400">
@@ -61,7 +61,7 @@ const About = () => {
             {/* ====== CONTRIBUTOR ====== */}
             <section className="px-4 py-16 sm:py-20 md:py-24 text-center">
               <div className="mx-auto max-w-3xl">
-                <h2 className="text-3xl font-bold tracking-tight text-[#111714] dark:text-gray-100 sm:text-4xl">
+                <h2 className="text-3xl font-bold tracking-tight text-text-light dark:text-gray-100 sm:text-4xl">
                   Meet the Creator
                 </h2>
                 <p className="mt-4 text-base leading-relaxed text-[#648772] dark:text-gray-400 sm:text-lg">
@@ -78,7 +78,7 @@ const About = () => {
                     src="https://i.pinimg.com/1200x/0f/ae/04/0fae04c2b8cd52e0ee6b3fb4c254bb21.jpg"
                     className="mx-auto h-32 w-32 rounded-full object-cover border-4 border-primary/20"
                   />
-                  <h3 className="mt-6 text-xl font-bold text-[#111714] dark:text-gray-100">
+                  <h3 className="mt-6 text-xl font-bold text-text-light dark:text-gray-100">
                     Daniel Oghenero
                   </h3>
                   <p className="mt-2 text-sm font-medium text-primary">

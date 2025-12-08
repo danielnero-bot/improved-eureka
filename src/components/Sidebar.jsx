@@ -172,6 +172,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
                     : "text-text-secondary-light hover:text-text-light hover:bg-gray-100"
                 }`}
                 title="Logout"
+                
               >
                 <MdLogout className="text-xl shrink-0" />
                 <span
