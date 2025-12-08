@@ -242,8 +242,8 @@ const RestaurantsDirectoryPage = () => {
                   key={restaurant.id}
                   className={`flex flex-col rounded-xl p-4 shadow-sm transition hover:shadow-md ${
                     darkMode
-                      ? "bg-gray-800 border border-white/10"
-                      : "bg-white border border-gray-200"
+                      ? "bg-card-dark border border-border-dark"
+                      : "bg-card-light border border-border-light"
                   }`}
                 >
                   <div
@@ -271,7 +271,7 @@ const RestaurantsDirectoryPage = () => {
                         {restaurant.id}
                       </span>
                     </p>
-                    
+
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                       {restaurant.location ||
                         restaurant.address ||

@@ -5,6 +5,37 @@ import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { motion } from "framer-motion";
+
+// Animation variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.5 },
+  },
+};
 
 const QuickPlateDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -104,7 +135,11 @@ const QuickPlateDashboard = () => {
         {/* Main Content Sections */}
         <main className="p-4 md:p-8 space-y-8">
           {/* Welcome Section */}
-          <section
+          <motion.section
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={fadeInUp}
             className={`rounded-xl p-6 transition-colors duration-300 ${
               darkMode
                 ? "bg-card-dark border border-border-dark"
@@ -117,20 +152,28 @@ const QuickPlateDashboard = () => {
             <p className="text-text-light-secondary dark:text-dark-secondary mt-1">
               What would you like to eat today?
             </p>
-          </section>
+          </motion.section>
 
           {/* Quick Actions */}
           <section>
             <h3 className="text-xl font-bold mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={staggerContainer}
+              className="grid grid-cols-2 md:grid-cols-4 gap-4"
+            >
               {[
                 { icon: MdFastfood, label: "Order Food", color: "primary" },
                 { icon: FiTruck, label: "Track Order", color: "blue" },
                 { icon: FiHeart, label: "Saved", color: "red" },
                 { icon: MdHistory, label: "Past Orders", color: "purple" },
               ].map((action, index) => (
-                <div
+                <motion.div
                   key={index}
+                  variants={scaleIn}
+                  whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
                   className={`flex flex-col items-center justify-center gap-2 rounded-xl p-4 text-center cursor-pointer hover:shadow-lg transition-all ${
                     darkMode
                       ? "bg-card-dark border border-border-dark hover:border-primary"
@@ -145,15 +188,19 @@ const QuickPlateDashboard = () => {
                     />
                   </div>
                   <p className="font-semibold">{action.label}</p>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </section>
 
           {/* Recent Orders */}
           <section>
             <h3 className="text-xl font-bold mb-4">Recent Orders</h3>
-            <div
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={scaleIn}
               className={`rounded-xl p-8 text-center transition-colors duration-300 ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
@@ -166,13 +213,17 @@ const QuickPlateDashboard = () => {
               <p className="text-text-light-secondary dark:text-dark-secondary">
                 No recent orders found.
               </p>
-            </div>
+            </motion.div>
           </section>
 
           {/* Saved Restaurants */}
           <section>
             <h3 className="text-xl font-bold mb-4">Your Saved Restaurants</h3>
-            <div
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={scaleIn}
               className={`rounded-xl p-8 text-center transition-colors duration-300 ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
@@ -185,7 +236,7 @@ const QuickPlateDashboard = () => {
               <p className="text-text-light-secondary dark:text-dark-secondary">
                 You haven't saved any restaurants yet.
               </p>
-            </div>
+            </motion.div>
           </section>
         </main>
       </div>

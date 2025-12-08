@@ -5,6 +5,34 @@ import { MdShoppingBasket } from "react-icons/md";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { motion } from "framer-motion";
+
+// Animation variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+};
+
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.5, delay: 0.2 },
+  },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.5, delay: 0.4 },
+  },
+};
 
 const UserOrdersPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -64,7 +92,13 @@ const UserOrdersPage = () => {
         >
           <div className="mx-auto max-w-4xl">
             {/* PageHeading */}
-            <div className="flex flex-wrap justify-between gap-4 items-center mb-6">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeInUp}
+              className="flex flex-wrap justify-between gap-4 items-center mb-6"
+            >
               <div className="flex items-center gap-4">
                 <button
                   onClick={toggleSidebar}
@@ -81,10 +115,16 @@ const UserOrdersPage = () => {
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Search and Filter Section */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeIn}
+              className="flex flex-col md:flex-row gap-4 mb-6"
+            >
               {/* SearchBar */}
               <div className="flex-1">
                 <label className="flex flex-col h-12 w-full">
@@ -134,12 +174,16 @@ const UserOrdersPage = () => {
                   />
                 </button>
               </div>
-            </div>
+            </motion.div>
 
             {/* Orders List */}
             <div className="grid grid-cols-1 gap-6">
               {/* Empty State */}
-              <div
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.3 }}
+                variants={scaleIn}
                 className={`flex flex-col items-center justify-center text-center gap-4 py-16 px-6 rounded-xl border-2 border-dashed transition-colors duration-300 ${
                   darkMode ? "border-gray-700" : "border-gray-300"
                 }`}
@@ -156,7 +200,7 @@ const UserOrdersPage = () => {
                 <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-medium leading-normal hover:opacity-90 mt-2">
                   <span>Browse Restaurants</span>
                 </button>
-              </div>
+              </motion.div>
             </div>
           </div>
         </main>

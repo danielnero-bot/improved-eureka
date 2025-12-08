@@ -21,7 +21,45 @@ import {
 } from "react-icons/md";
 import { IoStar, IoStarHalfOutline, IoStarOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
+// Animation variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+};
+
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.5 },
+  },
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.5 },
+  },
+};
 const UserRestaurantDetailsPage = () => {
   const menuItems = [
     {
@@ -173,17 +211,27 @@ const UserRestaurantDetailsPage = () => {
       <main className="flex-1 p-6 md:p-10 overflow-y-auto">
         <div className="max-w-7xl mx-auto">
           {/* HeaderImage */}
-          <div
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={fadeIn}
             className="w-full h-60 md:h-72 rounded-xl bg-cover bg-center mb-6"
             data-alt="Vibrant, delicious-looking pasta dish in a white bowl."
             style={{
               backgroundImage:
                 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAkAXG5FUF9fMqe6l46UQaezmBop2RJTPmhI4xbYj_tkD30vHZ9HPrnq8AUBLmN1NeQVSNXuhef-G4vgnUTeWH1Fb1ARlTJuAB65MkX4e-0qploUorJND1hebNrZQp9-KYt0nEtERK2Bs-I20aTZkUfb0kDqyc_QDfG_tLri3RZQjmTZrAXXa0cEkgkzMuGkFPVORcpTSOLZ9FwDAA7Thbauf9JYTe5AG9P4n_ZiqT9DfLYphxxC1vcRpOkLHoTQJebhn54rw5XubHb")',
             }}
-          ></div>
+          ></motion.div>
 
           {/* PageHeading */}
-          <div className="flex flex-wrap justify-between items-start gap-4 mb-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={fadeInUp}
+            className="flex flex-wrap justify-between items-start gap-4 mb-8"
+          >
             <div className="flex flex-col gap-2">
               <h1 className="text-gray-900 dark:text-white text-4xl font-bold leading-tight">
                 The Golden Spoon
@@ -208,13 +256,22 @@ const UserRestaurantDetailsPage = () => {
               <FiHeart />
               <span className="truncate">Favorite</span>
             </button>
-          </div>
+          </motion.div>
 
           {/* Restaurant Info Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={staggerContainer}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
             {/* Left Column: About & Details */}
             <div className="flex flex-col gap-8">
-              <div className="p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm">
+              <motion.div
+                variants={scaleIn}
+                className="p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm"
+              >
                 <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-4">
                   About The Golden Spoon
                 </h2>
@@ -225,9 +282,12 @@ const UserRestaurantDetailsPage = () => {
                   authentic flavors. From our handmade pasta to our wood-fired
                   pizzas, every dish is a celebration of Italian tradition.
                 </p>
-              </div>
+              </motion.div>
 
-              <div className="p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm">
+              <motion.div
+                variants={scaleIn}
+                className="p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm"
+              >
                 <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-4">
                   Details
                 </h2>
@@ -246,18 +306,29 @@ const UserRestaurantDetailsPage = () => {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </motion.div>
             </div>
 
             {/* Right Column: Menu Items */}
-            <div className="p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm lg:col-span-2">
+            <motion.div
+              variants={scaleIn}
+              className="p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm lg:col-span-2"
+            >
               <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-6">
                 Menu
               </h2>
-              <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.1 }}
+                className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+              >
                 {menuItems.map((item, index) => (
-                  <div
+                  <motion.div
                     key={index}
+                    variants={scaleIn}
+                    whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
                     className="flex flex-col rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/10 hover:shadow-lg transition-shadow overflow-hidden"
                   >
                     <div
@@ -276,11 +347,11 @@ const UserRestaurantDetailsPage = () => {
                         Add to Order
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
         </div>
 
         {/* Sticky Order Summary Bar */}

@@ -4,6 +4,26 @@ import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 import { FiMenu } from "react-icons/fi";
 import { useTheme } from "../context/ThemeContext";
+import { motion } from "framer-motion";
+
+// Animation variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.5 },
+  },
+};
 
 const UserProfilePage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -289,18 +309,28 @@ const UserProfilePage = () => {
             </h1>
           </div>
 
-          <div className="mb-8 hidden lg:block">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={fadeInUp}
+            className="mb-8 hidden lg:block"
+          >
             <h1 className="text-3xl font-bold text-black dark:text-white">
               Your Profile
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
               Manage your personal information and account settings.
             </p>
-          </div>
+          </motion.div>
 
           <div className="space-y-8">
             {/* Profile Header */}
-            <div
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={scaleIn}
               className={`rounded-xl shadow-sm transition-colors duration-300 ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
@@ -366,10 +396,14 @@ const UserProfilePage = () => {
                   {uploading ? "Uploading..." : "Edit photo"}
                 </button>
               </div>
-            </div>
+            </motion.div>
 
             {/* Profile Form */}
-            <div
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={scaleIn}
               className={`rounded-xl shadow-sm transition-colors duration-300 ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
@@ -494,10 +528,14 @@ const UserProfilePage = () => {
                   </div>
                 </form>
               </div>
-            </div>
+            </motion.div>
 
             {/* Preferences */}
-            <div
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={scaleIn}
               className={`rounded-xl shadow-sm transition-colors duration-300 ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
@@ -625,10 +663,16 @@ const UserProfilePage = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Save Button */}
-            <div className="flex justify-end">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeInUp}
+              className="flex justify-end"
+            >
               <button
                 className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
                 type="submit"
@@ -637,7 +681,7 @@ const UserProfilePage = () => {
               >
                 {loadingProfile ? "Saving..." : "Save Changes"}
               </button>
-            </div>
+            </motion.div>
           </div>
         </div>
       </main>
