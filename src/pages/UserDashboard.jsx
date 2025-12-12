@@ -42,6 +42,8 @@ const QuickPlateDashboard = () => {
   const [user, setUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [loadingFavorites, setLoadingFavorites] = useState(false);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const navigate = useNavigate();
   const { darkMode } = useTheme();
 
@@ -95,6 +97,35 @@ const QuickPlateDashboard = () => {
       }
     };
     fetchFavorites();
+    fetchFavorites();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchRecentOrders = async () => {
+      try {
+        setLoadingOrders(true);
+        const { data, error } = await supabase
+          .from("orders")
+          .select(
+            `
+             *,
+             restaurant:restaurants(name, logo_url)
+          `
+          )
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(3);
+
+        if (error) throw error;
+        setRecentOrders(data || []);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+    fetchRecentOrders();
   }, [user]);
 
   const handleLogout = async () => {
@@ -265,18 +296,77 @@ const QuickPlateDashboard = () => {
               whileInView="visible"
               viewport={{ once: true, amount: 0.3 }}
               variants={scaleIn}
-              className={`rounded-xl p-8 text-center transition-colors duration-300 ${
+              className={`rounded-xl p-4 md:p-6 transition-colors duration-300 ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
                   : "bg-card-light border border-border-light"
               }`}
             >
-              <div className="flex justify-center mb-4">
-                <MdHistory className="text-4xl text-text-muted-light dark:text-text-muted-dark opacity-50" />
-              </div>
-              <p className="text-text-secondary-light dark:text-text-secondary-dark">
-                No recent orders found.
-              </p>
+              {loadingOrders ? (
+                <div className="py-8 text-center">Loading orders...</div>
+              ) : recentOrders.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                  {recentOrders.map((order) => (
+                    <div
+                      key={order.id}
+                      className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                        darkMode
+                          ? "bg-white/5 border-white/10"
+                          : "bg-gray-50 border-gray-100"
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        {order.restaurant?.logo_url ? (
+                          <img
+                            src={order.restaurant.logo_url}
+                            alt={order.restaurant.name}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                            <MdFastfood className="text-xl text-primary" />
+                          </div>
+                        )}
+                        <div className="text-left">
+                          <h4 className="font-bold">
+                            {order.restaurant?.name || "Restaurant"}
+                          </h4>
+                          <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
+                            {new Date(order.created_at).toLocaleDateString()} •{" "}
+                            {order.status}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-primary">
+                          ${order.total_amount}
+                        </p>
+                        <button
+                          onClick={() => navigate("/userOrders")}
+                          className="text-xs hover:underline mt-1 block w-full text-right"
+                        >
+                          Details
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => navigate("/userOrders")}
+                    className="mt-2 text-sm text-primary font-bold hover:underline self-center"
+                  >
+                    View All Orders
+                  </button>
+                </div>
+              ) : (
+                <div className="py-8 text-center">
+                  <div className="flex justify-center mb-4">
+                    <MdHistory className="text-4xl text-text-muted-light dark:text-text-muted-dark opacity-50" />
+                  </div>
+                  <p className="text-text-secondary-light dark:text-text-secondary-dark">
+                    No recent orders found.
+                  </p>
+                </div>
+              )}
             </motion.div>
           </section>
 

@@ -23,6 +23,7 @@ const RestaurantDashboard = () => {
     todayOrders: 0,
     newCustomers: 0,
   });
+  const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const location = useLocation();
@@ -57,7 +58,10 @@ const RestaurantDashboard = () => {
         } else {
           setRestaurantData(data);
           // Fetch dashboard stats if restaurant data is available
-          await fetchDashboardStats(data.id);
+          await Promise.all([
+            fetchDashboardStats(data.id),
+            fetchRecentOrders(data.id),
+          ]);
         }
       } catch (error) {
         console.error("❌ Error in fetchRestaurantData:", error);
@@ -141,6 +145,57 @@ const RestaurantDashboard = () => {
       }
     } catch (error) {
       console.error("❌ Error fetching dashboard stats:", error);
+    }
+  };
+
+  const fetchRecentOrders = async (restaurantId) => {
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(
+          `
+           *,
+           items:order_items(
+             quantity,
+             price,
+             menu_item:menu_items(name)
+           ),
+           user:user_id(email) 
+        `
+        ) // Note: user_id relation might fail if not explicitly set up in Supabase as a foreign key to auth.users which is tricky.
+        // Usually we use the Profile table for user details.
+        // For now let's just show the order details.
+        // Actually, auth.users is not directly joinable usually.
+        // We will just show the Order ID and Items for now.
+        .eq("restaurant_id", restaurantId)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setRecentOrders(data || []);
+    } catch (err) {
+      console.error("Error fetching recent orders:", err);
+    }
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: newStatus })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      // Update local state
+      setRecentOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
+    } catch (err) {
+      console.error("Error updating status:", err);
+      alert("Failed to update status");
     }
   };
 
@@ -322,29 +377,141 @@ const RestaurantDashboard = () => {
               ))}
             </div>
 
-            {/* Analytics Placeholder */}
+            {/* Recent Incoming Orders */}
             <motion.div
               variants={itemVariants}
-              className={`rounded-2xl border p-6 text-center shadow-md ${
+              className={`rounded-2xl border p-6 shadow-md ${
                 darkMode
                   ? "bg-card-dark border-border-dark"
                   : "bg-card-light border-border-light"
               }`}
             >
-              <div className="flex flex-col items-center justify-center space-y-4 py-16">
-                <MdAnalytics className="text-6xl text-primary/70" />
-                <h2 className="text-2xl font-bold">Order Analytics</h2>
-                <p
-                  className={
-                    darkMode
-                      ? "text-text-muted-dark max-w-md"
-                      : "text-text-muted-light max-w-md"
-                  }
-                >
-                  Detailed charts and reports for your order history will be
-                  displayed here soon.
-                </p>
-              </div>
+              <h2 className="text-2xl font-bold mb-6">
+                Recent Incoming Orders
+              </h2>
+              {recentOrders.length === 0 ? (
+                <div className="text-center py-10 opacity-60">
+                  No orders found.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentOrders.map((order) => (
+                    <div
+                      key={order.id}
+                      className={`p-4 rounded-xl border transition-colors ${
+                        darkMode
+                          ? "bg-white/5 border-white/10"
+                          : "bg-gray-50 border-gray-100"
+                      }`}
+                    >
+                      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                        <div>
+                          <p className="font-bold text-lg">
+                            Order #{order.id.slice(0, 8)}
+                          </p>
+                          <p
+                            className={`text-sm ${
+                              darkMode ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
+                            {new Date(order.created_at).toLocaleString()}
+                          </p>
+                          <div className="mt-2 text-sm">
+                            <span className="font-medium mr-2">Status:</span>
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
+                                order.status === "pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : order.status === "confirmed"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : order.status === "preparing"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : order.status === "out_for_delivery"
+                                  ? "bg-indigo-100 text-indigo-800"
+                                  : order.status === "delivered"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {order.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Order Items Summary */}
+                        <div className="flex-1 md:mx-6">
+                          <div className="space-y-1">
+                            {order.items?.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="flex justify-between text-sm"
+                              >
+                                <span>
+                                  {item.quantity}x{" "}
+                                  {item.menu_item?.name || "Item"}
+                                </span>
+                                <span>${Number(item.price).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-2 text-right font-bold text-primary border-t pt-1 border-gray-200 dark:border-gray-700">
+                            Total: ${Number(order.total_amount).toFixed(2)}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-wrap gap-2">
+                          {order.status === "pending" && (
+                            <button
+                              onClick={() =>
+                                updateOrderStatus(order.id, "confirmed")
+                              }
+                              className="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600"
+                            >
+                              Confirm
+                            </button>
+                          )}
+                          {order.status === "confirmed" && (
+                            <button
+                              onClick={() =>
+                                updateOrderStatus(order.id, "preparing")
+                              }
+                              className="px-3 py-1 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600"
+                            >
+                              Start Preparing
+                            </button>
+                          )}
+                          {order.status === "preparing" && (
+                            <button
+                              onClick={() =>
+                                updateOrderStatus(order.id, "out_for_delivery")
+                              }
+                              className="px-3 py-1 bg-indigo-500 text-white rounded-lg text-sm font-medium hover:bg-indigo-600"
+                            >
+                              Out for Delivery
+                            </button>
+                          )}
+                          {order.status === "out_for_delivery" && (
+                            <button
+                              onClick={() =>
+                                updateOrderStatus(order.id, "delivered")
+                              }
+                              className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600"
+                            >
+                              Complete
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {order.special_instructions && (
+                        <div className="mt-3 text-sm italic text-orange-500 bg-orange-50 dark:bg-orange-900/10 p-2 rounded">
+                          Note: {order.special_instructions}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           </motion.div>
         </main>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
-import { FiHeart, FiShoppingCart } from "react-icons/fi";
+import { FiHeart, FiShoppingCart, FiMenu } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import {
   MdOutlineDeliveryDining,
@@ -15,6 +15,7 @@ import { BsStarFill, BsStar } from "react-icons/bs";
 import { supabase } from "../supabase";
 import UserSidebar from "../components/UserSidebar";
 import Cart from "../components/Cart";
+import RatingModal from "../components/RatingModal";
 import { useCart } from "../context/CartContext";
 import { useTheme } from "../context/ThemeContext";
 import { motion } from "framer-motion";
@@ -106,6 +107,8 @@ const RestaurantPublicView = () => {
   const [user, setUser] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
+  const [userReview, setUserReview] = useState(null);
+  const [isRatingOpen, setIsRatingOpen] = useState(false);
 
   const details = [
     {
@@ -232,6 +235,28 @@ const RestaurantPublicView = () => {
     checkFavoriteStatus();
   }, [user, restaurant?.id]);
 
+  useEffect(() => {
+    const fetchReview = async () => {
+      if (!user || !restaurant?.id) return;
+      try {
+        const { data, error } = await supabase
+          .from("reviews")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("restaurant_id", restaurant.id)
+          .maybeSingle();
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching review:", error);
+        }
+        setUserReview(data);
+      } catch (err) {
+        console.error("Error:", err);
+      }
+    };
+    fetchReview();
+  }, [user, restaurant?.id]);
+
   const handleToggleFavorite = async () => {
     if (!user) {
       navigate("/login");
@@ -341,6 +366,15 @@ const RestaurantPublicView = () => {
         />
       )}
 
+      {/* Mobile Sidebar Toggle */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="fixed top-4 left-4 z-40 p-2 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-md border border-gray-200 dark:border-gray-700 lg:hidden hover:scale-105 transition-transform"
+        aria-label="Open Sidebar"
+      >
+        <FiMenu size={24} />
+      </button>
+
       {/* Main Content */}
       <main className="flex-1 p-6 md:p-10 overflow-y-auto lg:ml-16">
         <div className="max-w-7xl mx-auto">
@@ -387,19 +421,51 @@ const RestaurantPublicView = () => {
               </p>
 
               {/* RatingSummary (inline) */}
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex gap-0.5">{renderStars()}</div>
+              {/* RatingSummary (inline) - Clickable to rate */}
+              <button
+                onClick={() => {
+                  if (!user) navigate("/login");
+                  else setIsRatingOpen(true);
+                }}
+                className="flex items-center gap-2 mt-1 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg px-2 -ml-2 transition-colors cursor-pointer"
+                title="Click to rate"
+              >
+                <div className="flex gap-0.5 pointer-events-none">
+                  {renderStars()}
+                </div>
                 <p className="text-text-light dark:text-text-dark text-sm font-medium">
                   {restaurant.rating || DEFAULT_RATING}
                 </p>
-                <p className={`${TEXT_MUTED_CLASSES} text-sm font-normal`}>
+                <p
+                  className={`${TEXT_MUTED_CLASSES} text-sm font-normal underline decoration-dotted`}
+                >
                   ({restaurant.review_count || DEFAULT_REVIEW_COUNT} reviews)
                 </p>
-              </div>
+                {!userReview && (
+                  <span className="text-primary text-xs font-bold ml-1 border border-primary/30 px-2 py-0.5 rounded-full bg-primary/5">
+                    Rate Now
+                  </span>
+                )}
+              </button>
             </div>
 
-            {/* Actions: Favorite */}
+            {/* Actions: Favorite & Rate */}
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  if (!user) {
+                    navigate("/login");
+                    return;
+                  }
+                  setIsRatingOpen(true);
+                }}
+                className={BUTTON_SECONDARY_CLASSES}
+              >
+                <IoStar className={userReview ? "text-yellow-400" : ""} />
+                <span className="truncate">
+                  {userReview ? `Rated ${userReview.rating}` : "Rate"}
+                </span>
+              </button>
               <button
                 onClick={handleToggleFavorite}
                 disabled={favLoading}
@@ -557,6 +623,29 @@ const RestaurantPublicView = () => {
 
       {/* Cart Sidebar */}
       <Cart />
+
+      {/* Rating Modal */}
+      <RatingModal
+        isOpen={isRatingOpen}
+        onClose={() => setIsRatingOpen(false)}
+        restaurantId={restaurant?.id}
+        userId={user?.id}
+        initialRating={userReview?.rating || 0}
+        initialComment={userReview?.comment || ""}
+        onRatingSuccess={() => {
+          // Refetch review to update UI
+          const fetchReview = async () => {
+            const { data } = await supabase
+              .from("reviews")
+              .select("*")
+              .eq("user_id", user.id)
+              .eq("restaurant_id", restaurant.id)
+              .single();
+            setUserReview(data);
+          };
+          fetchReview();
+        }}
+      />
     </div>
   );
 };

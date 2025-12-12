@@ -37,6 +37,8 @@ const scaleIn = {
 const UserOrdersPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { darkMode } = useTheme();
 
@@ -48,13 +50,45 @@ const UserOrdersPage = () => {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        if (user) setUser(user);
+        if (user) {
+          setUser(user);
+          fetchOrders(user.id);
+        } else {
+          setLoading(false);
+        }
       } catch {
-        // ignore
+        setLoading(false);
       }
     };
     getUser();
   }, []);
+
+  const fetchOrders = async (userId) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("orders")
+        .select(
+          `
+          *,
+          restaurant:restaurants(name, logo_url),
+          items:order_items(
+             *,
+             menu_item:menu_items(name)
+          )
+        `
+        )
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setOrders(data || []);
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -178,29 +212,113 @@ const UserOrdersPage = () => {
 
             {/* Orders List */}
             <div className="grid grid-cols-1 gap-6">
-              {/* Empty State */}
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.3 }}
-                variants={scaleIn}
-                className={`flex flex-col items-center justify-center text-center gap-4 py-16 px-6 rounded-xl border-2 border-dashed transition-colors duration-300 ${
-                  darkMode ? "border-gray-700" : "border-gray-300"
-                }`}
-              >
-                <div className="flex items-center justify-center size-16 bg-primary/20 rounded-full">
-                  <MdShoppingBasket className="text-3xl text-primary" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  You have no orders yet.
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 max-w-xs">
-                  Start exploring restaurants to place your first order.
-                </p>
-                <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-medium leading-normal hover:opacity-90 mt-2">
-                  <span>Browse Restaurants</span>
-                </button>
-              </motion.div>
+              {loading ? (
+                <div className="text-center py-10">Loading orders...</div>
+              ) : orders.length > 0 ? (
+                orders.map((order) => (
+                  <motion.div
+                    key={order.id}
+                    variants={scaleIn}
+                    initial="hidden"
+                    whileInView="visible"
+                    className={`p-6 rounded-xl border transition-colors duration-300 ${
+                      darkMode
+                        ? "bg-card-dark border-gray-700"
+                        : "bg-white border-gray-200"
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-4">
+                        {order.restaurant?.logo_url ? (
+                          <img
+                            src={order.restaurant.logo_url}
+                            alt={order.restaurant.name}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <MdShoppingBasket className="text-xl" />
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                            {order.restaurant?.name || "Unknown Restaurant"}
+                          </h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {new Date(order.created_at).toLocaleDateString()} at{" "}
+                            {new Date(order.created_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-bold capitalize ${
+                            order.status === "delivered"
+                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                              : order.status === "cancelled"
+                              ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                              : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                        <p className="mt-2 font-bold text-primary">
+                          ${Number(order.total_amount).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    <div
+                      className={`mt-4 pt-4 border-t ${
+                        darkMode ? "border-gray-700" : "border-gray-100"
+                      }`}
+                    >
+                      <p className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                        Items:
+                      </p>
+                      <ul className="space-y-1">
+                        {order.items?.map((item, idx) => (
+                          <li
+                            key={idx}
+                            className="text-sm text-gray-600 dark:text-gray-400 flex justify-between"
+                          >
+                            <span>
+                              {item.quantity}x{" "}
+                              {item.menu_item?.name || "Unknown Item"}
+                            </span>
+                            <span>${Number(item.price).toFixed(2)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <motion.div
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.3 }}
+                  variants={scaleIn}
+                  className={`flex flex-col items-center justify-center text-center gap-4 py-16 px-6 rounded-xl border-2 border-dashed transition-colors duration-300 ${
+                    darkMode ? "border-gray-700" : "border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-center size-16 bg-primary/20 rounded-full">
+                    <MdShoppingBasket className="text-3xl text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    You have no orders yet.
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 max-w-xs">
+                    Start exploring restaurants to place your first order.
+                  </p>
+                  <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-medium leading-normal hover:opacity-90 mt-2">
+                    <span>Browse Restaurants</span>
+                  </button>
+                </motion.div>
+              )}
             </div>
           </div>
         </main>
