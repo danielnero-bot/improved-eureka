@@ -10,10 +10,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import Sidebar from "../components/Sidebar";
 import { useTheme } from "../context/ThemeContext";
-import { motion } from "framer-motion";
 
 const Orders = () => {
-  const { darkMode, toggleTheme } = useTheme();
+  const { darkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [restaurantData, setRestaurantData] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -107,6 +106,28 @@ const Orders = () => {
           order.id === orderId ? { ...order, status: newStatus } : order
         )
       );
+
+      // Create notification for the user
+      const order = orders.find((o) => o.id === orderId);
+      if (order && order.user_id) {
+        const statusMessages = {
+          confirmed: "Your order has been confirmed!",
+          preparing: "Your order is being prepared.",
+          out_for_delivery: "Your order is out for delivery!",
+          delivered: "Your order has been delivered. Enjoy your meal!",
+          cancelled: "Your order has been cancelled.",
+        };
+
+        await supabase.from("notifications").insert([
+          {
+            user_id: order.user_id,
+            title: "Order Update",
+            message: statusMessages[newStatus] || `Your order status is now ${newStatus}.`,
+            type: "order_status",
+            link: "/userOrders",
+          },
+        ]);
+      }
     } catch (err) {
       console.error("Error updating status:", err);
       alert("Failed to update status");
@@ -122,10 +143,14 @@ const Orders = () => {
     switch (status?.toLowerCase()) {
       case "pending":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
-      case "preparing":
+      case "confirmed":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+      case "preparing":
+        return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300";
+      case "out_for_delivery":
       case "ready":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
+      case "delivered":
       case "completed":
         return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
       case "cancelled":
@@ -371,9 +396,48 @@ const Orders = () => {
                             {formatDate(order.created_at)}
                           </td>
                           <td className="px-4 lg:px-6 py-3 lg:py-4">
-                            <button className="text-primary hover:text-primary-dark font-medium text-sm">
-                              View
-                            </button>
+                            <div className="flex flex-wrap gap-2">
+                              {order.status === "pending" && (
+                                <button
+                                  onClick={() => updateOrderStatus(order.id, "confirmed")}
+                                  className="px-3 py-1 bg-blue-500 text-white rounded text-xs font-medium hover:bg-blue-600 transition-colors"
+                                >
+                                  Confirm
+                                </button>
+                              )}
+                              {order.status === "confirmed" && (
+                                <button
+                                  onClick={() => updateOrderStatus(order.id, "preparing")}
+                                  className="px-3 py-1 bg-indigo-500 text-white rounded text-xs font-medium hover:bg-indigo-600 transition-colors"
+                                >
+                                  Prepare
+                                </button>
+                              )}
+                              {order.status === "preparing" && (
+                                <button
+                                  onClick={() => updateOrderStatus(order.id, "out_for_delivery")}
+                                  className="px-3 py-1 bg-purple-500 text-white rounded text-xs font-medium hover:bg-purple-600 transition-colors"
+                                >
+                                  Deliver
+                                </button>
+                              )}
+                              {order.status === "out_for_delivery" && (
+                                <button
+                                  onClick={() => updateOrderStatus(order.id, "delivered")}
+                                  className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium hover:bg-green-600 transition-colors"
+                                >
+                                  Complete
+                                </button>
+                              )}
+                              {order.status !== "cancelled" && order.status !== "delivered" && (
+                                <button
+                                  onClick={() => updateOrderStatus(order.id, "cancelled")}
+                                  className="px-3 py-1 bg-red-500 text-white rounded text-xs font-medium hover:bg-red-600 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </motion.tr>
                       ))

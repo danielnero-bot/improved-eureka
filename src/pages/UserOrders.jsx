@@ -65,6 +65,38 @@ const UserOrdersPage = () => {
     getUser();
   }, []);
 
+  // Real-time subscription for order updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel("realtime-orders")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Update the order in the state with the new data
+          setOrders((prevOrders) =>
+            prevOrders.map((order) =>
+              order.id === payload.new.id
+                ? { ...order, ...payload.new }
+                : order
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const fetchOrders = async (userId) => {
     try {
       setLoading(true);

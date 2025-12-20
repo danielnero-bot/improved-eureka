@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import App from "./App";
 import About from "./pages/About";
 import Main from "./components/Main";
@@ -31,13 +32,15 @@ import Checkout from "./pages/Checkout";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Favorites from "./pages/Favorites";
+import NotificationsPage from "./pages/Notifications";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ThemeProvider>
       <CartProvider>
-        <HashRouter>
+        <NotificationProvider>
+          <HashRouter>
           <Routes>
             {/* App acts as the layout (with Navbar & Footer) */}
             <Route path="/" element={<App />}>
@@ -68,6 +71,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/orders" element={<Orders />} />
             <Route path="/userOrders" element={<UserOrdersPage />} />
             <Route path="/favorites" element={<Favorites />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/userProfile" element={<UserProfile />} />
             <Route
               path="/restaurantview"
@@ -83,6 +87,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/privacy" element={<Privacy />} />
           </Routes>
         </HashRouter>
+        </NotificationProvider>
       </CartProvider>
     </ThemeProvider>
   </React.StrictMode>

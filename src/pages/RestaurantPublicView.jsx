@@ -8,6 +8,7 @@ import {
   MdOutlineSchedule,
   MdOutlineCall,
   MdStorefront,
+  MdOutlineRestaurantMenu,
 } from "react-icons/md";
 import { IoStar, IoStarHalfOutline } from "react-icons/io5";
 import { supabase } from "../supabase";
@@ -18,43 +19,9 @@ import ReviewsList from "../components/ReviewsList";
 import { useCart } from "../context/CartContext";
 import { motion } from "framer-motion";
 
-// Animation variants
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
-  },
-};
 
-const fadeIn = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { duration: 0.5 },
-  },
-};
+// Animation variants removed as they are now handled inline or simplified
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.5, ease: "easeOut" },
-  },
-};
 
 const RestaurantPublicView = () => {
   // Constants
@@ -70,33 +37,22 @@ const RestaurantPublicView = () => {
   const STORAGE_BUCKET_NAME = "restaurant-logos";
   const STORAGE_FILE_LIMIT = 1;
 
-  // CSS Classes
   // CSS Classes - USING GLOBAL THEME VARIABLES
-  const ICON_CLASSES =
-    "text-text-secondary-light dark:text-text-secondary-dark mt-1";
-  const CARD_CLASSES =
-    "p-6 rounded-lg bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm";
-  const BUTTON_PRIMARY_CLASSES =
-    "bg-primary text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 font-bold hover:bg-green-600 transition-all hover:scale-105";
-  const BUTTON_SECONDARY_CLASSES =
-    "flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium text-text-light dark:text-text-dark border-border-light dark:border-border-dark hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors";
-  const HEADING_PRIMARY_CLASSES =
-    "text-text-light dark:text-text-dark text-4xl font-bold leading-tight";
-  const HEADING_SECONDARY_CLASSES =
-    "text-text-light dark:text-text-dark text-xl font-bold";
-  const TEXT_MUTED_CLASSES =
-    "text-text-secondary-light dark:text-text-secondary-dark";
-  const MENU_ITEM_CARD_CLASSES =
-    "flex flex-col rounded-lg border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark hover:shadow-lg transition-shadow overflow-hidden";
+  const ICON_CLASSES = "text-primary mt-1";
+  const CARD_CLASSES = "p-6 rounded-2xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm hover:shadow-md transition-all duration-300";
+  const BUTTON_PRIMARY_CLASSES = "bg-primary text-white px-8 py-3 rounded-full shadow-lg shadow-primary/20 flex items-center gap-3 font-bold hover:bg-green-600 transition-all hover:scale-105 active:scale-95";
+  const BUTTON_SECONDARY_CLASSES = "flex items-center gap-2 px-5 py-2.5 border rounded-full text-sm font-bold text-text-light dark:text-text-dark border-border-light dark:border-border-dark hover:bg-gray-100 dark:hover:bg-white/5 transition-all active:scale-95";
+  const HEADING_PRIMARY_CLASSES = "text-text-light dark:text-text-dark text-4xl md:text-5xl font-black leading-tight tracking-tight";
+  const HEADING_SECONDARY_CLASSES = "text-text-light dark:text-text-dark text-xl font-black tracking-tight";
+  const TEXT_MUTED_CLASSES = "text-text-secondary-light dark:text-text-secondary-dark";
+  const MENU_ITEM_CARD_CLASSES = "flex flex-col rounded-2xl border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 overflow-hidden group";
 
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { addToCart, getCartItemsCount, setIsCartOpen } = useCart();
+  const { addToCart, getCartItemsCount, setIsCartOpen, getCartTotal } = useCart();
 
-  const [restaurant, setRestaurant] = useState(
-    location.state?.restaurant || null
-  );
+  const [restaurant, setRestaurant] = useState(location.state?.restaurant || null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(!restaurant);
   const [menuItems, setMenuItems] = useState([]);
@@ -112,14 +68,12 @@ const RestaurantPublicView = () => {
     {
       icon: <MdOutlineLocationOn className={ICON_CLASSES} />,
       title: "Address",
-      description:
-        restaurant?.location || restaurant?.address || DEFAULT_FALLBACK_TEXT,
+      description: restaurant?.location || restaurant?.address || DEFAULT_FALLBACK_TEXT,
     },
     {
       icon: <MdOutlineCall className={ICON_CLASSES} />,
       title: "Phone",
-      description:
-        restaurant?.phone || restaurant?.contact_phone || DEFAULT_FALLBACK_TEXT,
+      description: restaurant?.phone || restaurant?.contact_phone || DEFAULT_FALLBACK_TEXT,
     },
     {
       icon: <MdOutlineSchedule className={ICON_CLASSES} />,
@@ -135,7 +89,9 @@ const RestaurantPublicView = () => {
 
   useEffect(() => {
     const load = async () => {
-      if (restaurant) return;
+      // If we already have the correct restaurant, don't refetch
+      if (restaurant && restaurant.id === id) return;
+
       try {
         setLoading(true);
         const { data, error } = await supabase
@@ -171,7 +127,7 @@ const RestaurantPublicView = () => {
     };
 
     load();
-  }, [id, restaurant]);
+  }, [id]); // Only depend on id, not restaurant state to avoid loops but allow updates on navigation
 
   useEffect(() => {
     const getUser = async () => {
@@ -253,7 +209,7 @@ const RestaurantPublicView = () => {
       }
     };
     fetchReview();
-  }, [user, restaurant?.id]);
+  }, [user, restaurant?.id, reviewsRefreshKey]);
 
   const handleToggleFavorite = async () => {
     if (!user) {
@@ -326,21 +282,32 @@ const RestaurantPublicView = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading restaurant...</div>
+      <div className="flex min-h-screen items-center justify-center bg-background-light dark:bg-background-dark">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-xl shadow-primary/20"></div>
+          <p className="text-lg font-bold text-text-light dark:text-text-dark animate-pulse">
+            Loading deliciousness...
+          </p>
+        </div>
       </div>
     );
   }
 
   if (!restaurant) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center">
-        <p className="text-lg">Restaurant not found.</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background-light dark:bg-background-dark p-8 text-center">
+        <div className="mb-6 rounded-full bg-red-100 p-6 dark:bg-red-900/20">
+          <MdStorefront className="text-6xl text-red-500" />
+        </div>
+        <h2 className="text-3xl font-black text-text-light dark:text-text-dark mb-2">Restaurant Not Found</h2>
+        <p className="text-text-secondary-light dark:text-text-secondary-dark mb-8 max-w-md">
+          The restaurant you're looking for might have closed or changed its address.
+        </p>
         <button
-          onClick={() => navigate(-1)}
-          className="mt-4 rounded-lg bg-primary px-4 py-2 text-white"
+          onClick={() => navigate("/restaurantview")}
+          className={BUTTON_PRIMARY_CLASSES}
         >
-          Back
+          Back to Restaurants
         </button>
       </div>
     );
@@ -348,7 +315,6 @@ const RestaurantPublicView = () => {
 
   return (
     <div className="relative flex min-h-screen w-full flex-row bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
-      {/* SideNavBar */}
       <UserSidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -356,165 +322,135 @@ const RestaurantPublicView = () => {
         onLogout={handleLogout}
       />
 
-      {/* Overlay for mobile when sidebar is open */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 lg:hidden transition-all duration-300"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Mobile Sidebar Toggle */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="fixed top-4 left-4 z-40 p-2 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-md border border-gray-200 dark:border-gray-700 lg:hidden hover:scale-105 transition-transform"
+        className="fixed top-4 left-4 z-40 p-3 rounded-xl bg-white dark:bg-card-dark text-primary shadow-xl border border-border-light dark:border-border-dark lg:hidden hover:scale-110 transition-all active:scale-95"
         aria-label="Open Sidebar"
       >
         <FiMenu size={24} />
       </button>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto lg:ml-16">
-        <div className="max-w-7xl mx-auto">
-          {/* HeaderImage - Prioritize logo_url over cover_image_url */}
+      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : "lg:ml-16"}`}>
+        {/* Hero Section */}
+        <div className="relative h-[40vh] md:h-[50vh] w-full overflow-hidden">
           {restaurant.logo_url || restaurant.cover_image_url ? (
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
-              variants={fadeIn}
-              className="w-full h-60 md:h-72 rounded-xl bg-cover bg-center mb-6"
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
               style={{
-                backgroundImage: `url('${
-                  restaurant.logo_url || restaurant.cover_image_url
-                }')`,
+                backgroundImage: `url('${restaurant.logo_url || restaurant.cover_image_url}')`,
               }}
-            ></motion.div>
-          ) : (
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
-              variants={fadeIn}
-              className="w-full h-60 md:h-72 rounded-xl bg-linear-to-r from-primary/20 to-blue-500/20 mb-6 flex items-center justify-center"
             >
-              <MdStorefront className="text-6xl text-gray-400" />
-            </motion.div>
+              <div className="absolute inset-0 bg-gradient-to-t from-background-light via-background-light/20 to-transparent dark:from-background-dark dark:via-background-dark/20"></div>
+            </div>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-blue-500/30 flex items-center justify-center">
+              <MdStorefront className="text-9xl text-white/20" />
+            </div>
           )}
-
-          {/* PageHeading */}
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeInUp}
-            className="flex flex-wrap justify-between items-start gap-4 mb-8"
-          >
-            <div className="flex flex-col gap-2">
-              <h1 className={HEADING_PRIMARY_CLASSES}>{restaurant.name}</h1>
-              <p
-                className={`${TEXT_MUTED_CLASSES} text-base font-normal leading-normal`}
+          
+          <div className="absolute bottom-0 left-0 w-full p-6 md:p-10">
+            <div className="max-w-7xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="flex flex-col md:flex-row md:items-end justify-between gap-6"
               >
-                {restaurant.cuisine || "Restaurant"}
-              </p>
-
-              {/* RatingSummary (inline) */}
-              {/* RatingSummary (inline) - Clickable to rate */}
-              <button
-                onClick={() => {
-                  if (!user) navigate("/login");
-                  else setIsRatingOpen(true);
-                }}
-                className="flex items-center gap-2 mt-1 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg px-2 -ml-2 transition-colors cursor-pointer"
-                title="Click to rate"
-              >
-                <div className="flex gap-0.5 pointer-events-none">
-                  {renderStars()}
+                <div className="flex flex-col gap-3">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-wider backdrop-blur-md border border-primary/20">
+                    {restaurant.cuisine || "Restaurant"}
+                  </div>
+                  <h1 className={HEADING_PRIMARY_CLASSES}>{restaurant.name}</h1>
+                  
+                  <button
+                    onClick={() => {
+                      const reviewsSection = document.getElementById("reviews-section");
+                      if (reviewsSection) reviewsSection.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="flex items-center gap-2 hover:bg-white/10 dark:hover:bg-black/10 rounded-xl p-1 -ml-1 transition-all w-fit group"
+                  >
+                    <div className="flex gap-0.5">{renderStars()}</div>
+                    <span className="text-lg font-black">{restaurant.rating || DEFAULT_RATING}</span>
+                    <span className="text-sm font-medium underline decoration-primary/30 underline-offset-4 group-hover:text-primary transition-colors">
+                      ({restaurant.review_count || DEFAULT_REVIEW_COUNT} reviews)
+                    </span>
+                  </button>
                 </div>
-                <p className="text-text-light dark:text-text-dark text-sm font-medium">
-                  {restaurant.rating || DEFAULT_RATING}
-                </p>
-                <p
-                  className={`${TEXT_MUTED_CLASSES} text-sm font-normal underline decoration-dotted`}
-                >
-                  ({restaurant.review_count || DEFAULT_REVIEW_COUNT} reviews)
-                </p>
-                {!userReview && (
-                  <span className="text-primary text-xs font-bold ml-1 border border-primary/30 px-2 py-0.5 rounded-full bg-primary/5">
-                    Rate Now
-                  </span>
-                )}
-              </button>
-            </div>
 
-            {/* Actions: Favorite & Rate */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  if (!user) {
-                    navigate("/login");
-                    return;
-                  }
-                  setIsRatingOpen(true);
-                }}
-                className={BUTTON_SECONDARY_CLASSES}
-              >
-                <IoStar className={userReview ? "text-yellow-400" : ""} />
-                <span className="truncate">
-                  {userReview ? `Rated ${userReview.rating}` : "Rate"}
-                </span>
-              </button>
-              <button
-                onClick={handleToggleFavorite}
-                disabled={favLoading}
-                className={`${BUTTON_SECONDARY_CLASSES} ${
-                  isFavorite ? "bg-red-50 text-red-500 border-red-200" : ""
-                }`}
-              >
-                {isFavorite ? (
-                  <FaHeart className="text-red-500" />
-                ) : (
-                  <FiHeart />
-                )}
-                <span className="truncate">
-                  {isFavorite ? "Favorited" : "Favorite"}
-                </span>
-              </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      if (!user) navigate("/login");
+                      else setIsRatingOpen(true);
+                    }}
+                    className={BUTTON_SECONDARY_CLASSES + " bg-white/80 dark:bg-black/40 backdrop-blur-md"}
+                  >
+                    <IoStar className={userReview ? "text-yellow-400" : "text-primary"} />
+                    <span>{userReview ? `Rated ${userReview.rating}` : "Rate"}</span>
+                  </button>
+                  <button
+                    onClick={handleToggleFavorite}
+                    disabled={favLoading}
+                    className={`${BUTTON_SECONDARY_CLASSES} bg-white/80 dark:bg-black/40 backdrop-blur-md ${
+                      isFavorite ? "text-red-500 border-red-200 bg-red-50/80" : ""
+                    }`}
+                  >
+                    {isFavorite ? <FaHeart className="text-red-500" /> : <FiHeart className="text-primary" />}
+                    <span>{isFavorite ? "Favorited" : "Favorite"}</span>
+                  </button>
+                </div>
+              </motion.div>
             </div>
-          </motion.div>
+          </div>
+        </div>
 
-          {/* Restaurant Info Section */}
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={staggerContainer}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-          >
-            {/* Left Column: About & Details */}
+        <div className="max-w-7xl mx-auto p-6 md:p-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            {/* Left Column: Info */}
             <div className="flex flex-col gap-8">
-              <motion.div variants={scaleIn} className={CARD_CLASSES}>
-                <h2 className={`${HEADING_SECONDARY_CLASSES} mb-4`}>
-                  About {restaurant.name}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className={CARD_CLASSES}
+              >
+                <h2 className={HEADING_SECONDARY_CLASSES + " mb-4 flex items-center gap-2"}>
+                  <MdStorefront className="text-primary" />
+                  About
                 </h2>
-                <p className={`${TEXT_MUTED_CLASSES} text-sm leading-relaxed`}>
-                  {restaurant.description ||
-                    restaurant.about ||
-                    DEFAULT_DESCRIPTION}
+                <p className={TEXT_MUTED_CLASSES + " text-sm leading-relaxed"}>
+                  {restaurant.description || restaurant.about || DEFAULT_DESCRIPTION}
                 </p>
               </motion.div>
 
-              <motion.div variants={scaleIn} className={CARD_CLASSES}>
-                <h2 className={`${HEADING_SECONDARY_CLASSES} mb-4`}>Details</h2>
-                <ul className="space-y-4">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className={CARD_CLASSES}
+              >
+                <h2 className={HEADING_SECONDARY_CLASSES + " mb-6 flex items-center gap-2"}>
+                  <MdOutlineSchedule className="text-primary" />
+                  Details
+                </h2>
+                <ul className="space-y-6">
                   {details.map((detail, index) => (
-                    <li key={index} className="flex items-start gap-4">
-                      {detail.icon}
+                    <li key={index} className="flex items-start gap-4 group">
+                      <div className="p-2.5 rounded-xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                        {detail.icon}
+                      </div>
                       <div className="flex flex-col">
-                        <span className="text-text-light dark:text-text-dark text-sm font-medium">
+                        <span className="text-xs font-black uppercase tracking-widest text-primary/60 mb-0.5">
                           {detail.title}
                         </span>
-                        <span className={`${TEXT_MUTED_CLASSES} text-sm`}>
+                        <span className="text-sm font-bold text-text-light dark:text-text-dark">
                           {detail.description}
                         </span>
                       </div>
@@ -524,163 +460,133 @@ const RestaurantPublicView = () => {
               </motion.div>
             </div>
 
-            {/* Right Column: Menu Items */}
-            <motion.div
-              variants={scaleIn}
-              className={`${CARD_CLASSES} lg:col-span-2`}
-            >
-              <h2 className={`${HEADING_SECONDARY_CLASSES} mb-6`}>Menu</h2>
+            {/* Right Column: Menu */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className={HEADING_PRIMARY_CLASSES.replace("text-4xl md:text-5xl", "text-3xl")}>
+                  Menu
+                </h2>
+                <div className="h-1 flex-1 mx-6 bg-gradient-to-r from-primary/20 to-transparent rounded-full hidden md:block"></div>
+              </div>
+
               {menuLoading ? (
-                <p className={`text-sm ${TEXT_MUTED_CLASSES}`}>
-                  Loading menu...
-                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {[1, 2, 4].map((i) => (
+                    <div key={i} className="h-64 rounded-2xl bg-gray-100 dark:bg-white/5 animate-pulse"></div>
+                  ))}
+                </div>
               ) : menuItems.length === 0 ? (
-                <p className={`text-sm ${TEXT_MUTED_CLASSES}`}>
-                  No menu items available.
-                </p>
+                <div className="flex flex-col items-center justify-center py-20 bg-gray-50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-border-light dark:border-border-dark">
+                  <MdOutlineRestaurantMenu className="text-6xl text-gray-300 mb-4" />
+                  <p className="text-xl font-bold text-text-secondary-light">No menu items yet.</p>
+                </div>
               ) : (
-                <motion.div
-                  variants={staggerContainer}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, amount: 0.1 }}
-                  className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
-                >
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                   {menuItems.map((item) => (
                     <motion.div
                       key={item.id}
-                      variants={fadeInUp}
-                      whileHover={{
-                        scale: 1.03,
-                        transition: { duration: 0.2 },
-                      }}
+                      layout
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       className={MENU_ITEM_CARD_CLASSES}
                     >
-                      {item.image_url ? (
-                        <div
-                          className="w-full h-40 bg-cover bg-center"
-                          style={{
-                            backgroundImage: `url('${item.image_url}')`,
-                          }}
-                        ></div>
-                      ) : (
-                        <div className="w-full h-40 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                          <MdStorefront className="text-4xl text-text-muted-light dark:text-text-muted-dark" />
+                      <div className="relative h-48 overflow-hidden">
+                        {item.image_url ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                            <MdStorefront className="text-5xl text-gray-300" />
+                          </div>
+                        )}
+                        <div className="absolute top-3 right-3">
+                          <div className="bg-white/90 dark:bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-sm font-black shadow-lg">
+                            ${Number(item.price).toFixed(2)}
+                          </div>
                         </div>
-                      )}
-                      <div className="p-4 flex flex-col grow">
-                        <h3 className="text-text-light dark:text-text-dark font-bold">
+                      </div>
+                      <div className="p-5 flex flex-col grow">
+                        <h3 className="text-lg font-black mb-2 group-hover:text-primary transition-colors">
                           {item.name}
                         </h3>
-                        <p
-                          className={`${TEXT_MUTED_CLASSES} text-sm line-clamp-2 mt-2`}
-                        >
+                        <p className={TEXT_MUTED_CLASSES + " text-xs line-clamp-2 mb-6"}>
                           {item.description || DEFAULT_ITEM_DESCRIPTION}
                         </p>
-                        <div className="mt-auto pt-4 flex items-center justify-between">
-                          <p className="text-text-light dark:text-text-dark font-semibold">
-                            {item.price
-                              ? `$${Number(item.price).toFixed(2)}`
-                              : "—"}
-                          </p>
-                          <button
-                            onClick={() => handleAddToCart(item)}
-                            className="bg-primary/10 text-primary text-sm font-bold py-1 px-3 rounded-full hover:bg-primary/20 transition-colors"
-                          >
-                            Add
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleAddToCart(item)}
+                          className="mt-auto w-full bg-primary text-white font-black py-3 rounded-xl shadow-lg shadow-primary/20 hover:bg-green-600 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                          <FiShoppingCart />
+                          Add to Cart
+                        </button>
                       </div>
                     </motion.div>
                   ))}
-                </motion.div>
+                </div>
               )}
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
           {/* Reviews Section */}
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={fadeInUp}
-            className="mt-12"
-          >
+          <div id="reviews-section" className="mt-20">
+            <div className="flex items-center gap-4 mb-10">
+              <h2 className={HEADING_PRIMARY_CLASSES.replace("text-4xl md:text-5xl", "text-3xl")}>
+                Customer Reviews
+              </h2>
+              <div className="flex-1 h-px bg-border-light dark:bg-border-dark"></div>
+            </div>
+            
             <ReviewsList
               key={reviewsRefreshKey}
               restaurantId={restaurant?.id}
               onReviewsUpdate={async () => {
-                // Update restaurant statistics when reviews change
                 const { data: reviews } = await supabase
                   .from("reviews")
                   .select("rating")
                   .eq("restaurant_id", restaurant.id);
 
-                if (reviews && reviews.length > 0) {
-                  const avgRating =
-                    reviews.reduce((sum, r) => sum + r.rating, 0) /
-                    reviews.length;
-                  const roundedRating = Math.round(avgRating * 10) / 10;
+                const stats = reviews?.length > 0 
+                  ? {
+                      rating: Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10,
+                      review_count: reviews.length
+                    }
+                  : { rating: 0, review_count: 0 };
 
-                  await supabase
-                    .from("restaurants")
-                    .update({
-                      rating: roundedRating,
-                      review_count: reviews.length,
-                    })
-                    .eq("id", restaurant.id);
-
-                  // Update local state
-                  setRestaurant((prev) => ({
-                    ...prev,
-                    rating: roundedRating,
-                    review_count: reviews.length,
-                  }));
-                } else {
-                  // No reviews left
-                  await supabase
-                    .from("restaurants")
-                    .update({
-                      rating: 0,
-                      review_count: 0,
-                    })
-                    .eq("id", restaurant.id);
-
-                  setRestaurant((prev) => ({
-                    ...prev,
-                    rating: 0,
-                    review_count: 0,
-                  }));
-                }
+                await supabase.from("restaurants").update(stats).eq("id", restaurant.id);
+                setRestaurant(prev => ({ ...prev, ...stats }));
               }}
             />
-          </motion.div>
+          </div>
         </div>
 
         {/* Floating Cart Button */}
         {getCartItemsCount() > 0 && (
           <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsCartOpen(true)}
-            className={`fixed bottom-6 right-6 ${BUTTON_PRIMARY_CLASSES} z-30`}
+            className="fixed bottom-8 right-8 z-40 bg-primary text-white px-8 py-4 rounded-2xl shadow-2xl shadow-primary/40 flex items-center gap-4 font-black transition-all group"
           >
-            <FiShoppingCart className="text-xl" />
-            <span>View Cart ({getCartItemsCount()})</span>
-            <span className="bg-white text-primary rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
-              {getCartItemsCount()}
-            </span>
+            <div className="relative">
+              <FiShoppingCart className="text-2xl" />
+              <span className="absolute -top-2 -right-2 bg-white text-primary text-[10px] w-5 h-5 flex items-center justify-center rounded-full shadow-md">
+                {getCartItemsCount()}
+              </span>
+            </div>
+            <span className="hidden md:block">View Order</span>
+            <div className="w-px h-6 bg-white/20 hidden md:block"></div>
+            <span className="text-lg">${getCartTotal().toFixed(2)}</span>
           </motion.button>
         )}
       </main>
 
-      {/* Cart Sidebar */}
       <Cart />
-
-      {/* Rating Modal */}
+      
       <RatingModal
         isOpen={isRatingOpen}
         onClose={() => setIsRatingOpen(false)}
@@ -689,49 +595,8 @@ const RestaurantPublicView = () => {
         initialRating={userReview?.rating || 0}
         initialComment={userReview?.comment || ""}
         onRatingSuccess={async () => {
-          // Refetch review to update UI
-          const fetchReview = async () => {
-            const { data } = await supabase
-              .from("reviews")
-              .select("*")
-              .eq("user_id", user.id)
-              .eq("restaurant_id", restaurant.id)
-              .maybeSingle();
-            setUserReview(data);
-          };
-
-          // Update restaurant statistics
-          const updateRestaurantStats = async () => {
-            const { data: reviews } = await supabase
-              .from("reviews")
-              .select("rating")
-              .eq("restaurant_id", restaurant.id);
-
-            if (reviews && reviews.length > 0) {
-              const avgRating =
-                reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-              const roundedRating = Math.round(avgRating * 10) / 10;
-
-              await supabase
-                .from("restaurants")
-                .update({
-                  rating: roundedRating,
-                  review_count: reviews.length,
-                })
-                .eq("id", restaurant.id);
-
-              // Update local state
-              setRestaurant((prev) => ({
-                ...prev,
-                rating: roundedRating,
-                review_count: reviews.length,
-              }));
-            }
-          };
-
-          await fetchReview();
-          await updateRestaurantStats();
-          setReviewsRefreshKey((prev) => prev + 1);
+          setReviewsRefreshKey(prev => prev + 1);
+          setIsRatingOpen(false);
         }}
       />
     </div>

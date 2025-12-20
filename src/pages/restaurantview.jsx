@@ -7,6 +7,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 
 const RestaurantsDirectoryPage = () => {
+  const navigate = useNavigate();
+  const { darkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [restaurants, setRestaurants] = useState([]);
@@ -15,6 +17,8 @@ const RestaurantsDirectoryPage = () => {
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get("search") || ""
   );
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   useEffect(() => {
     const query = searchParams.get("search");
@@ -289,6 +293,9 @@ const RestaurantsDirectoryPage = () => {
                       <span className="ml-1 text-sm font-medium">
                         {restaurant.rating?.toFixed(1) || "0.0"}
                       </span>
+                      <span className="text-xs text-text-muted-light dark:text-text-muted-dark ml-1">
+                        ({restaurant.review_count || 0} reviews)
+                      </span>
                     </div>
                   </div>
 
@@ -298,7 +305,7 @@ const RestaurantsDirectoryPage = () => {
                       to={`/restaurant/${restaurant.id}`}
                       state={{ restaurant }}
                     >
-                      View Profile
+                      View Menu
                     </Link>
                     <button className="flex-1 rounded-lg border border-border-light dark:border-border-dark px-4 py-2 text-sm text-text-light dark:text-text-dark hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
                       Message

@@ -6,20 +6,37 @@ import {
   FiUser,
   FiLogOut,
   FiShoppingCart,
+  FiBell,
 } from "react-icons/fi";
 import { MdStorefront, MdReceiptLong } from "react-icons/md";
 import { useTheme } from "../context/ThemeContext";
 import { useCart } from "../context/CartContext";
+import { useNotifications } from "../context/NotificationContext";
 
 const UserSidebar = ({ sidebarOpen, setSidebarOpen, user, onLogout }) => {
   const location = useLocation();
   const { darkMode } = useTheme();
   const { getCartItemsCount, setIsCartOpen } = useCart();
+  const { unreadCount } = useNotifications();
 
   const navItems = [
     { path: "/dashboard", label: "Home", icon: <FiHome /> },
     { path: "/restaurantview", label: "View Restaurants", icon: <MdStorefront /> },
     { path: "/userOrders", label: "Your Orders", icon: <MdReceiptLong /> },
+    {
+      path: "/notifications",
+      label: "Notifications",
+      icon: (
+        <div className="relative">
+          <FiBell />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] text-white">
+              {unreadCount}
+            </span>
+          )}
+        </div>
+      ),
+    },
     { path: "/favorites", label: "Favorites", icon: <FiHeart /> },
     { path: "/userProfile", label: "Profile", icon: <FiUser /> },
   ];

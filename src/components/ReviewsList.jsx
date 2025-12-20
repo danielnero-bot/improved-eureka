@@ -38,14 +38,7 @@ const ReviewsList = ({ restaurantId, onReviewsUpdate }) => {
       // Build query
       let query = supabase
         .from("reviews")
-        .select(
-          `
-          *,
-          user:user_id (
-            email
-          )
-        `
-        )
+        .select("*")
         .eq("restaurant_id", restaurantId);
 
       // Apply rating filter
@@ -75,10 +68,10 @@ const ReviewsList = ({ restaurantId, onReviewsUpdate }) => {
 
       if (error) throw error;
 
-      // Add user name from email (first part before @)
+      // Add generic user name since we can't join auth.users directly
       const reviewsWithNames = data.map((review) => ({
         ...review,
-        user_name: review.user?.email?.split("@")[0] || "Anonymous",
+        user_name: "Verified Customer",
       }));
 
       setReviews(reviewsWithNames);
