@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiHeart, FiBell, FiSearch, FiMapPin, FiTruck } from "react-icons/fi";
+import { FiHeart, FiBell, FiMapPin, FiTruck } from "react-icons/fi";
 import { MdFastfood, MdHistory, MdMenu, MdShoppingCart } from "react-icons/md";
 import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
@@ -177,17 +177,7 @@ const QuickPlateDashboard = () => {
               <MdMenu className="text-2xl" />
             </button>
             <div className="relative w-full max-w-md hidden md:block">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted-light dark:text-text-muted-dark" />
-              <input
-                className="w-full rounded-full border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark py-2 pl-10 pr-4 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
-                placeholder="Search for restaurants..."
-                type="text"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    // Implement search navigation if needed, or just visual
-                  }
-                }}
-              />
+              {/* Search functionality removed */}
             </div>
           </div>
           <div className="flex items-center gap-4">

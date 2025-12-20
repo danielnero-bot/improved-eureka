@@ -100,6 +100,27 @@ export const CartProvider = ({ children }) => {
     return cartItems.length > 0 ? cartItems[0].restaurant : null;
   };
 
+  // Return an array of grouped items by restaurant
+  const getGroupedCart = () => {
+    const map = new Map();
+    cartItems.forEach((item) => {
+      const rid = item.restaurant?.id || "__unknown__";
+      if (!map.has(rid)) {
+        map.set(rid, {
+          restaurant: item.restaurant || null,
+          items: [],
+        });
+      }
+      map.get(rid).items.push(item);
+    });
+
+    return Array.from(map.values()).map((group) => ({
+      restaurant: group.restaurant,
+      items: group.items,
+      total: group.items.reduce((sum, it) => sum + Number(it.price) * it.quantity, 0),
+    }));
+  };
+
   const value = {
     cartItems,
     isCartOpen,
@@ -111,6 +132,7 @@ export const CartProvider = ({ children }) => {
     getCartTotal,
     getCartItemsCount,
     getRestaurantFromCart,
+    getGroupedCart,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

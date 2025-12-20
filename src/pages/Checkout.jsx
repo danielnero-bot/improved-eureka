@@ -9,15 +9,14 @@ import { supabase } from "../supabase";
 const Checkout = () => {
   const navigate = useNavigate();
   const { darkMode } = useTheme();
-  const { cartItems, getCartTotal, getRestaurantFromCart, clearCart } =
-    useCart();
+  const { cartItems, getCartTotal, getGroupedCart, clearCart } = useCart();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [specialInstructions, setSpecialInstructions] = useState("");
 
-  const restaurant = getRestaurantFromCart();
+  const grouped = getGroupedCart();
 
   useEffect(() => {
     const getUser = async () => {
@@ -46,54 +45,73 @@ const Checkout = () => {
       return;
     }
 
+    if (!grouped || grouped.length === 0) {
+      alert("Your cart is empty.");
+      return;
+    }
+
     setLoading(true);
+    const createdOrderIds = [];
     try {
-      // Create order in database
-      const { data: orderData, error: orderError } = await supabase
-        .from("orders")
-        .insert([
-          {
-            user_id: user.id,
-            restaurant_id: restaurant.id,
-            total_amount: getCartTotal(),
-            status: "pending",
-            delivery_address: deliveryAddress,
-            payment_method: paymentMethod,
-            special_instructions: specialInstructions,
-          },
-        ])
-        .select()
-        .single();
+      // Create an order per restaurant group
+      for (const group of grouped) {
+        const { restaurant: rest, items, total } = group;
 
-      if (orderError) throw orderError;
+        const { data: orderData, error: orderError } = await supabase
+          .from("orders")
+          .insert([
+            {
+              user_id: user.id,
+              restaurant_id: rest?.id,
+              total_amount: total,
+              status: "pending",
+              delivery_address: deliveryAddress,
+              payment_method: paymentMethod,
+              special_instructions: specialInstructions,
+            },
+          ])
+          .select()
+          .single();
 
-      // Create order items
-      const orderItems = cartItems.map((item) => ({
-        order_id: orderData.id,
-        menu_item_id: item.id,
-        quantity: item.quantity,
-        price: item.price,
-      }));
+        if (orderError) throw orderError;
 
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
+        createdOrderIds.push(orderData.id);
 
-      if (itemsError) throw itemsError;
+        const orderItems = items.map((item) => ({
+          order_id: orderData.id,
+          menu_item_id: item.id,
+          quantity: item.quantity,
+          price: item.price,
+        }));
 
-      // Clear cart and navigate to orders page
+        const { error: itemsError } = await supabase
+          .from("order_items")
+          .insert(orderItems);
+
+        if (itemsError) throw itemsError;
+      }
+
+      // All orders created successfully
       clearCart();
-      alert("Order placed successfully!");
+      alert("Order(s) placed successfully!");
       navigate("/userOrders");
     } catch (error) {
-      console.error("Error placing order:", error);
-      alert("Failed to place order. Please try again.");
+      console.error("Error placing multi-restaurant order:", error);
+      // Attempt rollback for partially created orders
+      if (createdOrderIds.length > 0) {
+        try {
+          await supabase.from("orders").delete().in("id", createdOrderIds);
+        } catch (rollbackErr) {
+          console.error("Rollback failed:", rollbackErr);
+        }
+      }
+      alert("Failed to place order(s). Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!restaurant) return null;
+  if (!grouped || grouped.length === 0) return null;
 
   return (
     <div
@@ -136,30 +154,30 @@ const Checkout = () => {
                   : "bg-white border-gray-200"
               }`}
             >
-              <h2 className="text-lg font-bold mb-4">Ordering from</h2>
-              <div className="flex items-center gap-3">
-                {restaurant.logo_url ? (
-                  <img
-                    src={restaurant.logo_url}
-                    alt={restaurant.name}
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                    <MdStorefront className="text-3xl text-gray-400" />
-                  </div>
-                )}
-                <div>
-                  <h3 className="font-bold text-lg">{restaurant.name}</h3>
-                  <p
-                    className={`text-sm ${
-                      darkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    Est. delivery: 30-45 min
-                  </p>
+                <h2 className="text-lg font-bold mb-4">Ordering from</h2>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {grouped.map((g, idx) => (
+                    <div key={idx} className="flex items-center gap-3 mr-4 mb-2">
+                      {g.restaurant?.logo_url ? (
+                        <img
+                          src={g.restaurant.logo_url}
+                          alt={g.restaurant?.name}
+                          className="w-12 h-12 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <MdStorefront className="text-2xl text-gray-400" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-bold text-sm">{g.restaurant?.name || "Unknown"}</h3>
+                        <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                          {g.items.length} item{g.items.length !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
             </div>
 
             {/* Delivery Address */}

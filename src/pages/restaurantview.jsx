@@ -3,7 +3,7 @@ import { FiSearch, FiStar, FiMenu } from "react-icons/fi";
 import { MdStorefront } from "react-icons/md";
 import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 
 const RestaurantsDirectoryPage = () => {
@@ -11,11 +11,17 @@ const RestaurantsDirectoryPage = () => {
   const [user, setUser] = useState(null);
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const navigate = useNavigate();
-  const { darkMode } = useTheme();
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams.get("search") || ""
+  );
 
-  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
+  useEffect(() => {
+    const query = searchParams.get("search");
+    if (query) {
+      setSearchQuery(query);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -134,12 +140,16 @@ const RestaurantsDirectoryPage = () => {
     return stars;
   };
 
-  const filteredRestaurants = restaurants.filter(
-    (restaurant) =>
-      restaurant.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      restaurant.cuisine?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      restaurant.location?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredRestaurants = restaurants.filter((restaurant) => {
+    if (!restaurant) return false;
+    const query = String(searchQuery || "").toLowerCase();
+    const name = String(restaurant.name || "").toLowerCase();
+    const cuisine = String(restaurant.cuisine || "").toLowerCase();
+    const location = String(restaurant.location || 
+                          restaurant.address || "").toLowerCase();
+    
+    return name.includes(query) || cuisine.includes(query) || location.includes(query);
+  });
 
   return (
     <div className="relative flex min-h-screen w-full">

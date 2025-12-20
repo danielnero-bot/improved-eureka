@@ -41,6 +41,8 @@ const UserOrdersPage = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { darkMode } = useTheme();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
@@ -94,6 +96,24 @@ const UserOrdersPage = () => {
     await supabase.auth.signOut();
     navigate("/login");
   };
+
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      (order.restaurant?.name || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      order.items?.some((item) =>
+        (item.menu_item?.name || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
+      );
+
+    const matchesFilter =
+      filterStatus === "All" ||
+      (order.status || "").toLowerCase() === filterStatus.toLowerCase();
+
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <div className="relative flex min-h-screen w-full flex-col">
@@ -179,7 +199,8 @@ const UserOrdersPage = () => {
                           : "text-gray-900 bg-white border-gray-200 placeholder:text-gray-500"
                       }`}
                       placeholder="Search by restaurant or item..."
-                      defaultValue=""
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
                 </label>
@@ -187,26 +208,29 @@ const UserOrdersPage = () => {
 
               {/* Chips / Filter */}
               <div className="flex items-center">
-                <button
-                  className={`flex h-12 w-full md:w-auto shrink-0 items-center justify-between gap-x-2 rounded-lg px-4 transition-colors duration-300 ${
-                    darkMode
-                      ? "bg-black/20 border border-gray-700"
-                      : "bg-white border border-gray-200"
-                  }`}
-                >
-                  <p
-                    className={`text-sm font-medium leading-normal ${
-                      darkMode ? "text-gray-200" : "text-gray-800"
+                <div className="relative">
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className={`h-12 w-full md:w-48 appearance-none rounded-lg border px-4 pr-10 text-sm font-medium transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary ${
+                      darkMode
+                        ? "bg-black/20 border-gray-700 text-gray-200"
+                        : "bg-white border-gray-200 text-gray-800"
                     }`}
                   >
-                    All Orders
-                  </p>
+                    <option value="All">All Orders</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Preparing">Preparing</option>
+                    <option value="Ready">Ready</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
                   <FiChevronDown
-                    className={`text-xl ${
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 text-xl ${
                       darkMode ? "text-gray-400" : "text-gray-500"
                     }`}
                   />
-                </button>
+                </div>
               </div>
             </motion.div>
 
@@ -214,8 +238,8 @@ const UserOrdersPage = () => {
             <div className="grid grid-cols-1 gap-6">
               {loading ? (
                 <div className="text-center py-10">Loading orders...</div>
-              ) : orders.length > 0 ? (
-                orders.map((order) => (
+              ) : filteredOrders.length > 0 ? (
+                filteredOrders.map((order) => (
                   <motion.div
                     key={order.id}
                     variants={scaleIn}

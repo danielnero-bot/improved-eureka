@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { FiHeart, FiShoppingCart, FiMenu } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import {
@@ -10,14 +10,12 @@ import {
   MdStorefront,
 } from "react-icons/md";
 import { IoStar, IoStarHalfOutline } from "react-icons/io5";
-import { AiOutlineClose } from "react-icons/ai";
-import { BsStarFill, BsStar } from "react-icons/bs";
 import { supabase } from "../supabase";
 import UserSidebar from "../components/UserSidebar";
 import Cart from "../components/Cart";
 import RatingModal from "../components/RatingModal";
+import ReviewsList from "../components/ReviewsList";
 import { useCart } from "../context/CartContext";
-import { useTheme } from "../context/ThemeContext";
 import { motion } from "framer-motion";
 
 // Animation variants
@@ -95,7 +93,6 @@ const RestaurantPublicView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { addToCart, getCartItemsCount, setIsCartOpen } = useCart();
-  const { darkMode } = useTheme();
 
   const [restaurant, setRestaurant] = useState(
     location.state?.restaurant || null
@@ -109,6 +106,7 @@ const RestaurantPublicView = () => {
   const [favLoading, setFavLoading] = useState(false);
   const [userReview, setUserReview] = useState(null);
   const [isRatingOpen, setIsRatingOpen] = useState(false);
+  const [reviewsRefreshKey, setReviewsRefreshKey] = useState(0);
 
   const details = [
     {
@@ -599,6 +597,64 @@ const RestaurantPublicView = () => {
               )}
             </motion.div>
           </motion.div>
+
+          {/* Reviews Section */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={fadeInUp}
+            className="mt-12"
+          >
+            <ReviewsList
+              key={reviewsRefreshKey}
+              restaurantId={restaurant?.id}
+              onReviewsUpdate={async () => {
+                // Update restaurant statistics when reviews change
+                const { data: reviews } = await supabase
+                  .from("reviews")
+                  .select("rating")
+                  .eq("restaurant_id", restaurant.id);
+
+                if (reviews && reviews.length > 0) {
+                  const avgRating =
+                    reviews.reduce((sum, r) => sum + r.rating, 0) /
+                    reviews.length;
+                  const roundedRating = Math.round(avgRating * 10) / 10;
+
+                  await supabase
+                    .from("restaurants")
+                    .update({
+                      rating: roundedRating,
+                      review_count: reviews.length,
+                    })
+                    .eq("id", restaurant.id);
+
+                  // Update local state
+                  setRestaurant((prev) => ({
+                    ...prev,
+                    rating: roundedRating,
+                    review_count: reviews.length,
+                  }));
+                } else {
+                  // No reviews left
+                  await supabase
+                    .from("restaurants")
+                    .update({
+                      rating: 0,
+                      review_count: 0,
+                    })
+                    .eq("id", restaurant.id);
+
+                  setRestaurant((prev) => ({
+                    ...prev,
+                    rating: 0,
+                    review_count: 0,
+                  }));
+                }
+              }}
+            />
+          </motion.div>
         </div>
 
         {/* Floating Cart Button */}
@@ -632,7 +688,7 @@ const RestaurantPublicView = () => {
         userId={user?.id}
         initialRating={userReview?.rating || 0}
         initialComment={userReview?.comment || ""}
-        onRatingSuccess={() => {
+        onRatingSuccess={async () => {
           // Refetch review to update UI
           const fetchReview = async () => {
             const { data } = await supabase
@@ -640,10 +696,42 @@ const RestaurantPublicView = () => {
               .select("*")
               .eq("user_id", user.id)
               .eq("restaurant_id", restaurant.id)
-              .single();
+              .maybeSingle();
             setUserReview(data);
           };
-          fetchReview();
+
+          // Update restaurant statistics
+          const updateRestaurantStats = async () => {
+            const { data: reviews } = await supabase
+              .from("reviews")
+              .select("rating")
+              .eq("restaurant_id", restaurant.id);
+
+            if (reviews && reviews.length > 0) {
+              const avgRating =
+                reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+              const roundedRating = Math.round(avgRating * 10) / 10;
+
+              await supabase
+                .from("restaurants")
+                .update({
+                  rating: roundedRating,
+                  review_count: reviews.length,
+                })
+                .eq("id", restaurant.id);
+
+              // Update local state
+              setRestaurant((prev) => ({
+                ...prev,
+                rating: roundedRating,
+                review_count: reviews.length,
+              }));
+            }
+          };
+
+          await fetchReview();
+          await updateRestaurantStats();
+          setReviewsRefreshKey((prev) => prev + 1);
         }}
       />
     </div>

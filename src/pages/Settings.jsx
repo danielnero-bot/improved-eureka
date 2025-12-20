@@ -33,6 +33,60 @@ export default function Settings() {
     system: true,
   });
 
+  // Load notification settings
+  useEffect(() => {
+    const loadSettings = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("user_details")
+        .select("order_updates, email_notifications, push_notifications")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (data) {
+        setNotifications({
+          order: data.order_updates ?? true,
+          marketing: data.email_notifications ?? false,
+          system: data.push_notifications ?? true,
+        });
+      }
+    };
+    loadSettings();
+  }, []);
+
+  const updateNotification = async (key, value) => {
+    const newSettings = { ...notifications, [key]: value };
+    setNotifications(newSettings);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Map UI keys to DB columns
+    const dbUpdates = {
+      order_updates: newSettings.order,
+      email_notifications: newSettings.marketing,
+      push_notifications: newSettings.system,
+    };
+
+    try {
+      await supabase.from("user_details").upsert(
+        {
+          user_id: user.id,
+          ...dbUpdates,
+        },
+        { onConflict: "user_id" }
+      );
+    } catch (err) {
+      console.error("Failed to save notification settings", err);
+    }
+  };
+
   // Messages
   const [message, setMessage] = useState({ type: "", text: "" });
 
@@ -513,10 +567,7 @@ export default function Settings() {
                         type="checkbox"
                         checked={notifications.order}
                         onChange={(e) =>
-                          setNotifications({
-                            ...notifications,
-                            order: e.target.checked,
-                          })
+                          updateNotification("order", e.target.checked)
                         }
                         className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:bg-background-dark dark:border-border-dark"
                       />
@@ -534,10 +585,7 @@ export default function Settings() {
                         type="checkbox"
                         checked={notifications.marketing}
                         onChange={(e) =>
-                          setNotifications({
-                            ...notifications,
-                            marketing: e.target.checked,
-                          })
+                          updateNotification("marketing", e.target.checked)
                         }
                         className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:bg-background-dark dark:border-border-dark"
                       />
@@ -555,10 +603,7 @@ export default function Settings() {
                         type="checkbox"
                         checked={notifications.system}
                         onChange={(e) =>
-                          setNotifications({
-                            ...notifications,
-                            system: e.target.checked,
-                          })
+                          updateNotification("system", e.target.checked)
                         }
                         className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:bg-background-dark dark:border-border-dark"
                       />

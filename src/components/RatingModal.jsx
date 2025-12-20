@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { IoStar, IoClose } from "react-icons/io5";
 import { supabase } from "../supabase";
 
@@ -15,6 +15,11 @@ const RatingModal = ({
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState(initialComment);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setRating(initialRating);
+    setComment(initialComment);
+  }, [initialRating, initialComment]);
 
   if (!isOpen) return null;
 

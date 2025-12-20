@@ -18,7 +18,7 @@ const UserSidebar = ({ sidebarOpen, setSidebarOpen, user, onLogout }) => {
 
   const navItems = [
     { path: "/dashboard", label: "Home", icon: <FiHome /> },
-    { path: "/restaurantview", label: "Restaurants", icon: <MdStorefront /> },
+    { path: "/restaurantview", label: "View Restaurants", icon: <MdStorefront /> },
     { path: "/userOrders", label: "Your Orders", icon: <MdReceiptLong /> },
     { path: "/favorites", label: "Favorites", icon: <FiHeart /> },
     { path: "/userProfile", label: "Profile", icon: <FiUser /> },

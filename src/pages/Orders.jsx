@@ -66,7 +66,16 @@ const Orders = () => {
         // Fetch orders
         const { data: ordersData, error: ordersError } = await supabase
           .from("orders")
-          .select("*")
+          .select(
+            `
+            *,
+            items:order_items(
+              quantity,
+              price,
+              menu_item:menu_items(name)
+            )
+          `
+          )
           .eq("restaurant_id", restaurant.id)
           .order("created_at", { ascending: false });
 
@@ -82,6 +91,27 @@ const Orders = () => {
 
     fetchRestaurantAndOrders();
   }, [navigate]);
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: newStatus })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      // Update local state
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
+    } catch (err) {
+      console.error("Error updating status:", err);
+      alert("Failed to update status");
+    }
+  };
 
   const filteredOrders = orders.filter((order) => {
     if (filter === "All") return true;
@@ -398,11 +428,14 @@ const Orders = () => {
                           Items:
                         </span>
                         <span>
-                          {order.items
-                            ? Array.isArray(order.items)
-                              ? `${order.items.length} items`
-                              : "View details"
-                            : "No items"}
+                          <div className="flex flex-col gap-1 text-right">
+                            {order.items?.map((item, idx) => (
+                              <span key={idx} className="block text-xs">
+                                {item.quantity}x{" "}
+                                {item.menu_item?.name || "Item"}
+                              </span>
+                            ))}
+                          </div>
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -423,9 +456,48 @@ const Orders = () => {
                       </div>
                     </div>
 
-                    <button className="mt-3 w-full py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                      View Details
-                    </button>
+                    <div className="mt-3 flex gap-2">
+                      {order.status === "pending" && (
+                        <button
+                          onClick={() =>
+                            updateOrderStatus(order.id, "confirmed")
+                          }
+                          className="flex-1 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-medium hover:bg-blue-600"
+                        >
+                          Confirm Order
+                        </button>
+                      )}
+                      {order.status === "confirmed" && (
+                        <button
+                          onClick={() =>
+                            updateOrderStatus(order.id, "preparing")
+                          }
+                          className="flex-1 py-1.5 bg-purple-500 text-white rounded-lg text-xs font-medium hover:bg-purple-600"
+                        >
+                          Start Preparing
+                        </button>
+                      )}
+                      {order.status === "preparing" && (
+                        <button
+                          onClick={() =>
+                            updateOrderStatus(order.id, "out_for_delivery")
+                          }
+                          className="flex-1 py-1.5 bg-indigo-500 text-white rounded-lg text-xs font-medium hover:bg-indigo-600"
+                        >
+                          Out for Delivery
+                        </button>
+                      )}
+                      {order.status === "out_for_delivery" && (
+                        <button
+                          onClick={() =>
+                            updateOrderStatus(order.id, "delivered")
+                          }
+                          className="flex-1 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600"
+                        >
+                          Mark Completed
+                        </button>
+                      )}
+                    </div>
                   </motion.div>
                 ))
               ) : (
