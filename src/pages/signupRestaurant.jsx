@@ -71,6 +71,7 @@ const RestaurantSignup = () => {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/#/auth/callback`,
           data: {
             full_name: fullName,
             role: "restaurant",
@@ -87,8 +88,6 @@ const RestaurantSignup = () => {
         setError(
           "Account created! Please check your email to confirm your account before logging in."
         );
-      } else {
-        setError("Something went wrong during signup.");
       }
     } catch (err) {
       setError(err?.message || "Failed to create account");

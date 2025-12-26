@@ -241,6 +241,28 @@ const RestaurantPublicView = () => {
     }
   };
 
+  const updateRestaurantStats = async () => {
+    if (!restaurant?.id) return;
+    try {
+      const { data: reviews } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq("restaurant_id", restaurant.id);
+
+      const stats = reviews?.length > 0
+        ? {
+            rating: Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10,
+            review_count: reviews.length
+          }
+        : { rating: 0, review_count: 0 };
+
+      await supabase.from("restaurants").update(stats).eq("id", restaurant.id);
+      setRestaurant(prev => ({ ...prev, ...stats }));
+    } catch (err) {
+      console.error("Error updating stats:", err);
+    }
+  };
+
   const renderStars = () => {
     const rating = restaurant?.rating || DEFAULT_RATING;
     const stars = [];
@@ -542,22 +564,7 @@ const RestaurantPublicView = () => {
             <ReviewsList
               key={reviewsRefreshKey}
               restaurantId={restaurant?.id}
-              onReviewsUpdate={async () => {
-                const { data: reviews } = await supabase
-                  .from("reviews")
-                  .select("rating")
-                  .eq("restaurant_id", restaurant.id);
-
-                const stats = reviews?.length > 0 
-                  ? {
-                      rating: Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10,
-                      review_count: reviews.length
-                    }
-                  : { rating: 0, review_count: 0 };
-
-                await supabase.from("restaurants").update(stats).eq("id", restaurant.id);
-                setRestaurant(prev => ({ ...prev, ...stats }));
-              }}
+              onReviewsUpdate={updateRestaurantStats}
             />
           </div>
         </div>
@@ -595,6 +602,7 @@ const RestaurantPublicView = () => {
         initialRating={userReview?.rating || 0}
         initialComment={userReview?.comment || ""}
         onRatingSuccess={async () => {
+          await updateRestaurantStats();
           setReviewsRefreshKey(prev => prev + 1);
           setIsRatingOpen(false);
         }}

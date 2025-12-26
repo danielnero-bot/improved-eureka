@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   MdMenu,
-  MdLightMode,
-  MdDarkMode,
   MdRefresh,
   MdRestaurant,
 } from "react-icons/md";
@@ -10,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import Sidebar from "../components/Sidebar";
 import { useTheme } from "../context/ThemeContext";
+import { motion } from "framer-motion";
 
 const Orders = () => {
   const { darkMode } = useTheme();

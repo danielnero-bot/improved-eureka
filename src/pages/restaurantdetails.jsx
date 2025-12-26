@@ -20,7 +20,10 @@ const RestaurantDetails = () => {
     menuCount: 0,
     orderCount: 0,
     totalRevenue: 0,
+    reviewCount: 0,
+    rating: 0,
   });
+  const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const navigate = useNavigate();
@@ -68,7 +71,7 @@ const RestaurantDetails = () => {
       } else {
         setRestaurant(restaurantData);
 
-        const [menuRes, ordersRes] = await Promise.all([
+        const [menuRes, ordersRes, reviewsRes] = await Promise.all([
           supabase
             .from("menu_items")
             .select("id", { count: "exact", head: true })
@@ -78,6 +81,12 @@ const RestaurantDetails = () => {
             .select("total_amount")
             .eq("restaurant_id", restaurantData.id)
             .eq("status", "completed"),
+          supabase
+            .from("reviews")
+            .select("*, user:user_details(full_name, avatar_url)")
+            .eq("restaurant_id", restaurantData.id)
+            .order("created_at", { ascending: false })
+            .limit(3),
         ]);
 
         const menuCount = menuRes.count || 0;
@@ -88,7 +97,15 @@ const RestaurantDetails = () => {
           0
         );
 
-        setStats({ menuCount, orderCount, totalRevenue });
+        const reviews = reviewsRes?.data || [];
+        setStats({ 
+          menuCount, 
+          orderCount, 
+          totalRevenue,
+          reviewCount: restaurantData.review_count || 0,
+          rating: restaurantData.rating || 0
+        });
+        setRecentReviews(reviews);
       }
     } catch (err) {
       console.error("❌ Error loading data:", err.message);
@@ -413,8 +430,15 @@ const RestaurantDetails = () => {
                       </button>
                     </div>
                   )}
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
                     ID: {restaurant.id}
+                    <span className="text-gray-300 dark:text-gray-600">|</span>
+                    <span className="flex items-center gap-1 text-primary font-bold">
+                      ★ {restaurant.rating?.toFixed(1) || "0.0"}
+                      <span className="text-xs font-normal text-gray-500">
+                        ({restaurant.review_count || 0} reviews)
+                      </span>
+                    </span>
                   </p>
                 </div>
               </div>
@@ -440,6 +464,11 @@ const RestaurantDetails = () => {
                     style: "currency",
                     currency: "USD",
                   }).format(stats.totalRevenue),
+                },
+                {
+                  icon: <div className="text-xl font-bold">★</div>,
+                  label: "Average Rating",
+                  value: `${stats.rating.toFixed(1)} / 5.0`,
                 },
               ].map((stat) => (
                 <motion.div
@@ -518,7 +547,6 @@ const RestaurantDetails = () => {
                 </div>
               </motion.div>
 
-              {/* Description */}
               <motion.div
                 variants={itemVariants}
                 className={`rounded-xl border p-6 shadow-sm h-fit ${
@@ -537,6 +565,41 @@ const RestaurantDetails = () => {
                   "text",
                   true
                 )}
+              </motion.div>
+
+              {/* Recent Reviews (NEW) */}
+              <motion.div
+                variants={itemVariants}
+                className={`rounded-xl border p-6 shadow-sm h-fit ${
+                  darkMode
+                    ? "border-gray-700 bg-background-dark"
+                    : "border-gray-200 bg-white"
+                }`}
+              >
+                <h2 className="mb-6 text-lg font-semibold border-b border-gray-200 dark:border-gray-700 pb-3">
+                  Recent Reviews
+                </h2>
+                <div className="flex flex-col gap-4">
+                  {recentReviews.length > 0 ? (
+                    recentReviews.map((rev) => (
+                      <div key={rev.id} className="flex flex-col gap-1 border-b border-gray-100 dark:border-gray-800 pb-3 last:border-0 last:pb-0">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-bold text-gray-700 dark:text-gray-200 font-display">
+                            {rev.user?.full_name || "Guest"}
+                          </span>
+                          <span className="text-xs text-yellow-500 font-bold">
+                            ★ {rev.rating}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                          "{rev.comment || "No comment"}"
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-400 text-center py-4 italic">No reviews yet</p>
+                  )}
+                </div>
               </motion.div>
             </section>
 

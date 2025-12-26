@@ -27,6 +27,7 @@ const CreateUserAccount = () => {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/#/auth/callback`,
           data: {
             full_name: fullName,
             role: "user",
@@ -40,7 +41,7 @@ const CreateUserAccount = () => {
         setError(
           "Account created! Please check your email to confirm your account before logging in."
         );
-      } else {
+      } else if (data?.user && data?.session) {
         navigate("/dashboard");
       }
     } catch (error) {

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FiHeart, FiBell, FiMapPin, FiTruck } from "react-icons/fi";
+import { FiHeart, FiBell, FiMapPin, FiTruck, FiStar } from "react-icons/fi";
 import { MdFastfood, MdHistory, MdMenu, MdShoppingCart } from "react-icons/md";
 import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion"; // Removed unused import
 
 // Animation variants
 const fadeInUp = {
@@ -76,7 +76,9 @@ const QuickPlateDashboard = () => {
             restaurants (
               id,
               name,
-              logo_url
+              logo_url,
+              rating,
+              review_count
             )
           `
           )
@@ -110,7 +112,7 @@ const QuickPlateDashboard = () => {
           .select(
             `
              *,
-             restaurant:restaurants(name, logo_url)
+             restaurant:restaurants(name, logo_url, rating, review_count)
           `
           )
           .eq("user_id", user.id)
@@ -127,6 +129,24 @@ const QuickPlateDashboard = () => {
     };
     fetchRecentOrders();
   }, [user]);
+
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating || 0);
+    const hasHalfStar = (rating || 0) % 1 >= 0.5;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<FiStar key={i} className="text-yellow-500 fill-yellow-500 text-xs" />);
+    }
+    if (hasHalfStar) {
+      stars.push(<FiStar key="half" className="text-yellow-500 fill-yellow-500 opacity-50 text-xs" />);
+    }
+    const emptyStars = 5 - stars.length;
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<FiStar key={`empty-${i}`} className="text-gray-300 dark:text-gray-600 text-xs" />);
+    }
+    return stars;
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -317,15 +337,21 @@ const QuickPlateDashboard = () => {
                             <MdFastfood className="text-xl text-primary" />
                           </div>
                         )}
-                        <div className="text-left">
-                          <h4 className="font-bold">
-                            {order.restaurant?.name || "Restaurant"}
-                          </h4>
-                          <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-                            {new Date(order.created_at).toLocaleDateString()} •{" "}
-                            {order.status}
-                          </p>
-                        </div>
+                          <div className="text-left">
+                            <h4 className="font-bold flex items-center gap-2">
+                              {order.restaurant?.name || "Restaurant"}
+                              <div className="flex items-center gap-0.5 ml-1">
+                                {renderStars(order.restaurant?.rating)}
+                                <span className="text-[10px] text-gray-400 font-normal">
+                                  ({order.restaurant?.review_count || 0})
+                                </span>
+                              </div>
+                            </h4>
+                            <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark font-medium">
+                              {new Date(order.created_at).toLocaleDateString()} •{" "}
+                              <span className="capitalize">{order.status}</span>
+                            </p>
+                          </div>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-primary">
@@ -385,7 +411,15 @@ const QuickPlateDashboard = () => {
                       key={fav.id}
                       className="flex items-center justify-between border-b border-border-light dark:border-border-dark pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="font-semibold text-lg">{fav.name}</span>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-lg">{fav.name}</span>
+                        <div className="flex items-center gap-1">
+                          <div className="flex text-xs">{renderStars(fav.rating)}</div>
+                          <span className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
+                            {fav.rating?.toFixed(1) || "0.0"} ({fav.review_count || 0})
+                          </span>
+                        </div>
+                      </div>
                       <button
                         onClick={() => navigate(`/restaurant/${fav.id}`)}
                         className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-bold hover:bg-primary hover:text-white transition-colors"

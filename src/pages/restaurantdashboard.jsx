@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from "react";
 import {
-  MdLightMode,
-  MdDarkMode,
-  MdMenu,
   MdPayments,
   MdReceiptLong,
   MdPersonAdd,
-  MdAnalytics,
 } from "react-icons/md";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import Sidebar from "../components/Sidebar";
 import { useTheme } from "../context/ThemeContext";
 import { motion } from "framer-motion";
 
 const RestaurantDashboard = () => {
-  const { darkMode, toggleTheme } = useTheme();
+  const { darkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [restaurantData, setRestaurantData] = useState(null);
   const [dashboardStats, setDashboardStats] = useState({
@@ -24,9 +20,9 @@ const RestaurantDashboard = () => {
     newCustomers: 0,
   });
   const [recentOrders, setRecentOrders] = useState([]);
+  const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const location = useLocation();
   const navigate = useNavigate();
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
@@ -61,6 +57,7 @@ const RestaurantDashboard = () => {
           await Promise.all([
             fetchDashboardStats(data.id),
             fetchRecentOrders(data.id),
+            fetchRecentReviews(data.id),
           ]);
         }
       } catch (error) {
@@ -159,14 +156,9 @@ const RestaurantDashboard = () => {
              quantity,
              price,
              menu_item:menu_items(name)
-           ),
-           user:user_id(email) 
+           )
         `
-        ) // Note: user_id relation might fail if not explicitly set up in Supabase as a foreign key to auth.users which is tricky.
-        // Usually we use the Profile table for user details.
-        // For now let's just show the order details.
-        // Actually, auth.users is not directly joinable usually.
-        // We will just show the Order ID and Items for now.
+        )
         .eq("restaurant_id", restaurantId)
         .order("created_at", { ascending: false })
         .limit(10);
@@ -175,6 +167,25 @@ const RestaurantDashboard = () => {
       setRecentOrders(data || []);
     } catch (err) {
       console.error("Error fetching recent orders:", err);
+    }
+  };
+
+  const fetchRecentReviews = async (restaurantId) => {
+    try {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select(`
+          *,
+          user:user_details(full_name, avatar_url)
+        `)
+        .eq("restaurant_id", restaurantId)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setRecentReviews(data || []);
+    } catch (err) {
+      console.error("Error fetching recent reviews:", err);
     }
   };
 
@@ -300,7 +311,19 @@ const RestaurantDashboard = () => {
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 )}
-                <span className="text-lg font-bold">{restaurantData.name}</span>
+                <div className="flex flex-col items-end">
+                  <span className="text-lg font-bold">{restaurantData.name}</span>
+                  <div className="flex items-center gap-1 text-sm">
+                    <div className="flex text-yellow-500">
+                      {[...Array(5)].map((_, i) => (
+                        <svg key={i} className={`w-4 h-4 ${i < Math.floor(restaurantData.rating || 0) ? 'fill-current' : 'text-gray-300'}`} viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
+                    </div>
+                    <span className="font-bold text-primary">{restaurantData.rating?.toFixed(1) || "0.0"}</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -329,7 +352,7 @@ const RestaurantDashboard = () => {
             </motion.div>
 
             {/* Overview Cards */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 {
                   title: "Today's Revenue",
@@ -345,6 +368,17 @@ const RestaurantDashboard = () => {
                   title: "New Customers",
                   value: dashboardStats.newCustomers.toString(),
                   icon: <MdPersonAdd />,
+                },
+                {
+                  title: "Rating",
+                  value: `${restaurantData.rating?.toFixed(1) || "0.0"} / 5`,
+                  icon: (
+                    <div className="text-yellow-500 fill-current">
+                      <svg className="w-6 h-6" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </div>
+                  ),
                 },
               ].map(({ title, value, icon }) => (
                 <motion.div
@@ -508,6 +542,72 @@ const RestaurantDashboard = () => {
                           Note: {order.special_instructions}
                         </div>
                       )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+
+            {/* Recent Reviews */}
+            <motion.div
+              variants={itemVariants}
+              className={`rounded-2xl border p-6 shadow-md ${
+                darkMode
+                  ? "bg-card-dark border-border-dark"
+                  : "bg-card-light border-border-light"
+              }`}
+            >
+              <h2 className="text-2xl font-bold mb-6">Recent Customer Feedback</h2>
+              {recentReviews.length === 0 ? (
+                <div className="text-center py-10 opacity-60">No reviews yet.</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {recentReviews.map((review) => (
+                    <div
+                      key={review.id}
+                      className={`p-4 rounded-xl border transition-colors ${
+                        darkMode
+                          ? "bg-white/5 border-white/10"
+                          : "bg-gray-50 border-gray-100"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        {review.user?.avatar_url ? (
+                          <img
+                            src={review.user.avatar_url}
+                            className="w-10 h-10 rounded-full object-cover"
+                            alt=""
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                            {(review.user?.full_name || "G")[0]}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-bold text-sm">
+                            {review.user?.full_name || "Guest"}
+                          </p>
+                          <div className="flex text-yellow-500">
+                            {[...Array(5)].map((_, i) => (
+                              <svg
+                                key={i}
+                                className={`w-3 h-3 ${
+                                  i < review.rating ? "fill-current" : "text-gray-300"
+                                }`}
+                                viewBox="0 0 20 20"
+                              >
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                            ))}
+                          </div>
+                        </div>
+                        <span className="ml-auto text-xs opacity-50">
+                          {new Date(review.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-sm italic opacity-80 line-clamp-2">
+                        "{review.comment || "No comment provided."}"
+                      </p>
                     </div>
                   ))}
                 </div>

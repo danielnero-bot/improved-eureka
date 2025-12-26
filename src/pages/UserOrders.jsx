@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import UserSidebar from "../components/UserSidebar";
-import { FiSearch, FiChevronDown, FiMenu } from "react-icons/fi";
+import { FiSearch, FiChevronDown, FiMenu, FiStar } from "react-icons/fi";
 import { MdShoppingBasket } from "react-icons/md";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
@@ -105,7 +105,7 @@ const UserOrdersPage = () => {
         .select(
           `
           *,
-          restaurant:restaurants(name, logo_url),
+          restaurant:restaurants(name, logo_url, rating, review_count),
           items:order_items(
              *,
              menu_item:menu_items(name)
@@ -146,6 +146,24 @@ const UserOrdersPage = () => {
 
     return matchesSearch && matchesFilter;
   });
+
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating || 0);
+    const hasHalfStar = (rating || 0) % 1 >= 0.5;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<FiStar key={i} className="text-yellow-500 fill-yellow-500" />);
+    }
+    if (hasHalfStar) {
+      stars.push(<FiStar key="half" className="text-yellow-500 fill-yellow-500 opacity-50" />);
+    }
+    const emptyStars = 5 - stars.length;
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<FiStar key={`empty-${i}`} className="text-gray-300 dark:text-gray-600" />);
+    }
+    return stars;
+  };
 
   return (
     <div className="relative flex min-h-screen w-full flex-col">
@@ -297,8 +315,14 @@ const UserOrdersPage = () => {
                           </div>
                         )}
                         <div>
-                          <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                          <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
                             {order.restaurant?.name || "Unknown Restaurant"}
+                            <div className="flex items-center gap-0.5 scale-75 origin-left">
+                              {renderStars(order.restaurant?.rating)}
+                              <span className="text-xs text-gray-500 font-normal ml-1">
+                                ({order.restaurant?.review_count || 0})
+                              </span>
+                            </div>
                           </h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {new Date(order.created_at).toLocaleDateString()} at{" "}

@@ -14,6 +14,9 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+
   // Determine role
   const determineUserRole = async (user) => {
     if (user?.user_metadata?.role) return user.user_metadata.role;
@@ -36,6 +39,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setNeedsConfirmation(false);
     if (!email || !password)
       return setError("Email and password are required.");
 
@@ -43,7 +47,15 @@ const Login = () => {
     try {
       const { data, error: loginError } =
         await supabase.auth.signInWithPassword({ email, password });
-      if (loginError) throw loginError;
+      
+      if (loginError) {
+         if (loginError.message.includes("Email not confirmed")) {
+            setNeedsConfirmation(true);
+            throw new Error("Email not confirmed. Please check your inbox.");
+         }
+         throw loginError;
+      }
+      
       if (!data.user) throw new Error("Login failed.");
 
       const role = await determineUserRole(data.user);
@@ -52,6 +64,27 @@ const Login = () => {
       setError(err.message || "Login failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    setResendLoading(true);
+    setError("");
+    try {
+        const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email: email,
+            options: {
+                emailRedirectTo: `${window.location.origin}/#/auth/callback`
+            }
+        });
+        if (error) throw error;
+        setError("Confirmation email resent! Please check your inbox.");
+        setNeedsConfirmation(false);
+    } catch (err) {
+        setError(err.message || "Failed to resend confirmation email.");
+    } finally {
+        setResendLoading(false);
     }
   };
 
@@ -100,8 +133,24 @@ const Login = () => {
             {/* Form */}
             <form onSubmit={handleLogin} className="space-y-5">
               {error && (
-                <div className="px-4 py-3 rounded-lg bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400">
-                  {error}
+                <div className={`px-4 py-3 rounded-lg border ${
+                    error.includes("resent") 
+                    ? "bg-green-100 dark:bg-green-900/20 border-green-400 dark:border-green-700 text-green-700 dark:text-green-400"
+                    : "bg-red-100 dark:bg-red-900/20 border-red-400 dark:border-red-700 text-red-700 dark:text-red-400"
+                }`}>
+                  <div className="flex flex-col gap-2">
+                    <span>{error}</span>
+                    {needsConfirmation && (
+                        <button
+                            type="button"
+                            onClick={handleResendConfirmation}
+                            disabled={resendLoading}
+                            className="text-sm font-semibold underline hover:no-underline self-start focus:outline-none"
+                        >
+                            {resendLoading ? "Sending..." : "Resend Confirmation Email"}
+                        </button>
+                    )}
+                  </div>
                 </div>
               )}
 
