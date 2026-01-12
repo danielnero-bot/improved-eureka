@@ -38,7 +38,7 @@ const RestaurantSignup = () => {
         .from("restaurants")
         .insert([
           {
-            owner_uid: userId,
+            owner_id: userId,
             owner_name: ownerName,
             name: restaurantName,
             contact_email: contactEmail,

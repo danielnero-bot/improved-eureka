@@ -25,7 +25,7 @@ const Login = () => {
       const { data: restaurant } = await supabase
         .from("restaurants")
         .select("id")
-        .eq("owner_uid", user.id)
+        .eq("owner_id", user.id)
         .single();
       if (restaurant) return "restaurant";
 

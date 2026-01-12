@@ -105,14 +105,14 @@ const RestaurantSetup = () => {
       const { data: existingRestaurant } = await supabase
         .from("restaurants")
         .select("id")
-        .eq("owner_uid", uid)
+        .eq("owner_id", uid)
         .maybeSingle();
 
       const restaurantId = existingRestaurant?.id;
 
       // 🆕 Prepare payload
       const payload = {
-        owner_uid: uid,
+        owner_id: uid,
         name: restaurantName,
         address,
         description,
@@ -132,7 +132,7 @@ const RestaurantSetup = () => {
       // 🆕 Insert or update restaurant record
       const { data, error: upsertError } = await supabase
         .from("restaurants")
-        .upsert([payload], { onConflict: "owner_uid" })
+        .upsert([payload], { onConflict: "owner_id" })
         .select()
         .single();
 

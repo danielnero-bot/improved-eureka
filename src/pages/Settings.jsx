@@ -129,7 +129,7 @@ export default function Settings() {
         const { data: restaurant } = await supabase
           .from("restaurants")
           .select("*")
-          .eq("owner_uid", user.id)
+          .eq("owner_id", user.id)
           .maybeSingle();
 
         if (restaurant) {

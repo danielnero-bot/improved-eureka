@@ -36,11 +36,11 @@ const MenuManagement = () => {
         return;
       }
 
-      // 2️⃣ Fetch restaurant by owner_uid
+      // 2️⃣ Fetch restaurant by owner_id
       const { data: restaurant, error: restaurantError } = await supabase
         .from("restaurants")
         .select("*")
-        .eq("owner_uid", user.id)
+        .eq("owner_id", user.id)
         .single();
 
       if (restaurantError) {

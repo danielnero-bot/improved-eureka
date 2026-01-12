@@ -42,7 +42,7 @@ const RestaurantDashboard = () => {
         const { data, error } = await supabase
           .from("restaurants")
           .select("*")
-          .eq("owner_uid", user.id)
+          .eq("owner_id", user.id)
           .maybeSingle(); // Use maybeSingle to avoid error if no row exists
 
         if (error) {

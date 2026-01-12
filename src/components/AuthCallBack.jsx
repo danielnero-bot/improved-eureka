@@ -91,7 +91,7 @@ export default function AuthCallback() {
       const { data: restaurant } = await supabase
         .from("restaurants")
         .select("id")
-        .eq("owner_uid", user.id)
+        .eq("owner_id", user.id)
         .maybeSingle();
       if (restaurant) return "restaurant";
     } catch (err) {
@@ -112,7 +112,7 @@ export default function AuthCallback() {
         // Create the restaurant
         const { error } = await supabase.from("restaurants").insert([
           {
-            owner_uid: user.id,
+            owner_id: user.id,
             owner_name: user.user_metadata?.full_name || user.email,
             name: pendingRestaurantName,
             contact_email: user.email,

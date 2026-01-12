@@ -49,7 +49,7 @@ const AddMenuItem = () => {
         const { data: restaurant, error: restaurantError } = await supabase
           .from("restaurants")
           .select("*")
-          .eq("owner_uid", user.id)
+          .eq("owner_id", user.id)
           .single();
 
         if (restaurantError) {

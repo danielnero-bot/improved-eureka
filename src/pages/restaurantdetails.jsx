@@ -59,7 +59,7 @@ const RestaurantDetails = () => {
       const { data: restaurantData, error: restaurantError } = await supabase
         .from("restaurants")
         .select("*")
-        .eq("owner_uid", user.id)
+        .eq("owner_id", user.id)
         .single();
 
       if (restaurantError) {
@@ -159,7 +159,7 @@ const RestaurantDetails = () => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `logo_${Date.now()}.${fileExt}`;
-      const filePath = `${restaurant.owner_uid}/${fileName}`;
+      const filePath = `${restaurant.owner_id}/${fileName}`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
