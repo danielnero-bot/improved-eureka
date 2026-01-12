@@ -71,7 +71,7 @@ const RestaurantDetails = () => {
       } else {
         setRestaurant(restaurantData);
 
-        const [menuRes, ordersRes, reviewsRes] = await Promise.all([
+        const [menuRes, ordersRes, reviewsData] = await Promise.all([
           supabase
             .from("menu_items")
             .select("id", { count: "exact", head: true })
@@ -83,7 +83,7 @@ const RestaurantDetails = () => {
             .eq("status", "completed"),
           supabase
             .from("reviews")
-            .select("*, user:user_details(full_name, avatar_url)")
+            .select("*")
             .eq("restaurant_id", restaurantData.id)
             .order("created_at", { ascending: false })
             .limit(3),
@@ -97,7 +97,18 @@ const RestaurantDetails = () => {
           0
         );
 
-        const reviews = reviewsRes?.data || [];
+        // Manually fetch user details for each review
+        const reviewsWithUsers = reviewsData.data ? await Promise.all(
+          reviewsData.data.map(async (review) => {
+            const { data: userData } = await supabase
+              .from("user_details")
+              .select("full_name, avatar_url")
+              .eq("user_id", review.user_id)
+              .single();
+            return { ...review, user: userData };
+          })
+        ) : [];
+
         setStats({ 
           menuCount, 
           orderCount, 
@@ -105,7 +116,7 @@ const RestaurantDetails = () => {
           reviewCount: restaurantData.review_count || 0,
           rating: restaurantData.rating || 0
         });
-        setRecentReviews(reviews);
+        setRecentReviews(reviewsWithUsers);
       }
     } catch (err) {
       console.error("❌ Error loading data:", err.message);

@@ -5,7 +5,7 @@ import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-// import { motion } from "framer-motion"; // Removed unused import
+import { motion } from "framer-motion";
 
 // Animation variants
 const fadeInUp = {

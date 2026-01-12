@@ -3,6 +3,7 @@ import {
   MdPayments,
   MdReceiptLong,
   MdPersonAdd,
+  MdMenu,
 } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
@@ -124,22 +125,10 @@ const RestaurantDashboard = () => {
         }));
       }
 
-      // New customers (last 24 hours)
-      const { data: customersData, error: customersError } = await supabase
-        .from("customers")
-        .select("id")
-        .eq("restaurant_id", restaurantId)
-        .gte(
-          "created_at",
-          new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-        );
-
-      if (!customersError && customersData) {
-        setDashboardStats((prev) => ({
-          ...prev,
-          newCustomers: customersData.length,
-        }));
-      }
+      setDashboardStats((prev) => ({
+        ...prev,
+        newCustomers: 0, // Set to 0 since 'customers' table does not exist
+      }));
     } catch (error) {
       console.error("❌ Error fetching dashboard stats:", error);
     }
@@ -174,16 +163,26 @@ const RestaurantDashboard = () => {
     try {
       const { data, error } = await supabase
         .from("reviews")
-        .select(`
-          *,
-          user:user_details(full_name, avatar_url)
-        `)
+        .select("*")
         .eq("restaurant_id", restaurantId)
         .order("created_at", { ascending: false })
         .limit(5);
 
       if (error) throw error;
-      setRecentReviews(data || []);
+
+      // Manually fetch user details for each review to avoid join error
+      const reviewsWithUsers = await Promise.all(
+        data.map(async (review) => {
+          const { data: userData } = await supabase
+            .from("user_details")
+            .select("full_name, avatar_url")
+            .eq("user_id", review.user_id)
+            .single();
+          return { ...review, user: userData };
+        })
+      );
+
+      setRecentReviews(reviewsWithUsers);
     } catch (err) {
       console.error("Error fetching recent reviews:", err);
     }
