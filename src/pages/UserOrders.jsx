@@ -105,7 +105,7 @@ const UserOrdersPage = () => {
         .select(
           `
           *,
-          restaurant:restaurants(name, logo_url, rating, review_count),
+          restaurant:restaurants!orders_restaurant_id_fkey(name, logo_url, rating, review_count),
           items:order_items(
              *,
              menu_item:menu_items(name)
