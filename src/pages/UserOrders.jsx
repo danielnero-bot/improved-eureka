@@ -4,6 +4,7 @@ import { FiSearch, FiChevronDown, FiMenu, FiStar } from "react-icons/fi";
 import { MdShoppingBasket } from "react-icons/md";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 
 // Animation variants

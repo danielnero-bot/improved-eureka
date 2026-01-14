@@ -8,6 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import Sidebar from "../components/Sidebar";
+import { motion } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 
 const RestaurantDashboard = () => {

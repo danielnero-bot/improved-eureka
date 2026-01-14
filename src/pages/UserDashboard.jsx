@@ -4,6 +4,7 @@ import { MdFastfood, MdHistory, MdMenu, MdShoppingCart } from "react-icons/md";
 import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 
 // Animation variants
