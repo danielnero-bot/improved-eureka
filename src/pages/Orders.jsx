@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import Sidebar from "../components/Sidebar";
 import { useTheme } from "../context/ThemeContext";
-import { motion } from "framer-motion";
 
 const Orders = () => {
   const { darkMode } = useTheme();
@@ -61,25 +60,40 @@ const Orders = () => {
 
         setRestaurantData(restaurant);
 
-        // Fetch orders
+        // Fetch bases orders
         const { data: ordersData, error: ordersError } = await supabase
           .from("orders")
-          .select(
-            `
-            *,
-            items:order_items(
-              quantity,
-              price,
-              menu_item:menu_items(name)
-            )
-          `
-          )
+          .select("*")
           .eq("restaurant_id", restaurant.id)
           .order("created_at", { ascending: false });
 
         if (ordersError) throw ordersError;
+        if (!ordersData) return setOrders([]);
 
-        setOrders(ordersData || []);
+        // Fetch items for each order sequentially to avoid join errors
+        const ordersWithItems = await Promise.all(
+          ordersData.map(async (order) => {
+            const { data: itemsData } = await supabase
+              .from("order_items")
+              .select("*")
+              .eq("order_id", order.id);
+
+            const itemsWithMenuNames = itemsData ? await Promise.all(
+              itemsData.map(async (item) => {
+                const { data: menuItem } = await supabase
+                  .from("menu_items")
+                  .select("name")
+                  .eq("id", item.menu_item_id)
+                  .single();
+                return { ...item, menu_item: menuItem };
+              })
+            ) : [];
+
+            return { ...order, items: itemsWithMenuNames };
+          })
+        );
+
+        setOrders(ordersWithItems);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

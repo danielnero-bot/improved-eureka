@@ -5,7 +5,6 @@ import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { motion } from "framer-motion";
 
 // Animation variants
 const fadeInUp = {
@@ -107,20 +106,28 @@ const QuickPlateDashboard = () => {
     const fetchRecentOrders = async () => {
       try {
         setLoadingOrders(true);
-        const { data, error } = await supabase
+        const { data: ordersData, error: ordersError } = await supabase
           .from("orders")
-          .select(
-            `
-             *,
-             restaurant:restaurants(name, logo_url, rating, review_count)
-          `
-          )
+          .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(3);
 
-        if (error) throw error;
-        setRecentOrders(data || []);
+        if (ordersError) throw ordersError;
+        
+        // Fetch restaurant details for each order to avoid join ambiguity (PGRST201)
+        const richOrders = await Promise.all(
+          (ordersData || []).map(async (order) => {
+            const { data: restaurant } = await supabase
+              .from("restaurants")
+              .select("name, logo_url, rating, review_count")
+              .eq("id", order.restaurant_id)
+              .single();
+            return { ...order, restaurant };
+          })
+        );
+
+        setRecentOrders(richOrders);
       } catch (err) {
         console.error("Error fetching orders:", err);
       } finally {

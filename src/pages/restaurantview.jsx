@@ -275,13 +275,6 @@ const RestaurantsDirectoryPage = () => {
                     <h2 className="text-lg font-bold text-text-light dark:text-text-dark">
                       {restaurant.name}
                     </h2>
-                    <p className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1">
-                      ID:{" "}
-                      <span className="font-mono text-[11px]">
-                        {restaurant.id}
-                      </span>
-                    </p>
-
                     <p className="mt-1 text-sm text-text-secondary-light dark:text-text-secondary-dark">
                       {restaurant.location ||
                         restaurant.address ||

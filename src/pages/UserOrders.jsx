@@ -5,7 +5,6 @@ import { MdShoppingBasket } from "react-icons/md";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { motion } from "framer-motion";
 
 // Animation variants
 const fadeInUp = {
