@@ -100,23 +100,42 @@ const UserOrdersPage = () => {
   const fetchOrders = async (userId) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
-        .select(
-          `
-          *,
-          restaurant:restaurants!orders_restaurant_id_fkey(name, logo_url, rating, review_count),
-          items:order_items(
-             *,
-             menu_item:menu_items(name)
-          )
-        `
-        )
+        .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setOrders(data || []);
+      if (ordersError) throw ordersError;
+
+      // Fetch restaurant details and items for each order sequentially
+      const ordersWithDetails = await Promise.all(
+        (ordersData || []).map(async (order) => {
+          // Fetch restaurant details
+          const { data: restaurant } = await supabase
+            .from("restaurants")
+            .select("*")
+            .eq("id", order.restaurant_id)
+            .single();
+
+          // Fetch order items
+          const { data: itemsData } = await supabase
+            .from("order_items")
+            .select(`
+              *,
+              menu_item:menu_items(name)
+            `)
+            .eq("order_id", order.id);
+
+          return {
+            ...order,
+            restaurant,
+            items: itemsData || []
+          };
+        })
+      );
+
+      setOrders(ordersWithDetails);
     } catch (err) {
       console.error("Error fetching orders:", err);
     } finally {

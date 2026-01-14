@@ -74,11 +74,7 @@ const QuickPlateDashboard = () => {
             `
             id,
             restaurants!favorites_restaurant_id_fkey (
-              id,
-              name,
-              logo_url,
-              rating,
-              review_count
+              *
             )
           `
           )
@@ -98,7 +94,6 @@ const QuickPlateDashboard = () => {
         setLoadingFavorites(false);
       }
     };
-    fetchFavorites();
     fetchFavorites();
   }, [user]);
 
@@ -121,7 +116,7 @@ const QuickPlateDashboard = () => {
           (ordersData || []).map(async (order) => {
             const { data: restaurant } = await supabase
               .from("restaurants")
-              .select("name, logo_url, rating, review_count")
+              .select("*")
               .eq("id", order.restaurant_id)
               .single();
             return { ...order, restaurant };
