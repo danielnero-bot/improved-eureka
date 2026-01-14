@@ -73,7 +73,7 @@ const RestaurantPublicView = () => {
     {
       icon: <MdOutlineCall className={ICON_CLASSES} />,
       title: "Phone",
-      description: user_details?.phone || restaurant?.contact_phone || DEFAULT_FALLBACK_TEXT,
+      description: restaurant?.phone || restaurant?.contact_phone || DEFAULT_FALLBACK_TEXT,
     },
     {
       icon: <MdOutlineSchedule className={ICON_CLASSES} />,
