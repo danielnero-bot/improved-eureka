@@ -47,7 +47,7 @@ const Favorites = () => {
           .select(
             `
             id,
-            restaurants (
+            restaurants!favorites_restaurant_id_fkey (
               *
             )
           `

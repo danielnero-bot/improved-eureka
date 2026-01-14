@@ -73,7 +73,7 @@ const QuickPlateDashboard = () => {
           .select(
             `
             id,
-            restaurants (
+            restaurants!favorites_restaurant_id_fkey (
               id,
               name,
               logo_url,
