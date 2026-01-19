@@ -601,6 +601,7 @@ const RestaurantPublicView = () => {
         userId={user?.id}
         initialRating={userReview?.rating || 0}
         initialComment={userReview?.comment || ""}
+        reviewId={userReview?.id}
         onRatingSuccess={async () => {
           await updateRestaurantStats();
           setReviewsRefreshKey(prev => prev + 1);

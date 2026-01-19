@@ -10,6 +10,7 @@ const RatingModal = ({
   onRatingSuccess,
   initialRating = 0,
   initialComment = "",
+  reviewId,
 }) => {
   const [rating, setRating] = useState(initialRating);
   const [hover, setHover] = useState(0);
@@ -29,17 +30,28 @@ const RatingModal = ({
 
     setLoading(true);
     try {
-      // Upsert review based on user_id and restaurant_id uniqueness
-      const { error } = await supabase.from("reviews").upsert(
-        {
-          restaurant_id: restaurantId,
-          user_id: userId,
-          rating,
-          comment,
-          created_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id, restaurant_id" }
-      );
+      // Use update if reviewId exists, otherwise insert
+      let query;
+      const payload = {
+        restaurant_id: restaurantId,
+        user_id: userId,
+        rating,
+        comment,
+        created_at: new Date().toISOString(),
+      };
+
+      if (reviewId) {
+        query = supabase
+          .from("reviews")
+          .update(payload)
+          .eq("id", reviewId);
+      } else {
+        query = supabase
+          .from("reviews")
+          .insert([payload]);
+      }
+
+      const { error } = await query;
 
       if (error) throw error;
       onRatingSuccess();
