@@ -6,6 +6,7 @@ import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
+import OrderTracker from "../components/OrderTracker";
 
 // Animation variants
 const fadeInUp = {
@@ -369,6 +370,12 @@ const UserOrdersPage = () => {
                         </p>
                       </div>
                     </div>
+                    
+                    {/* Visual Order Tracker */}
+                    <div className="mb-4">
+                      <OrderTracker status={order.status} />
+                    </div>
+
                     <div
                       className={`mt-4 pt-4 border-t ${
                         darkMode ? "border-gray-700" : "border-gray-100"
