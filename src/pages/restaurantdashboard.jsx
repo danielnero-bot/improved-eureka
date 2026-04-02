@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   MdPayments,
   MdReceiptLong,
@@ -8,8 +8,12 @@ import {
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import Sidebar from "../components/Sidebar";
-import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useTheme } from "../context/ThemeContext";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const RestaurantDashboard = () => {
   const { darkMode } = useTheme();
@@ -23,6 +27,29 @@ const RestaurantDashboard = () => {
   const [recentOrders, setRecentOrders] = useState([]);
   const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    gsap.from(".header-anim", {
+      opacity: 0,
+      y: -20,
+      duration: 0.5,
+      ease: "power2.out"
+    });
+
+    gsap.from(".dashboard-item", {
+      opacity: 0,
+      y: 20,
+      duration: 0.5,
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top 80%"
+      }
+    });
+  }, { scope: containerRef });
 
   const navigate = useNavigate();
 
@@ -230,22 +257,6 @@ const RestaurantDashboard = () => {
     navigate("/login");
   };
 
-  // Animation Variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  };
-
   if (loading) {
     return (
       <div
@@ -294,11 +305,8 @@ const RestaurantDashboard = () => {
         }`}
       >
         {/* Header */}
-        <motion.header
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
+        <header
+          className={`header-anim sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
             darkMode
               ? "bg-card-dark border-border-dark"
               : "bg-card-light border-border-light"
@@ -342,18 +350,12 @@ const RestaurantDashboard = () => {
               </div>
             )}
           </div>
-        </motion.header>
+        </header>
 
         {/* Main Section */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
-            className="mx-auto max-w-7xl space-y-8"
-          >
-            <motion.div variants={itemVariants}>
+        <main ref={containerRef} className="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300">
+          <div className="mx-auto max-w-7xl space-y-8">
+            <div className="dashboard-item">
               <h1 className="text-3xl font-bold">Dashboard Overview</h1>
               <p
                 className={
@@ -364,7 +366,7 @@ const RestaurantDashboard = () => {
                   ? `Welcome back to ${restaurantData.name}! Here's an overview of your restaurant's performance.`
                   : "Welcome back! Here's an overview of your restaurant's performance."}
               </p>
-            </motion.div>
+            </div>
 
             {/* Overview Cards */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -396,10 +398,9 @@ const RestaurantDashboard = () => {
                   ),
                 },
               ].map(({ title, value, icon }) => (
-                <motion.div
+                <div
                   key={title}
-                  variants={itemVariants}
-                  className={`rounded-2xl border p-6 shadow-md ${
+                  className={`dashboard-item rounded-2xl border p-6 shadow-md ${
                     darkMode
                       ? "bg-card-dark border-border-dark"
                       : "bg-card-light border-border-light"
@@ -422,14 +423,13 @@ const RestaurantDashboard = () => {
                       {icon}
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
 
             {/* Recent Incoming Orders */}
-            <motion.div
-              variants={itemVariants}
-              className={`rounded-2xl border p-6 shadow-md ${
+            <div
+              className={`dashboard-item rounded-2xl border p-6 shadow-md ${
                 darkMode
                   ? "bg-card-dark border-border-dark"
                   : "bg-card-light border-border-light"
@@ -561,12 +561,11 @@ const RestaurantDashboard = () => {
                   ))}
                 </div>
               )}
-            </motion.div>
+            </div>
 
             {/* Recent Reviews */}
-            <motion.div
-              variants={itemVariants}
-              className={`rounded-2xl border p-6 shadow-md ${
+            <div
+              className={`dashboard-item rounded-2xl border p-6 shadow-md ${
                 darkMode
                   ? "bg-card-dark border-border-dark"
                   : "bg-card-light border-border-light"
@@ -627,8 +626,8 @@ const RestaurantDashboard = () => {
                   ))}
                 </div>
               )}
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </main>
       </div>
     </div>

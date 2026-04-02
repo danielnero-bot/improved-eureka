@@ -1,43 +1,59 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FiHeart, FiBell, FiMapPin, FiTruck, FiStar } from "react-icons/fi";
 import { MdFastfood, MdHistory, MdMenu, MdShoppingCart } from "react-icons/md";
 import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useTheme } from "../context/ThemeContext";
 
-// Animation variants
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
-  },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.5 },
-  },
-};
+gsap.registerPlugin(ScrollTrigger);
 
 const QuickPlateDashboard = () => {
+  const containerRef = useRef(null);
+  
+  useGSAP(() => {
+    // Welcome Section
+    gsap.from(".welcome-section", {
+      opacity: 0,
+      y: 30,
+      duration: 0.6,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".welcome-section" }
+    });
+
+    // Quick Actions
+    gsap.from(".quick-action-item", {
+      opacity: 0,
+      scale: 0.95,
+      duration: 0.5,
+      ease: "power2.out",
+      stagger: 0.1,
+      scrollTrigger: { trigger: ".quick-actions-container" }
+    });
+
+    // Recent Orders
+    gsap.from(".recent-orders-section", {
+      opacity: 0,
+      scale: 0.95,
+      duration: 0.5,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".recent-orders-section" }
+    });
+
+    // Saved Restaurants
+    gsap.from(".saved-restaurants-section", {
+      opacity: 0,
+      scale: 0.95,
+      duration: 0.5,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".saved-restaurants-section" }
+    });
+
+  }, { scope: containerRef });
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
@@ -111,7 +127,6 @@ const QuickPlateDashboard = () => {
 
         if (ordersError) throw ordersError;
         
-        // Fetch restaurant details for each order to avoid join ambiguity (PGRST201)
         const richOrders = await Promise.all(
           (ordersData || []).map(async (order) => {
             const { data: restaurant } = await supabase
@@ -157,7 +172,7 @@ const QuickPlateDashboard = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen w-full">
+    <div ref={containerRef} className="relative flex min-h-screen w-full">
       {/* Desktop Sidebar */}
       <UserSidebar
         sidebarOpen={sidebarOpen}
@@ -222,12 +237,8 @@ const QuickPlateDashboard = () => {
         {/* Main Content Sections */}
         <main className="p-4 md:p-8 space-y-8">
           {/* Welcome Section */}
-          <motion.section
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeInUp}
-            className={`rounded-xl p-6 transition-colors duration-300 ${
+          <section
+            className={`welcome-section rounded-xl p-6 transition-colors duration-300 ${
               darkMode
                 ? "bg-card-dark border border-border-dark"
                 : "bg-card-light border border-border-light"
@@ -239,17 +250,13 @@ const QuickPlateDashboard = () => {
             <p className="text-text-secondary-light dark:text-text-secondary-dark mt-1">
               What would you like to eat today?
             </p>
-          </motion.section>
+          </section>
 
           {/* Quick Actions */}
           <section>
             <h3 className="text-xl font-bold mb-4">Quick Actions</h3>
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-              variants={staggerContainer}
-              className="grid grid-cols-2 md:grid-cols-4 gap-4"
+            <div
+              className="quick-actions-container grid grid-cols-2 md:grid-cols-4 gap-4"
             >
               {[
                 {
@@ -277,12 +284,10 @@ const QuickPlateDashboard = () => {
                   path: "/userOrders",
                 },
               ].map((action, index) => (
-                <motion.div
+                <div
                   key={index}
-                  variants={scaleIn}
-                  whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
                   onClick={() => navigate(action.path)}
-                  className={`flex flex-col items-center justify-center gap-2 rounded-xl p-4 text-center cursor-pointer hover:shadow-lg transition-all ${
+                  className={`quick-action-item flex flex-col items-center justify-center gap-2 rounded-xl p-4 text-center cursor-pointer hover:scale-105 hover:shadow-lg transition-all ${
                     darkMode
                       ? "bg-card-dark border border-border-dark hover:border-primary"
                       : "bg-card-light border border-border-light hover:border-primary"
@@ -296,20 +301,16 @@ const QuickPlateDashboard = () => {
                     />
                   </div>
                   <p className="font-semibold">{action.label}</p>
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
           </section>
 
           {/* Recent Orders */}
           <section>
             <h3 className="text-xl font-bold mb-4">Recent Orders</h3>
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
-              variants={scaleIn}
-              className={`rounded-xl p-4 md:p-6 transition-colors duration-300 ${
+            <div
+              className={`recent-orders-section rounded-xl p-4 md:p-6 transition-colors duration-300 ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
                   : "bg-card-light border border-border-light"
@@ -386,18 +387,14 @@ const QuickPlateDashboard = () => {
                   </p>
                 </div>
               )}
-            </motion.div>
+            </div>
           </section>
 
           {/* Saved Restaurants */}
           <section>
             <h3 className="text-xl font-bold mb-4">Your Saved Restaurants</h3>
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
-              variants={scaleIn}
-              className={`rounded-xl p-6 transition-colors duration-300 min-h-[150px] flex flex-col justify-center ${
+            <div
+              className={`saved-restaurants-section rounded-xl p-6 transition-colors duration-300 min-h-[150px] flex flex-col justify-center ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
                   : "bg-card-light border border-border-light"
@@ -448,7 +445,7 @@ const QuickPlateDashboard = () => {
                   </p>
                 </div>
               )}
-            </motion.div>
+            </div>
           </section>
         </main>
       </div>

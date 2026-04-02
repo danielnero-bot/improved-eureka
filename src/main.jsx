@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
 import { NotificationProvider } from "./context/NotificationContext";
@@ -52,7 +52,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <ThemeProvider>
       <CartProvider>
         <NotificationProvider>
-          <HashRouter>
+          <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* App acts as the layout (with Navbar & Footer) */}
@@ -101,7 +101,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="/admin" element={<AdminDashboard />} />
             </Routes>
           </Suspense>
-        </HashRouter>
+        </BrowserRouter>
         </NotificationProvider>
       </CartProvider>
     </ThemeProvider>
