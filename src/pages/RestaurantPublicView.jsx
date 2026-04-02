@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { FiHeart, FiShoppingCart, FiMenu } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
@@ -17,11 +17,11 @@ import Cart from "../components/Cart";
 import RatingModal from "../components/RatingModal";
 import ReviewsList from "../components/ReviewsList";
 import { useCart } from "../context/CartContext";
-import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-
-// Animation variants removed as they are now handled inline or simplified
-
+gsap.registerPlugin(ScrollTrigger);
 
 const RestaurantPublicView = () => {
   // Constants
@@ -64,6 +64,8 @@ const RestaurantPublicView = () => {
   const [isRatingOpen, setIsRatingOpen] = useState(false);
   const [reviewsRefreshKey, setReviewsRefreshKey] = useState(0);
 
+  const containerRef = useRef(null);
+
   const details = [
     {
       icon: <MdOutlineLocationOn className={ICON_CLASSES} />,
@@ -86,6 +88,51 @@ const RestaurantPublicView = () => {
       description: restaurant?.delivery_info || DEFAULT_DELIVERY_INFO,
     },
   ];
+
+  useGSAP(() => {
+    if (!loading && restaurant) {
+      gsap.from(".hero-content-anim", {
+        opacity: 0,
+        y: 20,
+        duration: 0.5,
+        ease: "power2.out",
+        clearProps: "all"
+      });
+
+      gsap.from(".info-card-anim", {
+        opacity: 0,
+        x: -20,
+        stagger: 0.1,
+        duration: 0.5,
+        delay: 0.2,
+        ease: "power2.out",
+        clearProps: "all"
+      });
+
+      if (!menuLoading && menuItems.length > 0) {
+        gsap.from(".menu-item-anim", {
+          opacity: 0,
+          scale: 0.9,
+          stagger: 0.05,
+          duration: 0.4,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: ".menu-container",
+            start: "top 85%",
+          },
+          clearProps: "all"
+        });
+      }
+      
+      const cartCount = getCartItemsCount();
+      if (cartCount > 0) {
+        gsap.fromTo(".floating-cart-anim", 
+          { opacity: 0, y: 100 },
+          { opacity: 1, y: 0, duration: 0.5, ease: "back.out(1.5)", clearProps: "all" }
+        );
+      }
+    }
+  }, { scope: containerRef, dependencies: [loading, restaurant, menuLoading, menuItems.length, getCartItemsCount()] });
 
   useEffect(() => {
     const load = async () => {
@@ -336,7 +383,7 @@ const RestaurantPublicView = () => {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-row bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+    <div className="relative flex min-h-screen w-full flex-row bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark" ref={containerRef}>
       <UserSidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -379,11 +426,8 @@ const RestaurantPublicView = () => {
           
           <div className="absolute bottom-0 left-0 w-full p-6 md:p-10">
             <div className="max-w-7xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="flex flex-col md:flex-row md:items-end justify-between gap-6"
+              <div
+                className="hero-content-anim flex flex-col md:flex-row md:items-end justify-between gap-6"
               >
                 <div className="flex flex-col gap-3">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-wider backdrop-blur-md border border-primary/20">
@@ -428,7 +472,7 @@ const RestaurantPublicView = () => {
                     <span>{isFavorite ? "Favorited" : "Favorite"}</span>
                   </button>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </div>
         </div>
@@ -437,11 +481,8 @@ const RestaurantPublicView = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {/* Left Column: Info */}
             <div className="flex flex-col gap-8">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className={CARD_CLASSES}
+              <div
+                className={`${CARD_CLASSES} info-card-anim`}
               >
                 <h2 className={HEADING_SECONDARY_CLASSES + " mb-4 flex items-center gap-2"}>
                   <MdStorefront className="text-primary" />
@@ -450,13 +491,10 @@ const RestaurantPublicView = () => {
                 <p className={TEXT_MUTED_CLASSES + " text-sm leading-relaxed"}>
                   {restaurant.description || restaurant.about || DEFAULT_DESCRIPTION}
                 </p>
-              </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className={CARD_CLASSES}
+              <div
+                className={`${CARD_CLASSES} info-card-anim`}
               >
                 <h2 className={HEADING_SECONDARY_CLASSES + " mb-6 flex items-center gap-2"}>
                   <MdOutlineSchedule className="text-primary" />
@@ -464,7 +502,7 @@ const RestaurantPublicView = () => {
                 </h2>
                 <ul className="space-y-6">
                   {details.map((detail, index) => (
-                    <li key={index} className="flex items-start gap-4 group">
+                     <li key={index} className="flex items-start gap-4 group">
                       <div className="p-2.5 rounded-xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
                         {detail.icon}
                       </div>
@@ -479,11 +517,11 @@ const RestaurantPublicView = () => {
                     </li>
                   ))}
                 </ul>
-              </motion.div>
+              </div>
             </div>
 
             {/* Right Column: Menu */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 menu-container">
               <div className="flex items-center justify-between mb-8">
                 <h2 className={HEADING_PRIMARY_CLASSES.replace("text-4xl md:text-5xl", "text-3xl")}>
                   Menu
@@ -505,12 +543,9 @@ const RestaurantPublicView = () => {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                   {menuItems.map((item) => (
-                    <motion.div
+                    <div
                       key={item.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className={MENU_ITEM_CARD_CLASSES}
+                      className={`${MENU_ITEM_CARD_CLASSES} menu-item-anim`}
                     >
                       <div className="relative h-48 overflow-hidden">
                         {item.image_url ? (
@@ -545,7 +580,7 @@ const RestaurantPublicView = () => {
                           Add to Cart
                         </button>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -571,13 +606,9 @@ const RestaurantPublicView = () => {
 
         {/* Floating Cart Button */}
         {getCartItemsCount() > 0 && (
-          <motion.button
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={() => setIsCartOpen(true)}
-            className="fixed bottom-8 right-8 z-40 bg-primary text-white px-8 py-4 rounded-2xl shadow-2xl shadow-primary/40 flex items-center gap-4 font-black transition-all group"
+            className="floating-cart-anim hover:scale-105 active:scale-95 fixed bottom-8 right-8 z-40 bg-primary text-white px-8 py-4 rounded-2xl shadow-2xl shadow-primary/40 flex items-center gap-4 font-black transition-transform group"
           >
             <div className="relative">
               <FiShoppingCart className="text-2xl" />
@@ -588,7 +619,7 @@ const RestaurantPublicView = () => {
             <span className="hidden md:block">View Order</span>
             <div className="w-px h-6 bg-white/20 hidden md:block"></div>
             <span className="text-lg">${getCartTotal().toFixed(2)}</span>
-          </motion.button>
+          </button>
         )}
       </main>
 

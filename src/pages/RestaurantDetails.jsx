@@ -12,7 +12,11 @@ import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { useTheme } from "../context/ThemeContext";
-import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const RestaurantDetails = () => {
   const [restaurant, setRestaurant] = useState(null);
@@ -35,6 +39,7 @@ const RestaurantDetails = () => {
   const [editingField, setEditingField] = useState(null);
   const [tempValue, setTempValue] = useState("");
   const fileInputRef = useRef(null);
+  const containerRef = useRef(null);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -128,6 +133,23 @@ const RestaurantDetails = () => {
   useEffect(() => {
     fetchData();
   }, [navigate]);
+
+  useGSAP(() => {
+    if (!loading && restaurant) {
+      gsap.from(".item-anim", {
+        opacity: 0,
+        y: 20,
+        stagger: 0.1,
+        duration: 0.5,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top 90%",
+        },
+        clearProps: "all"
+      });
+    }
+  }, { scope: containerRef, dependencies: [loading, restaurant] });
 
   // Start editing a field
   const startEditing = (field, value) => {
@@ -280,22 +302,6 @@ const RestaurantDetails = () => {
     );
   };
 
-  // Animation Variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  };
-
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center text-lg text-gray-500 font-display">
@@ -344,19 +350,15 @@ const RestaurantDetails = () => {
         className={`layout-container flex h-full grow flex-col transition-all duration-300 ${
           sidebarOpen ? "lg:ml-16" : "lg:ml-16"
         }`}
+        ref={containerRef}
       >
         <main className="flex-1 p-4 sm:p-6 md:p-8">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
+          <div
             className="mx-auto flex w-full max-w-6xl flex-col gap-8"
           >
             {/* Header & Logo */}
-            <motion.header
-              variants={itemVariants}
-              className={`flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between p-6 rounded-xl border shadow-sm ${
+            <header
+              className={`item-anim flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between p-6 rounded-xl border shadow-sm ${
                 darkMode
                   ? "bg-background-dark border-gray-700"
                   : "bg-white border-gray-200"
@@ -453,7 +455,7 @@ const RestaurantDetails = () => {
                   </p>
                 </div>
               </div>
-            </motion.header>
+            </header>
 
             {/* Stats Section */}
             <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -482,10 +484,9 @@ const RestaurantDetails = () => {
                   value: `${stats.rating.toFixed(1)} / 5.0`,
                 },
               ].map((stat) => (
-                <motion.div
+                <div
                   key={stat.label}
-                  variants={itemVariants}
-                  className={`rounded-xl border p-5 shadow-sm hover:shadow-md transition-shadow ${
+                  className={`item-anim rounded-xl border p-5 shadow-sm hover:shadow-md transition-shadow ${
                     darkMode
                       ? "border-gray-700 bg-background-dark"
                       : "border-gray-200 bg-white"
@@ -504,16 +505,15 @@ const RestaurantDetails = () => {
                       </p>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </section>
 
             {/* Restaurant Info Grid */}
             <section className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               {/* General Info */}
-              <motion.div
-                variants={itemVariants}
-                className={`lg:col-span-2 rounded-xl border p-6 shadow-sm ${
+              <div
+                className={`item-anim lg:col-span-2 rounded-xl border p-6 shadow-sm ${
                   darkMode
                     ? "border-gray-700 bg-background-dark"
                     : "border-gray-200 bg-white"
@@ -556,11 +556,10 @@ const RestaurantDetails = () => {
                     "time"
                   )}
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                variants={itemVariants}
-                className={`rounded-xl border p-6 shadow-sm h-fit ${
+              <div
+                className={`item-anim rounded-xl border p-6 shadow-sm h-fit ${
                   darkMode
                     ? "border-gray-700 bg-background-dark"
                     : "border-gray-200 bg-white"
@@ -576,12 +575,11 @@ const RestaurantDetails = () => {
                   "text",
                   true
                 )}
-              </motion.div>
+              </div>
 
               {/* Recent Reviews (NEW) */}
-              <motion.div
-                variants={itemVariants}
-                className={`rounded-xl border p-6 shadow-sm h-fit ${
+              <div
+                className={`item-anim rounded-xl border p-6 shadow-sm h-fit ${
                   darkMode
                     ? "border-gray-700 bg-background-dark"
                     : "border-gray-200 bg-white"
@@ -611,13 +609,12 @@ const RestaurantDetails = () => {
                     <p className="text-sm text-gray-400 text-center py-4 italic">No reviews yet</p>
                   )}
                 </div>
-              </motion.div>
+              </div>
             </section>
 
             {/* Action Buttons */}
-            <motion.section
-              variants={itemVariants}
-              className="flex justify-end"
+            <section
+              className="item-anim flex justify-end"
             >
               <button
                 onClick={() => navigate("/add-menu-item")}
@@ -626,8 +623,8 @@ const RestaurantDetails = () => {
                 <MdRestaurantMenu size={20} />
                 Add New Menu Item
               </button>
-            </motion.section>
-          </motion.div>
+            </section>
+          </div>
         </main>
       </div>
     </div>
