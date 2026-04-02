@@ -91,7 +91,7 @@ const Login = () => {
             type: 'signup',
             email: email,
             options: {
-                emailRedirectTo: `${window.location.origin}/#/auth/callback`
+                emailRedirectTo: `${window.location.origin}/auth/callback`
             }
         });
         if (error) throw error;
@@ -109,7 +109,7 @@ const Login = () => {
     setError("");
     setLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}${window.location.pathname}#/auth/callback`;
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo: redirectUrl },

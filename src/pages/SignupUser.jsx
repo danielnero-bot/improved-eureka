@@ -49,7 +49,7 @@ const CreateUserAccount = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/#/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             full_name: fullName,
             role: "user",
@@ -77,7 +77,7 @@ const CreateUserAccount = () => {
     setError("");
     setLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}${window.location.pathname}#/auth/callback`;
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
