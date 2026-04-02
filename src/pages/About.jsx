@@ -1,14 +1,64 @@
-import React from "react";
+import React, { useRef } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const About = () => {
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    // Hero Animation
+    gsap.fromTo(
+      ".hero-anim > *",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: "power2.out" }
+    );
+
+    // Story Section
+    gsap.fromTo(
+      ".story-anim",
+      { y: 40, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        stagger: 0.2,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: ".story-container",
+          start: "top 80%",
+        },
+      }
+    );
+
+    // Contributor Section
+    gsap.fromTo(
+      ".contributor-anim",
+      { scale: 0.9, opacity: 0, y: 30 },
+      {
+        scale: 1,
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        ease: "back.out(1.2)",
+        scrollTrigger: {
+          trigger: ".contributor-section",
+          start: "top 85%",
+        },
+      }
+    );
+  }, { scope: containerRef });
+
   return (
-    <div className="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+    <div ref={containerRef} className="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
       <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
         {/* ====== MAIN CONTENT ====== */}
         <main className="flex flex-col flex-1 px-4 sm:px-8 md:px-10 lg:px-20 xl:px-40 py-5">
           <div className="mx-auto w-full max-w-[960px] flex-1">
             {/* ====== HERO SECTION ====== */}
-            <section className="px-4 py-12 sm:py-16 md:py-20 text-center">
+            <section className="hero-anim px-4 py-12 sm:py-16 md:py-20 text-center">
               <h1 className="text-3xl font-bold tracking-tight text-text-light dark:text-gray-100 sm:text-4xl md:text-5xl">
                 Empowering Restaurants to Go Digital — Effortlessly
               </h1>
@@ -21,8 +71,8 @@ const About = () => {
             </section>
 
             {/* ====== STORY & PURPOSE SECTIONS ====== */}
-            <section className="grid grid-cols-1 gap-12 px-4 md:grid-cols-2 md:gap-16">
-              <div className="space-y-4">
+            <section className="story-container grid grid-cols-1 gap-12 px-4 md:grid-cols-2 md:gap-16">
+              <div className="story-anim space-y-4">
                 <h2 className="text-2xl font-bold text-text-light dark:text-text-dark">
                   Our Story
                 </h2>
@@ -40,7 +90,7 @@ const About = () => {
                 </p>
               </div>
 
-              <div className="space-y-4">
+              <div className="story-anim space-y-4">
                 <h2 className="text-2xl font-bold text-text-light dark:text-text-dark">
                   Why We’re Open Source
                 </h2>
@@ -59,8 +109,8 @@ const About = () => {
             </section>
 
             {/* ====== CONTRIBUTOR ====== */}
-            <section className="px-4 py-16 sm:py-20 md:py-24 text-center">
-              <div className="mx-auto max-w-3xl">
+            <section className="contributor-section px-4 py-16 sm:py-20 md:py-24 text-center">
+              <div className="contributor-anim mx-auto max-w-3xl">
                 <h2 className="text-3xl font-bold tracking-tight text-text-light dark:text-gray-100 sm:text-4xl">
                   Meet the Creator
                 </h2>
@@ -71,12 +121,12 @@ const About = () => {
                 </p>
               </div>
 
-              <div className="mt-12 flex justify-center">
+              <div className="contributor-anim mt-12 flex justify-center">
                 <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl p-8 max-w-sm transition-colors duration-300">
                   <img
                     alt="Daniel Oghenero"
                     src="https://i.pinimg.com/1200x/0f/ae/04/0fae04c2b8cd52e0ee6b3fb4c254bb21.jpg"
-                    className="mx-auto h-32 w-32 rounded-full object-cover border-4 border-primary/20"
+                    className="mx-auto h-32 w-32 rounded-full object-cover border-4 border-primary/20 hover:scale-105 transition-transform"
                   />
                   <h3 className="mt-6 text-xl font-bold text-text-light dark:text-gray-100">
                     Daniel Oghenero

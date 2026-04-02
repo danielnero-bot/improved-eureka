@@ -13,7 +13,7 @@ const Footer = () => {
     <footer className="mt-10 border-t border-gray-200 dark:border-gray-700 pt-8 pb-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4">
         <p className="text-sm text-[#648772] dark:text-gray-400">
-          © 2025 QuickPlate. All rights reserved.
+          © {new Date().getFullYear()} QuickPlate. All rights reserved.
         </p>
         <div className="flex items-center gap-4">
           <Link

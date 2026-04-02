@@ -1,13 +1,10 @@
 import React, { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { FiMenu, FiX } from "react-icons/fi";
-import { FaSun, FaMoon } from "react-icons/fa";
 import { FaXmark } from "react-icons/fa6";
-import { useTheme } from "../context/ThemeContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { darkMode, toggleTheme } = useTheme();
 
   const navItems = [
     { name: "About", path: "/about" },
@@ -85,13 +82,7 @@ const Navbar = () => {
           >
             Get Started
           </Link>
-          <button
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            className="ml-3 rounded-full p-2 bg-surface-light dark:bg-surface-dark text-text-light dark:text-gray-200 hover:opacity-90"
-          >
-            {darkMode ? <FaSun /> : <FaMoon />}
-          </button>
+          
         </nav>
 
         {/* Mobile Menu Button */}

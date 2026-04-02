@@ -3,16 +3,32 @@ import { FaRegEye, FaRegEyeSlash, FaGoogle } from "react-icons/fa";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
-import { useTheme } from "../context/ThemeContext";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { useRef } from "react";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { darkMode } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    gsap.fromTo(
+      ".back-btn",
+      { x: -20, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.5, ease: "power2.out" }
+    );
+
+    gsap.fromTo(
+      ".form-anim > *",
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, ease: "power2.out", delay: 0.2 }
+    );
+  }, { scope: containerRef });
 
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -106,11 +122,11 @@ const Login = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen w-full bg-background-light dark:bg-background-dark font-display transition-colors duration-300">
+    <div ref={containerRef} className="relative flex min-h-screen w-full bg-background-light dark:bg-background-dark font-display transition-colors duration-300">
       {/* Back Button */}
       <Link
         to="/"
-        className="absolute top-6 left-6 z-10 inline-flex items-center gap-2 text-text-light dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
+        className="back-btn absolute top-6 left-6 z-10 inline-flex items-center gap-2 text-text-light dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
       >
         <IoMdArrowRoundBack className="text-xl" />
         <span className="font-medium">Back</span>
@@ -118,7 +134,7 @@ const Login = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-6">
-        <main className="w-full max-w-md">
+        <main className="w-full max-w-md form-anim">
           <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-8 shadow-lg transition-colors duration-300">
             {/* Header */}
             <div className="text-center mb-8">

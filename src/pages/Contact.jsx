@@ -1,15 +1,39 @@
-import React from "react";
+import React, { useRef } from "react";
 import { FaEnvelope, FaGithub, FaLinkedin, FaXTwitter } from "react-icons/fa6";
-import { MdLocationOn, MdPhone } from "react-icons/md";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const Contact = () => {
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    gsap.fromTo(".header-anim > *", 
+      { y: -30, opacity: 0 }, 
+      { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: "power2.out" }
+    );
+
+    gsap.fromTo(".form-anim", 
+      { x: -30, opacity: 0 }, 
+      { x: 0, opacity: 1, duration: 0.8, ease: "power2.out" }
+    );
+
+    gsap.fromTo(".info-anim > *", 
+      { x: 30, opacity: 0 }, 
+      { x: 0, opacity: 1, duration: 0.6, stagger: 0.15, ease: "power2.out" }
+    );
+
+  }, { scope: containerRef });
+
   return (
-    <div className="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-white min-h-screen flex flex-col transition-colors duration-300">
+    <div ref={containerRef} className="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-white min-h-screen flex flex-col transition-colors duration-300">
       {/* Main */}
       <main className="grow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
           {/* Header */}
-          <header className="text-center mb-16">
+          <header className="header-anim text-center mb-16">
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-text-light dark:text-white">
               Get in Touch
             </h1>
@@ -22,7 +46,7 @@ const Contact = () => {
           {/* Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Contact Form - Takes 2 columns on large screens */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 form-anim">
               <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl p-8 shadow-sm transition-colors duration-300">
                 <h2 className="text-2xl font-bold text-text-light dark:text-white mb-6">
                   Send us a Message
@@ -103,7 +127,7 @@ const Contact = () => {
             </div>
 
             {/* Contact Information - Takes 1 column on large screens */}
-            <div className="space-y-6">
+            <div className="space-y-6 info-anim">
               {/* Contact Info Card */}
               <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl p-6 shadow-sm transition-colors duration-300">
                 <h2 className="text-xl font-bold text-text-light dark:text-white mb-6">
@@ -163,10 +187,10 @@ const Contact = () => {
                 </h2>
                 <div className="flex gap-4">
                   <a
-                    href="https://github.com/danielnero-bot"
+                   href="https://github.com/danielnero-bot"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-12 h-12 bg-primary/10 hover:bg-primary/20 rounded-lg flex items-center justify-center transition-colors"
+                    className="w-12 h-12 bg-primary/10 hover:bg-primary/20 rounded-lg flex items-center justify-center transition-colors hover:-translate-y-1"
                     title="GitHub"
                   >
                     <FaGithub className="text-primary text-xl" />
@@ -175,7 +199,7 @@ const Contact = () => {
                     href="https://www.linkedin.com/in/daniel-oghenero-b23937388?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-12 h-12 bg-primary/10 hover:bg-primary/20 rounded-lg flex items-center justify-center transition-colors"
+                    className="w-12 h-12 bg-primary/10 hover:bg-primary/20 rounded-lg flex items-center justify-center transition-colors hover:-translate-y-1"
                     title="LinkedIn"
                   >
                     <FaLinkedin className="text-primary text-xl" />
@@ -184,7 +208,7 @@ const Contact = () => {
                     href="https://x.com/danielnero80311"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-12 h-12 bg-primary/10 hover:bg-primary/20 rounded-lg flex items-center justify-center transition-colors"
+                    className="w-12 h-12 bg-primary/10 hover:bg-primary/20 rounded-lg flex items-center justify-center transition-colors hover:-translate-y-1"
                     title="Twitter"
                   >
                     <FaXTwitter className="text-primary text-xl" />

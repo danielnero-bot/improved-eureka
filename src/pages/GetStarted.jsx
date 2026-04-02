@@ -16,52 +16,65 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 const JoinQuickPlate = () => {
-  const container = useRef(null);
+  const containerRef = useRef(null);
 
   useGSAP(() => {
-    gsap.from(".heading-anim", {
-      scrollTrigger: { trigger: ".heading-anim", start: "top 80%" },
-      opacity: 0,
-      y: 30,
-      duration: 0.6,
-      ease: "power2.out"
-    });
+    gsap.fromTo(
+      ".back-btn",
+      { x: -20, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.5, ease: "power2.out" }
+    );
 
-    gsap.from(".role-card", {
-      scrollTrigger: { trigger: ".role-cards-container", start: "top 80%" },
-      opacity: 0,
-      scale: 0.95,
-      duration: 0.5,
-      ease: "power2.out",
-      stagger: 0.15,
-      delay: 0.2
-    });
+    gsap.fromTo(
+      ".heading-anim",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8, ease: "power2.out", delay: 0.2 }
+    );
+
+    gsap.fromTo(
+      ".role-card",
+      { scale: 0.95, opacity: 0, y: 20 },
+      {
+        scale: 1,
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        stagger: 0.2,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: ".role-cards-container",
+          start: "top 85%",
+        },
+      }
+    );
 
     const benefitTimeline = gsap.timeline({
-      scrollTrigger: { trigger: ".benefits-container", start: "top 80%" }
+      scrollTrigger: { trigger: ".benefits-container", start: "top 85%" }
     });
     
-    benefitTimeline.from(".benefits-header", {
-      opacity: 0,
-      y: 30,
-      duration: 0.6,
-      ease: "power2.out"
-    }).from(".benefit-card", {
-      opacity: 0,
-      scale: 0.95,
-      duration: 0.5,
-      ease: "power2.out",
-      stagger: 0.15
-    }, "-=0.4");
+    benefitTimeline.fromTo(".benefits-header", 
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power2.out" }
+    ).fromTo(".benefit-card", 
+      { scale: 0.95, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" }, 
+      "-=0.3"
+    );
 
-    gsap.from(".footer-anim", {
-      scrollTrigger: { trigger: ".footer-anim", start: "top 90%" },
-      opacity: 0,
-      y: 30,
-      duration: 0.6,
-      ease: "power2.out"
-    });
-  }, { scope: container });
+    gsap.fromTo(".footer-anim", 
+      { y: 20, opacity: 0 },
+      { 
+        y: 0, 
+        opacity: 1, 
+        duration: 0.6, 
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: ".footer-anim",
+          start: "top 95%",
+        }
+      }
+    );
+  }, { scope: containerRef });
 
   const userFeatures = [
     "Browse restaurants and menus",
@@ -105,12 +118,12 @@ const JoinQuickPlate = () => {
   ];
 
   return (
-    <div ref={container} className="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
+    <div ref={containerRef} className="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Back Button */}
         <Link
           to="/"
-          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white rounded-full px-4 py-2 mb-8 transition-all hover:scale-105 shadow-md"
+          className="back-btn inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white rounded-full px-4 py-2 mb-8 transition-all hover:scale-105 shadow-md"
         >
           <IoMdArrowRoundBack />
           <span className="text-sm font-medium">Back to Home</span>
@@ -159,7 +172,7 @@ const JoinQuickPlate = () => {
                 <div className="space-y-3 mb-6">
                   {userFeatures.map((feature, index) => (
                     <div key={index} className="flex items-center gap-3">
-                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                      <div className="shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
                         <FaCheck className="text-primary text-xs" />
                       </div>
                       <span className="text-sm text-text-secondary-light dark:text-gray-400">
@@ -208,7 +221,7 @@ const JoinQuickPlate = () => {
                 <div className="space-y-3 mb-6">
                   {restaurantFeatures.map((feature, index) => (
                     <div key={index} className="flex items-center gap-3">
-                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                      <div className="shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
                         <FaCheck className="text-primary text-xs" />
                       </div>
                       <span className="text-sm text-text-secondary-light dark:text-gray-400">

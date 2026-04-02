@@ -5,11 +5,12 @@ import { MdShoppingCart, MdFavorite, MdHistory } from "react-icons/md";
 import PasswordChecker from "../components/PasswordChecker";
 import { supabase } from "../supabase";
 import { Link, useNavigate } from "react-router-dom";
-import { useTheme } from "../context/ThemeContext";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { useRef } from "react";
 
 const CreateUserAccount = () => {
   const navigate = useNavigate();
-  const { darkMode } = useTheme();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +18,27 @@ const CreateUserAccount = () => {
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    gsap.fromTo(
+      ".back-btn",
+      { x: -20, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.5, ease: "power2.out" }
+    );
+
+    gsap.fromTo(
+      ".form-anim > *",
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, ease: "power2.out", delay: 0.2 }
+    );
+
+    gsap.fromTo(
+      ".benefits-anim > *",
+      { x: 30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.6, stagger: 0.15, ease: "power2.out", delay: 0.4 }
+    );
+  }, { scope: containerRef });
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -85,11 +107,11 @@ const CreateUserAccount = () => {
   ];
 
   return (
-    <div className="relative flex min-h-screen w-full bg-background-light dark:bg-background-dark font-display transition-colors duration-300">
+    <div ref={containerRef} className="relative flex min-h-screen w-full bg-background-light dark:bg-background-dark font-display transition-colors duration-300">
       {/* Back Button */}
       <Link
         to="/getStarted"
-        className="absolute top-6 left-6 z-10 inline-flex items-center gap-2 text-text-light dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
+        className="back-btn absolute top-6 left-6 z-10 inline-flex items-center gap-2 text-text-light dark:text-white hover:text-primary dark:hover:text-primary transition-colors"
       >
         <IoMdArrowRoundBack className="text-xl" />
         <span className="font-medium">Back</span>
@@ -98,7 +120,7 @@ const CreateUserAccount = () => {
       <div className="flex w-full">
         {/* Left Side - Form */}
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-          <main className="w-full max-w-md">
+          <main className="w-full max-w-md form-anim">
             <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-8 shadow-lg transition-colors duration-300">
               {/* Header */}
               <div className="text-center mb-8">
@@ -255,8 +277,8 @@ const CreateUserAccount = () => {
         </div>
 
         {/* Right Side - Benefits (Hidden on mobile) */}
-        <div className="hidden lg:flex flex-1 bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-primary/10 items-center justify-center p-12">
-          <div className="max-w-md">
+        <div className="benefits-anim hidden lg:flex flex-1 bg-linear-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-primary/10 flex-col items-center justify-center p-12">
+          <div className="max-w-md w-full">
             <div className="mb-8">
               <h2 className="text-3xl font-bold text-text-light dark:text-white mb-3">
                 Why Join QuickPlate?
@@ -272,7 +294,7 @@ const CreateUserAccount = () => {
                   key={index}
                   className="flex items-start gap-4 bg-white/50 dark:bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20 dark:border-white/10"
                 >
-                  <div className="flex-shrink-0 w-10 h-10 bg-white dark:bg-white/10 rounded-lg flex items-center justify-center">
+                  <div className="shrink-0 w-10 h-10 bg-white dark:bg-white/10 rounded-lg flex items-center justify-center">
                     {benefit.icon}
                   </div>
                   <div>
