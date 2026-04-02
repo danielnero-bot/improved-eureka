@@ -93,40 +93,21 @@ const Orders = () => {
 
         setRestaurantData(restaurant);
 
-        // Fetch bases orders
-        const { data: ordersData, error: ordersError } = await supabase
+        // Fetch orders with items and menu item names in one go
+        const { data: ordersWithItems, error: ordersError } = await supabase
           .from("orders")
-          .select("*")
+          .select(`
+            *,
+            items:order_items(
+              *,
+              menu_item:menu_items(name)
+            )
+          `)
           .eq("restaurant_id", restaurant.id)
           .order("created_at", { ascending: false });
 
         if (ordersError) throw ordersError;
-        if (!ordersData) return setOrders([]);
-
-        // Fetch items for each order sequentially to avoid join errors
-        const ordersWithItems = await Promise.all(
-          ordersData.map(async (order) => {
-            const { data: itemsData } = await supabase
-              .from("order_items")
-              .select("*")
-              .eq("order_id", order.id);
-
-            const itemsWithMenuNames = itemsData ? await Promise.all(
-              itemsData.map(async (item) => {
-                const { data: menuItem } = await supabase
-                  .from("menu_items")
-                  .select("name")
-                  .eq("id", item.menu_item_id)
-                  .single();
-                return { ...item, menu_item: menuItem };
-              })
-            ) : [];
-
-            return { ...order, items: itemsWithMenuNames };
-          })
-        );
-
-        setOrders(ordersWithItems);
+        setOrders(ordersWithItems || []);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

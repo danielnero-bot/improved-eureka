@@ -202,40 +202,21 @@ const RestaurantDashboard = () => {
 
   const fetchRecentOrders = async (restaurantId) => {
     try {
-      const { data: ordersData, error: ordersError } = await supabase
+      const { data: ordersWithItems, error: ordersError } = await supabase
         .from("orders")
-        .select("*")
+        .select(`
+          *,
+          items:order_items(
+            *,
+            menu_item:menu_items(name)
+          )
+        `)
         .eq("restaurant_id", restaurantId)
         .order("created_at", { ascending: false })
         .limit(10);
 
       if (ordersError) throw ordersError;
-      if (!ordersData) return setRecentOrders([]);
-
-      // Fetch items for each order sequentially to avoid join errors
-      const ordersWithItems = await Promise.all(
-        ordersData.map(async (order) => {
-          const { data: itemsData } = await supabase
-            .from("order_items")
-            .select("*")
-            .eq("order_id", order.id);
-
-          const itemsWithMenuNames = itemsData ? await Promise.all(
-            itemsData.map(async (item) => {
-              const { data: menuItem } = await supabase
-                .from("menu_items")
-                .select("name")
-                .eq("id", item.menu_item_id)
-                .single();
-              return { ...item, menu_item: menuItem };
-            })
-          ) : [];
-
-          return { ...order, items: itemsWithMenuNames };
-        })
-      );
-
-      setRecentOrders(ordersWithItems);
+      setRecentOrders(ordersWithItems || []);
     } catch (err) {
       console.error("Error fetching recent orders:", err);
     }
