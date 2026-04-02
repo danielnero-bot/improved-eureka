@@ -1,29 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import UserSidebar from "../components/UserSidebar";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 import { FiMenu } from "react-icons/fi";
 import { useTheme } from "../context/ThemeContext";
-import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-// Animation variants
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
-  },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.5 },
-  },
-};
+gsap.registerPlugin(ScrollTrigger);
 
 const UserProfilePage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -44,6 +29,44 @@ const UserProfilePage = () => {
   });
   const navigate = useNavigate();
   const { darkMode, toggleTheme } = useTheme();
+  
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    gsap.from(".header-anim", {
+      opacity: 0,
+      y: 30,
+      duration: 0.6,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: ".header-anim",
+        start: "top 85%"
+      }
+    });
+
+    gsap.from(".profile-section-anim", {
+      opacity: 0,
+      scale: 0.95,
+      duration: 0.5,
+      stagger: 0.15,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: ".profile-section-anim",
+        start: "top 85%"
+      }
+    });
+
+    gsap.from(".button-anim", {
+      opacity: 0,
+      y: 30,
+      duration: 0.6,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: ".button-anim",
+        start: "top 90%"
+      }
+    });
+  }, { scope: containerRef });
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
@@ -294,6 +317,7 @@ const UserProfilePage = () => {
             ? "bg-background-dark text-white"
             : "bg-background-light text-black"
         }`}
+        ref={containerRef}
       >
         <div className="max-w-4xl mx-auto">
           {/* Mobile Header */}
@@ -309,12 +333,8 @@ const UserProfilePage = () => {
             </h1>
           </div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeInUp}
-            className="mb-8 hidden lg:block"
+          <div
+            className="header-anim mb-8 hidden lg:block"
           >
             <h1 className="text-3xl font-bold text-black dark:text-white">
               Your Profile
@@ -322,16 +342,12 @@ const UserProfilePage = () => {
             <p className="text-gray-500 dark:text-gray-400 mt-1">
               Manage your personal information and account settings.
             </p>
-          </motion.div>
+          </div>
 
           <div className="space-y-8">
             {/* Profile Header */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
-              variants={scaleIn}
-              className={`rounded-xl shadow-sm transition-colors duration-300 ${
+            <div
+              className={`profile-section-anim rounded-xl shadow-sm transition-colors duration-300 ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
                   : "bg-card-light border border-border-light"
@@ -396,15 +412,11 @@ const UserProfilePage = () => {
                   {uploading ? "Uploading..." : "Edit photo"}
                 </button>
               </div>
-            </motion.div>
+            </div>
 
             {/* Profile Form */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-              variants={scaleIn}
-              className={`rounded-xl shadow-sm transition-colors duration-300 ${
+            <div
+              className={`profile-section-anim rounded-xl shadow-sm transition-colors duration-300 ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
                   : "bg-card-light border border-border-light"
@@ -528,15 +540,11 @@ const UserProfilePage = () => {
                   </div>
                 </form>
               </div>
-            </motion.div>
+            </div>
 
             {/* Preferences */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
-              variants={scaleIn}
-              className={`rounded-xl shadow-sm transition-colors duration-300 ${
+            <div
+              className={`profile-section-anim rounded-xl shadow-sm transition-colors duration-300 ${
                 darkMode
                   ? "bg-card-dark border border-border-dark"
                   : "bg-card-light border border-border-light"
@@ -663,15 +671,11 @@ const UserProfilePage = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Save Button */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
-              variants={fadeInUp}
-              className="flex justify-end"
+            <div
+              className="button-anim flex justify-end"
             >
               <button
                 className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
@@ -681,7 +685,7 @@ const UserProfilePage = () => {
               >
                 {loadingProfile ? "Saving..." : "Save Changes"}
               </button>
-            </motion.div>
+            </div>
           </div>
         </div>
       </main>

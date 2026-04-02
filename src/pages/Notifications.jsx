@@ -1,26 +1,36 @@
-import React from "react";
+import React, { useRef } from "react";
 import UserSidebar from "../components/UserSidebar";
 import { useNotifications } from "../context/NotificationContext";
 import { useTheme } from "../context/ThemeContext";
-import { motion } from "framer-motion";
 import { FiBell, FiCheckCircle, FiClock, FiTrash2 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 
 const NotificationsPage = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { darkMode } = useTheme();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const navigate = useNavigate();
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    if (notifications && notifications.length > 0) {
+      gsap.from(".notification-item", {
+        opacity: 0,
+        y: 20,
+        duration: 0.4,
+        stagger: 0.1,
+        ease: "power2.out",
+        clearProps: "all" // Clears properties after animation so layout updates work
+      });
+    }
+  }, { scope: containerRef, dependencies: [notifications] });
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/login");
-  };
-
-  const fadeInUp = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
   };
 
   return (
@@ -38,6 +48,7 @@ const NotificationsPage = () => {
           } ${
             darkMode ? "bg-background-dark text-white" : "bg-background-light text-black"
           }`}
+          ref={containerRef}
         >
           <div className="mx-auto max-w-3xl">
             <div className="flex items-center justify-between mb-8">
@@ -61,16 +72,13 @@ const NotificationsPage = () => {
             <div className="space-y-4">
               {notifications.length > 0 ? (
                 notifications.map((notification) => (
-                  <motion.div
+                  <div
                     key={notification.id}
-                    initial="hidden"
-                    animate="visible"
-                    variants={fadeInUp}
                     onClick={() => {
                       if (!notification.is_read) markAsRead(notification.id);
                       if (notification.link) navigate(notification.link);
                     }}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                    className={`notification-item p-4 rounded-xl border cursor-pointer transition-all ${
                       notification.is_read
                         ? darkMode
                           ? "bg-card-dark/40 border-gray-800 opacity-60"
@@ -105,7 +113,7 @@ const NotificationsPage = () => {
                         </p>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-center">

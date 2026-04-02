@@ -1,41 +1,54 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import UserSidebar from "../components/UserSidebar";
 import { FiSearch, FiChevronDown, FiMenu, FiStar } from "react-icons/fi";
 import { MdShoppingBasket } from "react-icons/md";
 import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useTheme } from "../context/ThemeContext";
 import OrderTracker from "../components/OrderTracker";
 
-// Animation variants
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
-  },
-};
-
-const fadeIn = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { duration: 0.5, delay: 0.2 },
-  },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.5, delay: 0.4 },
-  },
-};
+gsap.registerPlugin(ScrollTrigger);
 
 const UserOrdersPage = () => {
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    gsap.from(".heading-anim", {
+      opacity: 0,
+      y: 30,
+      duration: 0.6,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".heading-anim", start: "top 80%" }
+    });
+
+    gsap.from(".filter-anim", {
+      opacity: 0,
+      duration: 0.5,
+      delay: 0.2,
+      scrollTrigger: { trigger: ".filter-anim", start: "top 80%" }
+    });
+
+    gsap.from(".order-card-anim", {
+      opacity: 0,
+      scale: 0.95,
+      duration: 0.5,
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".orders-list-container", start: "top 80%" }
+    });
+
+    gsap.from(".empty-state-anim", {
+      opacity: 0,
+      scale: 0.95,
+      duration: 0.5,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".empty-state-anim", start: "top 80%" }
+    });
+  }, { scope: containerRef });
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -186,7 +199,7 @@ const UserOrdersPage = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col">
+    <div ref={containerRef} className="relative flex min-h-screen w-full flex-col">
       <div className="flex h-full w-full">
         {/* SideNavBar */}
         <UserSidebar
@@ -216,13 +229,7 @@ const UserOrdersPage = () => {
         >
           <div className="mx-auto max-w-4xl">
             {/* PageHeading */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
-              variants={fadeInUp}
-              className="flex flex-wrap justify-between gap-4 items-center mb-6"
-            >
+            <div className="heading-anim flex flex-wrap justify-between gap-4 items-center mb-6">
               <div className="flex items-center gap-4">
                 <button
                   onClick={toggleSidebar}
@@ -239,16 +246,10 @@ const UserOrdersPage = () => {
                   </p>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Search and Filter Section */}
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
-              variants={fadeIn}
-              className="flex flex-col md:flex-row gap-4 mb-6"
-            >
+            <div className="filter-anim flex flex-col md:flex-row gap-4 mb-6">
               {/* SearchBar */}
               <div className="flex-1">
                 <label className="flex flex-col h-12 w-full">
@@ -302,20 +303,17 @@ const UserOrdersPage = () => {
                   />
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Orders List */}
-            <div className="grid grid-cols-1 gap-6">
+            <div className="orders-list-container grid grid-cols-1 gap-6">
               {loading ? (
                 <div className="text-center py-10">Loading orders...</div>
               ) : filteredOrders.length > 0 ? (
                 filteredOrders.map((order) => (
-                  <motion.div
+                  <div
                     key={order.id}
-                    variants={scaleIn}
-                    initial="hidden"
-                    whileInView="visible"
-                    className={`p-6 rounded-xl border transition-colors duration-300 ${
+                    className={`order-card-anim p-6 rounded-xl border transition-colors duration-300 ${
                       darkMode
                         ? "bg-card-dark border-gray-700"
                         : "bg-white border-gray-200"
@@ -399,15 +397,11 @@ const UserOrdersPage = () => {
                         ))}
                       </ul>
                     </div>
-                  </motion.div>
+                  </div>
                 ))
               ) : (
-                <motion.div
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, amount: 0.3 }}
-                  variants={scaleIn}
-                  className={`flex flex-col items-center justify-center text-center gap-4 py-16 px-6 rounded-xl border-2 border-dashed transition-colors duration-300 ${
+                <div
+                  className={`empty-state-anim flex flex-col items-center justify-center text-center gap-4 py-16 px-6 rounded-xl border-2 border-dashed transition-colors duration-300 ${
                     darkMode ? "border-gray-700" : "border-gray-300"
                   }`}
                 >
@@ -423,7 +417,7 @@ const UserOrdersPage = () => {
                   <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-medium leading-normal hover:opacity-90 mt-2">
                     <span>Browse Restaurants</span>
                   </button>
-                </motion.div>
+                </div>
               )}
             </div>
           </div>

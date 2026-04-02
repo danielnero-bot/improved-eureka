@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import { useTheme } from "../context/ThemeContext";
@@ -12,7 +12,8 @@ import {
   FiMenu
 } from "react-icons/fi";
 import { MdStorefront } from "react-icons/md";
-import { motion, AnimatePresence } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 
 const AdminDashboard = () => {
   const { darkMode } = useTheme();
@@ -28,6 +29,20 @@ const AdminDashboard = () => {
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    if (!loading) {
+      gsap.from(".tab-content-anim", {
+        opacity: 0,
+        y: 20,
+        duration: 0.4,
+        ease: "power2.out",
+        clearProps: "all"
+      });
+    }
+  }, { scope: containerRef, dependencies: [activeTab, loading] });
 
   // Check admin access (Mock implementation: allowed for now, or check specific email)
   useEffect(() => {
@@ -207,20 +222,17 @@ const AdminDashboard = () => {
           </div>
         </header>
 
-        <div className="p-6 lg:p-10 max-w-7xl mx-auto">
+        <div className="p-6 lg:p-10 max-w-7xl mx-auto" ref={containerRef}>
             {loading ? (
                 <div className="flex items-center justify-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
             ) : (
-                <AnimatePresence mode="wait">
+                <>
                     {activeTab === "overview" && (
-                        <motion.div 
+                        <div 
                             key="overview"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            className="space-y-6"
+                            className="tab-content-anim space-y-6"
                         >
                             <h2 className="text-2xl font-bold mb-6">Dashboard Overview</h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -252,15 +264,13 @@ const AdminDashboard = () => {
                                     </div>
                                 </div>
                             </div>
-                        </motion.div>
+                        </div>
                     )}
 
                     {activeTab === "users" && (
-                        <motion.div 
+                        <div 
                             key="users"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
+                            className="tab-content-anim"
                         >
                              <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-bold">Users Management</h2>
@@ -317,15 +327,13 @@ const AdminDashboard = () => {
                                     </table>
                                 </div>
                             </div>
-                        </motion.div>
+                        </div>
                     )}
 
                     {activeTab === "restaurants" && (
-                        <motion.div 
+                        <div 
                             key="restaurants"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
+                            className="tab-content-anim"
                         >
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-bold">Restaurant Management</h2>
@@ -382,9 +390,9 @@ const AdminDashboard = () => {
                                     No restaurants found matching your search.
                                 </div>
                             )}
-                        </motion.div>
+                        </div>
                     )}
-                </AnimatePresence>
+                </>
             )}
         </div>
       </main>

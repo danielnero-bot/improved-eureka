@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabase";
 import ReviewCard from "./ReviewCard";
 import RatingModal from "./RatingModal";
-import { motion } from "framer-motion";
 import { IoStar, IoFilter } from "react-icons/io5";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 
 const ReviewsList = ({ restaurantId, onReviewsUpdate }) => {
   const [reviews, setReviews] = useState([]);
@@ -14,6 +15,31 @@ const ReviewsList = ({ restaurantId, onReviewsUpdate }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [editingReview, setEditingReview] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    if (showFilters) {
+      gsap.fromTo(".filter-panel-anim", 
+        { height: 0, opacity: 0 },
+        { height: "auto", opacity: 1, duration: 0.3, ease: "power2.out", clearProps: "all" }
+      );
+    }
+  }, { scope: containerRef, dependencies: [showFilters] });
+
+  useGSAP(() => {
+    if (!loading && reviews.length > 0) {
+      gsap.from(".review-card-item", {
+        opacity: 0,
+        y: 20,
+        duration: 0.4,
+        stagger: 0.1,
+        ease: "power2.out",
+        clearProps: "all"
+      });
+    }
+  }, { scope: containerRef, dependencies: [reviews, loading] });
+
 
   useEffect(() => {
     fetchCurrentUser();
@@ -126,16 +152,6 @@ const ReviewsList = ({ restaurantId, onReviewsUpdate }) => {
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
   const getRatingDistribution = () => {
     const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     reviews.forEach((review) => {
@@ -148,7 +164,7 @@ const ReviewsList = ({ restaurantId, onReviewsUpdate }) => {
   const totalReviews = reviews.length;
 
   return (
-    <div className="w-full">
+    <div className="w-full" ref={containerRef}>
       {/* Header with filters */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
@@ -190,11 +206,8 @@ const ReviewsList = ({ restaurantId, onReviewsUpdate }) => {
 
       {/* Filter Panel */}
       {showFilters && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          className="mb-6 p-4 rounded-lg border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark"
+        <div
+          className="filter-panel-anim overflow-hidden mb-6 p-4 rounded-lg border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark"
         >
           <p className="text-sm font-medium text-text-light dark:text-text-dark mb-3">
             Filter by Rating
@@ -225,7 +238,7 @@ const ReviewsList = ({ restaurantId, onReviewsUpdate }) => {
               </button>
             ))}
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Reviews List */}
@@ -243,12 +256,7 @@ const ReviewsList = ({ restaurantId, onReviewsUpdate }) => {
           </p>
         </div>
       ) : (
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="space-y-4"
-        >
+        <div className="space-y-4">
           {reviews.map((review) => (
             <ReviewCard
               key={review.id}
@@ -258,7 +266,7 @@ const ReviewsList = ({ restaurantId, onReviewsUpdate }) => {
               onDelete={handleDeleteReview}
             />
           ))}
-        </motion.div>
+        </div>
       )}
 
       {/* Edit Review Modal */}

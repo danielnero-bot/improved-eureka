@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   FiHome,
   FiShoppingBag,
@@ -21,46 +21,57 @@ import {
 } from "react-icons/md";
 import { IoStar, IoStarHalfOutline, IoStarOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-// Animation variants
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: "easeOut" },
-  },
-};
+gsap.registerPlugin(ScrollTrigger);
 
-const fadeIn = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { duration: 0.5 },
-  },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.5 },
-  },
-};
 const UserRestaurantDetailsPage = () => {
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    gsap.from(".img-anim", {
+      opacity: 0,
+      duration: 0.5,
+      scrollTrigger: { trigger: ".img-anim", start: "top 80%" }
+    });
+
+    gsap.from(".heading-anim", {
+      opacity: 0,
+      y: 30,
+      duration: 0.6,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".heading-anim", start: "top 80%" }
+    });
+
+    gsap.from(".info-card-anim", {
+      opacity: 0,
+      scale: 0.95,
+      duration: 0.5,
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".info-cards-container", start: "top 80%" }
+    });
+
+    gsap.from(".menu-wrapper-anim", {
+      opacity: 0,
+      scale: 0.95,
+      duration: 0.5,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".menu-wrapper-anim", start: "top 80%" }
+    });
+
+    gsap.from(".menu-item-anim", {
+      opacity: 0,
+      scale: 0.95,
+      duration: 0.5,
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: { trigger: ".menu-items-grid", start: "top 80%" }
+    });
+  }, { scope: containerRef });
+
   const menuItems = [
     {
       name: "Spaghetti Bolognese",
@@ -134,7 +145,7 @@ const UserRestaurantDetailsPage = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen w-full flex-row">
+    <div className="relative flex min-h-screen w-full flex-row" ref={containerRef}>
       {/* SideNavBar */}
       <div className="hidden md:flex flex-col border-r border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/20 w-64 p-4">
         <div className="flex flex-col gap-4">
@@ -211,26 +222,18 @@ const UserRestaurantDetailsPage = () => {
       <main className="flex-1 p-6 md:p-10 overflow-y-auto">
         <div className="max-w-7xl mx-auto">
           {/* HeaderImage */}
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeIn}
-            className="w-full h-60 md:h-72 rounded-xl bg-cover bg-center mb-6"
+          <div
+            className="img-anim w-full h-60 md:h-72 rounded-xl bg-cover bg-center mb-6"
             data-alt="Vibrant, delicious-looking pasta dish in a white bowl."
             style={{
               backgroundImage:
                 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAkAXG5FUF9fMqe6l46UQaezmBop2RJTPmhI4xbYj_tkD30vHZ9HPrnq8AUBLmN1NeQVSNXuhef-G4vgnUTeWH1Fb1ARlTJuAB65MkX4e-0qploUorJND1hebNrZQp9-KYt0nEtERK2Bs-I20aTZkUfb0kDqyc_QDfG_tLri3RZQjmTZrAXXa0cEkgkzMuGkFPVORcpTSOLZ9FwDAA7Thbauf9JYTe5AG9P4n_ZiqT9DfLYphxxC1vcRpOkLHoTQJebhn54rw5XubHb")',
             }}
-          ></motion.div>
+          ></div>
 
           {/* PageHeading */}
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeInUp}
-            className="flex flex-wrap justify-between items-start gap-4 mb-8"
+          <div
+            className="heading-anim flex flex-wrap justify-between items-start gap-4 mb-8"
           >
             <div className="flex flex-col gap-2">
               <h1 className="text-gray-900 dark:text-white text-4xl font-bold leading-tight">
@@ -256,21 +259,14 @@ const UserRestaurantDetailsPage = () => {
               <FiHeart />
               <span className="truncate">Favorite</span>
             </button>
-          </motion.div>
+          </div>
 
           {/* Restaurant Info Section */}
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={staggerContainer}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-          >
+          <div className="info-cards-container grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Column: About & Details */}
             <div className="flex flex-col gap-8">
-              <motion.div
-                variants={scaleIn}
-                className="p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm"
+              <div
+                className="info-card-anim p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm"
               >
                 <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-4">
                   About The Golden Spoon
@@ -282,11 +278,10 @@ const UserRestaurantDetailsPage = () => {
                   authentic flavors. From our handmade pasta to our wood-fired
                   pizzas, every dish is a celebration of Italian tradition.
                 </p>
-              </motion.div>
+              </div>
 
-              <motion.div
-                variants={scaleIn}
-                className="p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm"
+              <div
+                className="info-card-anim p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm"
               >
                 <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-4">
                   Details
@@ -306,30 +301,23 @@ const UserRestaurantDetailsPage = () => {
                     </li>
                   ))}
                 </ul>
-              </motion.div>
+              </div>
             </div>
 
             {/* Right Column: Menu Items */}
-            <motion.div
-              variants={scaleIn}
-              className="p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm lg:col-span-2"
+            <div
+              className="menu-wrapper-anim p-6 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 shadow-sm lg:col-span-2"
             >
               <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-6">
                 Menu
               </h2>
-              <motion.div
-                variants={staggerContainer}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.1 }}
-                className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+              <div
+                className="menu-items-grid grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
               >
                 {menuItems.map((item, index) => (
-                  <motion.div
+                  <div
                     key={index}
-                    variants={scaleIn}
-                    whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
-                    className="flex flex-col rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/10 hover:shadow-lg transition-shadow overflow-hidden"
+                    className="menu-item-anim flex flex-col rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/10 hover:shadow-lg hover:scale-[1.03] transition-all overflow-hidden"
                   >
                     <div
                       className="w-full h-40 bg-cover bg-center"
@@ -347,11 +335,11 @@ const UserRestaurantDetailsPage = () => {
                         Add to Order
                       </button>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
-              </motion.div>
-            </motion.div>
-          </motion.div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Sticky Order Summary Bar */}

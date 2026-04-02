@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import { useTheme } from "../context/ThemeContext";
 import Sidebar from "../components/Sidebar";
 import { MdMenu, MdLightMode, MdDarkMode } from "react-icons/md";
-import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -14,6 +18,29 @@ export default function Settings() {
   const [user, setUser] = useState(null);
   const [restaurantData, setRestaurantData] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    gsap.from(".header-anim", {
+      opacity: 0,
+      y: -20,
+      duration: 0.5,
+      ease: "power2.out"
+    });
+
+    gsap.from(".settings-section-anim", {
+      opacity: 0,
+      y: 20,
+      duration: 0.5,
+      stagger: 0.1,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top 80%"
+      }
+    });
+  }, { scope: containerRef });
 
   // Form states
   const [fullName, setFullName] = useState("");
@@ -89,22 +116,6 @@ export default function Settings() {
 
   // Messages
   const [message, setMessage] = useState({ type: "", text: "" });
-
-  // Animation Variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  };
 
   useEffect(() => {
     getProfile();
@@ -238,11 +249,8 @@ export default function Settings() {
         }`}
       >
         {/* Header */}
-        <motion.header
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
+        <header
+          className={`header-anim sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
             darkMode
               ? "bg-card-dark border-border-dark"
               : "bg-card-light border-border-light"
@@ -257,14 +265,11 @@ export default function Settings() {
             </button>
             <h1 className="text-xl font-bold tracking-tight">Settings</h1>
           </div>
-        </motion.header>
+        </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
+          <div
+            ref={containerRef}
             className="w-full max-w-4xl mx-auto"
           >
             {message.text && (
@@ -281,9 +286,8 @@ export default function Settings() {
 
             <div className="flex flex-col gap-8">
               {/* ================= PROFILE SECTION ================= */}
-              <motion.section
-                variants={itemVariants}
-                className={`rounded-xl border shadow-sm transition-colors duration-300 ${
+              <section
+                className={`settings-section-anim rounded-xl border shadow-sm transition-colors duration-300 ${
                   darkMode
                     ? "bg-card-dark border-border-dark"
                     : "bg-card-light border-border-light"
@@ -407,12 +411,11 @@ export default function Settings() {
                     </div>
                   </div>
                 </form>
-              </motion.section>
+              </section>
 
               {/* ================= ACCOUNT SECTION ================= */}
-              <motion.section
-                variants={itemVariants}
-                className={`rounded-xl border shadow-sm transition-colors duration-300 ${
+              <section
+                className={`settings-section-anim rounded-xl border shadow-sm transition-colors duration-300 ${
                   darkMode
                     ? "bg-card-dark border-border-dark"
                     : "bg-card-light border-border-light"
@@ -501,12 +504,11 @@ export default function Settings() {
                     </button>
                   </div>
                 </div>
-              </motion.section>
+              </section>
 
               {/* ================= PREFERENCES SECTION ================= */}
-              <motion.section
-                variants={itemVariants}
-                className={`rounded-xl border shadow-sm transition-colors duration-300 ${
+              <section
+                className={`settings-section-anim rounded-xl border shadow-sm transition-colors duration-300 ${
                   darkMode
                     ? "bg-card-dark border-border-dark"
                     : "bg-card-light border-border-light"
@@ -616,9 +618,9 @@ export default function Settings() {
                     </div>
                   </div>
                 </div>
-              </motion.section>
+              </section>
             </div>
-          </motion.div>
+          </div>
         </main>
       </div>
     </div>

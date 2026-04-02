@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { IoIosAddCircle, IoIosAdd } from "react-icons/io";
 import { MdMenu, MdDarkMode, MdLightMode } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import Sidebar from "../components/Sidebar";
 import { useTheme } from "../context/ThemeContext";
-import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const MenuManagement = () => {
   const { darkMode, toggleTheme } = useTheme();
@@ -16,6 +20,8 @@ const MenuManagement = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(null);
   const navigate = useNavigate();
+
+  const containerRef = useRef(null);
 
   useEffect(() => {
     fetchData();
@@ -144,21 +150,50 @@ const MenuManagement = () => {
     item.name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Animation Variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
+  useGSAP(() => {
+    if (!loading) {
+      gsap.from(".header-anim", {
+        opacity: 0,
+        y: -20,
+        duration: 0.5,
+        ease: "power2.out",
+        clearProps: "all"
+      });
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  };
+      if (menuItems.length === 0) {
+        gsap.from(".empty-state-anim", {
+          opacity: 0,
+          y: 20,
+          duration: 0.5,
+          ease: "power2.out",
+          clearProps: "all"
+        });
+      } else {
+        gsap.from(".search-anim", {
+          opacity: 0,
+          y: -10,
+          duration: 0.5,
+          delay: 0.2,
+          ease: "power2.out",
+          clearProps: "all"
+        });
+
+        gsap.from(".menu-item-anim", {
+          opacity: 0,
+          y: 20,
+          stagger: 0.1,
+          duration: 0.5,
+          ease: "power2.out",
+          clearProps: "all",
+          scrollTrigger: {
+            trigger: ".menu-grid",
+            start: "top 80%",
+            once: true
+          }
+        });
+      }
+    }
+  }, { scope: containerRef, dependencies: [loading, filteredMenu] });
 
   if (loading) {
     return (
@@ -206,13 +241,11 @@ const MenuManagement = () => {
         className={`flex flex-1 flex-col transition-all duration-300 ${
           sidebarOpen ? "lg:ml-16" : "lg:ml-16"
         }`}
+        ref={containerRef}
       >
         {/* Header */}
-        <motion.header
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
+        <header
+          className={`header-anim sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
             darkMode
               ? "bg-card-dark border-border-dark"
               : "bg-card-light border-border-light"
@@ -252,16 +285,13 @@ const MenuManagement = () => {
               </div>
             )}
           </div>
-        </motion.header>
+        </header>
 
         {/* Main Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300">
           {menuItems.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4"
+            <div
+              className="empty-state-anim flex flex-col items-center justify-center h-[60vh] text-center space-y-4"
             >
               <IoIosAddCircle className="text-6xl text-primary/70" />
               <h2 className="text-2xl font-bold">No Menu Items Yet</h2>
@@ -280,15 +310,12 @@ const MenuManagement = () => {
                 <IoIosAdd />
                 Add Your First Item
               </button>
-            </motion.div>
+            </div>
           ) : (
             <>
               {/* Search Input */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6"
+              <div
+                className="search-anim flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6"
               >
                 <input
                   type="text"
@@ -304,21 +331,16 @@ const MenuManagement = () => {
                 <div className="text-sm text-text-muted-light dark:text-text-muted-dark">
                   {filteredMenu.length} of {menuItems.length} items
                 </div>
-              </motion.div>
+              </div>
 
               {/* Menu Grid */}
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.1 }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              <div
+                className="menu-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
               >
                 {filteredMenu.map((item) => (
-                  <motion.div
+                  <div
                     key={item.id}
-                    variants={itemVariants}
-                    className={`flex flex-col border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow ${
+                    className={`menu-item-anim flex flex-col border rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow ${
                       darkMode
                         ? "bg-card-dark border-border-dark"
                         : "bg-card-light border-border-light"
@@ -399,9 +421,9 @@ const MenuManagement = () => {
                         )}
                       </button>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
-              </motion.div>
+              </div>
 
               {filteredMenu.length === 0 && search && (
                 <div className="text-center py-12">

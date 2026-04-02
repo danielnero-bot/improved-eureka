@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   MdMenu,
   MdRefresh,
@@ -7,8 +7,12 @@ import {
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import Sidebar from "../components/Sidebar";
-import { motion } from "framer-motion";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useTheme } from "../context/ThemeContext";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const Orders = () => {
   const { darkMode } = useTheme();
@@ -18,6 +22,35 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
   const navigate = useNavigate();
+
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    gsap.from(".header-anim", {
+      opacity: 0,
+      y: -20,
+      duration: 0.5,
+      ease: "power2.out"
+    });
+
+    gsap.from(".order-row-anim", {
+      opacity: 0,
+      y: 20,
+      duration: 0.3,
+      stagger: 0.05,
+      ease: "power2.out",
+      clearProps: "all"
+    });
+
+    gsap.from(".order-card-anim", {
+      opacity: 0,
+      y: 20,
+      duration: 0.3,
+      stagger: 0.1,
+      ease: "power2.out",
+      clearProps: "all"
+    });
+  }, { scope: containerRef, dependencies: [filter, orders] });
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
@@ -174,21 +207,6 @@ const Orders = () => {
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  };
-
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center font-display bg-background-light dark:bg-background-dark">
@@ -229,11 +247,8 @@ const Orders = () => {
         }`}
       >
         {/* Header */}
-        <motion.header
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className={`sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
+        <header
+          className={`header-anim sticky top-0 z-20 flex h-16 items-center justify-between border-b px-4 sm:px-6 backdrop-blur-md bg-opacity-80 ${
             darkMode
               ? "bg-card-dark border-border-dark"
               : "bg-card-light border-border-light"
@@ -269,14 +284,12 @@ const Orders = () => {
               </div>
             )}
           </div>
-        </motion.header>
+        </header>
 
         {/* Main Content */}
         <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-x-hidden">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
+          <div
+            ref={containerRef}
             className="mx-auto max-w-7xl"
           >
             {/* Header Section */}
@@ -376,10 +389,9 @@ const Orders = () => {
                   <tbody className="divide-y divide-border-light dark:divide-border-dark">
                     {filteredOrders.length > 0 ? (
                       filteredOrders.map((order) => (
-                        <motion.tr
+                        <tr
                           key={order.id}
-                          variants={itemVariants}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                          className="order-row-anim hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                         >
                           <td className="px-4 lg:px-6 py-3 lg:py-4 font-medium">
                             #{order.id.slice(0, 8)}
@@ -453,7 +465,7 @@ const Orders = () => {
                               )}
                             </div>
                           </td>
-                        </motion.tr>
+                        </tr>
                       ))
                     ) : (
                       <tr>
@@ -477,10 +489,9 @@ const Orders = () => {
             <div className="md:hidden space-y-3">
               {filteredOrders.length > 0 ? (
                 filteredOrders.map((order) => (
-                  <motion.div
+                  <div
                     key={order.id}
-                    variants={itemVariants}
-                    className="rounded-lg border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-4 shadow-sm"
+                    className="order-card-anim rounded-lg border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-4 shadow-sm"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -576,7 +587,7 @@ const Orders = () => {
                         </button>
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                 ))
               ) : (
                 <div className="rounded-lg border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark p-12 text-center">
@@ -587,7 +598,7 @@ const Orders = () => {
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         </main>
       </div>
     </div>

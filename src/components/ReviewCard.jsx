@@ -1,7 +1,6 @@
 import React from "react";
 import { IoStar } from "react-icons/io5";
 import { FiUser, FiEdit2, FiTrash2 } from "react-icons/fi";
-import { motion } from "framer-motion";
 
 const ReviewCard = ({ review, currentUserId, onEdit, onDelete }) => {
   const formatDate = (dateString) => {
@@ -34,11 +33,8 @@ const ReviewCard = ({ review, currentUserId, onEdit, onDelete }) => {
   const isOwner = currentUserId && review.user_id === currentUserId;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="p-4 rounded-lg border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark hover:shadow-md transition-shadow"
+    <div
+      className="review-card-item p-4 rounded-lg border border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark hover:shadow-md transition-shadow"
     >
       {/* Header: User info and rating */}
       <div className="flex items-start justify-between mb-3">
@@ -90,7 +86,7 @@ const ReviewCard = ({ review, currentUserId, onEdit, onDelete }) => {
           {review.comment}
         </p>
       )}
-    </motion.div>
+    </div>
   );
 };
 
