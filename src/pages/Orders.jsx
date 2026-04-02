@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   MdMenu,
   MdRefresh,
@@ -65,9 +65,8 @@ const Orders = () => {
     return new Date(dateString).toLocaleString();
   };
 
-  useEffect(() => {
-    const fetchRestaurantAndOrders = async () => {
-      try {
+  const fetchRestaurantAndOrders = useCallback(async () => {
+    try {
         setLoading(true);
         const {
           data: { user },
@@ -133,10 +132,55 @@ const Orders = () => {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchRestaurantAndOrders();
   }, [navigate]);
+
+
+
+  useEffect(() => {
+    fetchRestaurantAndOrders();
+  }, [fetchRestaurantAndOrders]);
+
+  useEffect(() => {
+    if (!restaurantData) return;
+
+    const channel = supabase
+      .channel("restaurant-orders-live")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "orders",
+          filter: `restaurant_id=eq.${restaurantData.id}`,
+        },
+        () => {
+          fetchRestaurantAndOrders();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `restaurant_id=eq.${restaurantData.id}`,
+        },
+        (payload) => {
+          setOrders((prev) =>
+            prev.map((order) =>
+              order.id === payload.new.id
+                ? { ...order, ...payload.new }
+                : order
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [restaurantData?.id, fetchRestaurantAndOrders]);
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {

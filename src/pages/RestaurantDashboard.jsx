@@ -119,6 +119,45 @@ const RestaurantDashboard = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+   // Real-time subscription for dashboard updates
+   useEffect(() => {
+    if (!restaurantData) return;
+
+    const channel = supabase
+      .channel("dashboard-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `restaurant_id=eq.${restaurantData.id}`,
+        },
+        () => {
+          // Re-fetch everything if an order changes
+          fetchDashboardStats(restaurantData.id);
+          fetchRecentOrders(restaurantData.id);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "reviews",
+          filter: `restaurant_id=eq.${restaurantData.id}`,
+        },
+        () => {
+          fetchRecentReviews(restaurantData.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [restaurantData?.id]);
+
   // Fetch dashboard statistics
   const fetchDashboardStats = async (restaurantId) => {
     try {
