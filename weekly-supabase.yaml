@@ -1,0 +1,29 @@
+# .github/workflows/weekly-supabase-ping.yml
+
+name: Weekly Supabase Ping
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9:00 AM UTC
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase table
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/user_details?limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}")
+          
+          echo "Response status: $RESPONSE"
+          
+          if [ "$RESPONSE" -ne 200 ]; then
+            echo "Ping failed with status $RESPONSE"
+            exit 1
+          fi
+          
+          echo "Supabase ping successful!"
