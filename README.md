@@ -2,7 +2,7 @@
 
 **QuickPlate** is a React + Vite food delivery web app that connects customers with local restaurants, lets them browse menus and place orders, and gives restaurant owners tools to manage their business online.
 
-The app is powered by **Supabase** for authentication, data storage, and file handling, and uses **React Router** for navigation plus **TailwindCSS** and **Framer Motion** for the UI and animations.
+The app is powered by **Supabase** for authentication, data storage, and file handling, and uses **React Router** for navigation plus **TailwindCSS** and **GSAP** for the UI and animations.
 
 ---
 
