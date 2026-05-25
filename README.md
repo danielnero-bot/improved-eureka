@@ -38,7 +38,6 @@ The app is powered by **Supabase** for authentication, data storage, and file ha
 - **Vite 7**
 - **React Router 7**
 - **TailwindCSS 4**
-- **Framer Motion**
 - **GSAP / @gsap/react**
 - **React Icons**
 
@@ -55,7 +54,7 @@ The app is powered by **Supabase** for authentication, data storage, and file ha
 
 ---
 
-##  Project structure
+## 📁 Project structure
 
 ```text
 vite-project/
@@ -108,65 +107,3 @@ The app uses client-side routing in [src/main.jsx](src/main.jsx). Key routes inc
 - `/terms` — terms
 - `/privacy` — privacy
 - `/admin` — admin dashboard
-
----
-
-## 🎨 UI and behavior notes
-
-- The app includes a **dark/light theme system** via [src/context/ThemeContext.jsx](src/context/ThemeContext.jsx)
-- The cart is managed through [src/context/CartContext.jsx](src/context/CartContext.jsx)
-- Notifications are handled in [src/context/NotificationContext.jsx](src/context/NotificationContext.jsx)
-- Pages are lazily loaded in [src/main.jsx](src/main.jsx) for better performance
-- The app uses a shared layout in [src/App.jsx](src/App.jsx) with `Navbar` and `Footer`
-
----
-
-## 🗄️ Supabase integration
-
-The app expects the following environment variables:
-
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-
-These are loaded in [src/supabase.js](src/supabase.js).
-
-The current implementation uses Supabase for:
-- user authentication
-- storing user and restaurant data
-- managing file uploads
-- connecting the frontend to backend data
-
----
-
-## 🧪 Available commands
-
-```bash
-npm run dev
-npm run build
-npm run preview
-npm run lint
-```
-
----
-
-## 📌 Notes
-
-- The workflow file in [vite-project/.github/workflows/weekly-supabase-ping.yml](vite-project/.github/workflows/weekly-supabase-ping.yml) is separate from the app itself and is used to ping Supabase periodically.
-- If you are deploying this app, make sure the Supabase environment variables are set in your hosting platform as well.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome. If you want to improve the app:
-
-1. Create a feature branch
-2. Make your changes
-3. Run `npm run lint`
-4. Open a pull request
-
----
-
-## 📞 Support
-
-If you need help setting up the project, check the environment variables and Supabase configuration first.
