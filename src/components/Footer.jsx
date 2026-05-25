@@ -12,9 +12,17 @@ const Footer = () => {
   return (
     <footer className="mt-10 border-t border-gray-200 dark:border-gray-700 pt-8 pb-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4">
-        <p className="text-sm text-[#648772] dark:text-gray-400">
-          © {new Date().getFullYear()} QuickPlate. All rights reserved.
-        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-[#648772] dark:text-gray-400">
+          <p>
+            © {new Date().getFullYear()} QuickPlate. All rights reserved.
+          </p>
+          <Link
+            to="/privacy"
+            className="hover:text-primary transition-colors"
+          >
+            Privacy
+          </Link>
+        </div>
         <div className="flex items-center gap-4">
           <Link
             to="https://github.com/danielnero-bot/improved-eureka"
@@ -24,7 +32,7 @@ const Footer = () => {
             <FaGithub />
           </Link>
           <a
-            href="https://x.com/danielnero80311"
+            href="https://x.com/getquickplate"
             target="_blank"
             className="text-[#648772] dark:text-gray-400 hover:text-primary transition-colors"
           >
@@ -52,7 +60,7 @@ const Footer = () => {
             <FaLinkedinIn />
           </a>
           <a
-            href="https://www.instagram.com/d.ne_ro?igsh=eTM4bHIwZjlsOTQ5"
+            href="https://www.instagram.com/getquickplate?igsh=bTM5bTl6aXJ2OGNt"
             target="_blank"
             className="text-[#648772] dark:text-gray-400 hover:text-primary transition-colors"
           >
