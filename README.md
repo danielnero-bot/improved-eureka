@@ -1,255 +1,172 @@
 # 🍽️ QuickPlate
 
-**QuickPlate** is a modern, full-stack food delivery platform that connects hungry customers with their favorite local restaurants. Built with cutting-edge web technologies, QuickPlate offers a seamless ordering experience with real-time updates, beautiful animations, and an intuitive interface.
+**QuickPlate** is a React + Vite food delivery web app that connects customers with local restaurants, lets them browse menus and place orders, and gives restaurant owners tools to manage their business online.
+
+The app is powered by **Supabase** for authentication, data storage, and file handling, and uses **React Router** for navigation plus **TailwindCSS** and **Framer Motion** for the UI and animations.
 
 ---
 
-## ✨ Features
+## ✨ What the app does
 
-### For Customers
-- 🔍 **Browse Restaurants** - Discover local restaurants with detailed menus and ratings
-- 🛒 **Smart Cart System** - Add items from multiple restaurants with real-time cart management
-- 📱 **Responsive Design** - Seamless experience across desktop, tablet, and mobile devices
-- 🌓 **Dark/Light Mode** - Toggle between themes for comfortable viewing
-- 👤 **User Profiles** - Manage personal information, delivery addresses, and preferences
-- 📦 **Order Tracking** - View order history and track current orders
-- ⭐ **Restaurant Reviews** - Read ratings and reviews from other customers
-- 🎨 **Smooth Animations** - Scroll-triggered animations for an engaging user experience
+### For customers
+- Browse restaurant listings and restaurant detail pages
+- View menu items and restaurant information
+- Add items to a cart and manage quantities
+- Checkout and place orders
+- View order history and current orders
+- Manage favorites and notifications
+- Update profile information
+- Read restaurant reviews
+- Switch between light and dark themes
 
-### For Restaurant Owners
-- 🏪 **Restaurant Dashboard** - Comprehensive management interface
-- 📋 **Menu Management** - Easy-to-use menu item creation and editing
-- 🖼️ **Image Upload** - Upload restaurant logos and menu item photos
-- 📊 **Order Management** - Track and manage incoming orders
-- ⚙️ **Restaurant Settings** - Update business hours, contact info, and delivery details
+### For restaurant owners
+- Access a restaurant dashboard
+- Create and manage restaurant setup details
+- Add menu items
+- Manage orders
+- Update restaurant settings and business information
+
+### For admins
+- Access an admin dashboard page
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech stack
 
 ### Frontend
-- **React 19** - Modern UI library with latest features
-- **Vite** - Lightning-fast build tool and dev server
-- **TailwindCSS 4** - Utility-first CSS framework with custom theming
-- **Framer Motion** - Smooth scroll-triggered animations
-- **React Router** - Client-side routing
-- **React Icons** - Comprehensive icon library
+- **React 19**
+- **Vite 7**
+- **React Router 7**
+- **TailwindCSS 4**
+- **Framer Motion**
+- **GSAP / @gsap/react**
+- **React Icons**
 
-### Backend & Services
-- **Supabase** - Backend-as-a-Service for:
-  - PostgreSQL database
-  - Authentication & user management
-  - File storage (avatars, restaurant logos, menu images)
-  - Real-time subscriptions
+### Backend / services
+- **Supabase** for:
+  - authentication
+  - PostgreSQL data storage
+  - file storage
+  - session management
 
-### Design
-- **Montserrat Font** - Clean, modern typography
-- **Custom Color Palette** - Primary green (#38e07b) with dark/light theme support
-- **Responsive Layout** - Mobile-first design approach
-- **Glassmorphism Effects** - Modern UI aesthetics
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
-- Supabase account
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/quickplate.git
-   cd quickplate
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   
-   Create a `.env` file in the root directory:
-   ```env
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-
-4. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open your browser**
-   
-   Navigate to `http://localhost:5173`
+### Other tools
+- **ESLint**
+- **Vite PWA** support
 
 ---
 
-## 📁 Project Structure
+##  Project structure
 
-```
+```text
 vite-project/
 ├── src/
-│   ├── components/          # Reusable UI components
-│   │   ├── Cart.jsx
-│   │   ├── UserSidebar.jsx
-│   │   └── ...
-│   ├── context/            # React Context providers
-│   │   ├── CartContext.jsx
-│   │   └── ThemeContext.jsx
-│   ├── pages/              # Page components
-│   │   ├── UserDashboard.jsx
-│   │   ├── RestaurantPublicView.jsx
-│   │   ├── UserProfile.jsx
-│   │   ├── UserOrders.jsx
-│   │   ├── Checkout.jsx
-│   │   └── ...
-│   ├── supabase.js         # Supabase client configuration
-│   ├── index.css           # Global styles & theme
-│   └── main.jsx            # App entry point
-├── public/                 # Static assets
+│   ├── components/       # Reusable UI pieces and auth helpers
+│   ├── context/          # Theme, cart, and notification providers
+│   ├── pages/            # Page-level routes and views
+│   ├── assets/           # Static images and media
+│   ├── App.jsx           # Layout wrapper with Navbar/Footer
+│   ├── main.jsx          # Router setup and app entry point
+│   ├── index.css         # Global styles and theme variables
+│   └── supabase.js       # Supabase client configuration
+├── public/               # Static public assets
+├── .github/workflows/    # GitHub Actions workflows
 ├── index.html
-└── package.json
+├── package.json
+└── vite.config.js
 ```
 
 ---
 
-## 🎨 Key Features Explained
+## 🧭 Main routes
 
-### Theme System
-QuickPlate features a comprehensive dark/light theme system with:
-- Persistent theme preference (localStorage)
-- Smooth transitions between themes
-- Custom color tokens for consistent styling
-- Theme-aware components throughout the app
+The app uses client-side routing in [src/main.jsx](src/main.jsx). Key routes include:
 
-### Cart Management
-The cart system includes:
-- Add/remove items with quantity controls
-- Multi-restaurant support
-- Real-time price calculations
-- Persistent cart state
-- Smooth animations for cart interactions
-
-### Animation System
-Built with Framer Motion, featuring:
-- Scroll-triggered fade-in animations
-- Staggered list animations
-- Hover effects on interactive elements
-- Scale and opacity transitions
-- Performance-optimized with `once: true` viewport settings
-
-### Authentication Flow
-Secure authentication powered by Supabase:
-- Email/password authentication
-- User role management (customer/restaurant)
-- Protected routes
-- Session persistence
-- Secure logout
-
----
-
-## 🗄️ Database Schema
-
-### Main Tables
-- **users** - User authentication data
-- **user_details** - Extended user profile information
-- **restaurants** - Restaurant information and settings
-- **menu_items** - Restaurant menu items
-- **orders** - Customer orders
-- **order_items** - Individual items in orders
-
-### Storage Buckets
-- **avatars** - User profile pictures
-- **restaurant-logos** - Restaurant branding
-- **menu-images** - Menu item photos
+- `/` — home page
+- `/about` — about page
+- `/docs` — docs / landing page
+- `/contact` — contact page
+- `/getStarted` — onboarding / join flow
+- `/signupUser` — customer sign up
+- `/signupRestaurant` — restaurant sign up
+- `/login` — login
+- `/dashboard` — customer dashboard
+- `/restaurantDashboard` — restaurant dashboard
+- `/restaurantsetup` — restaurant setup
+- `/menupage` — menu management
+- `/addmenuitem` — add menu item
+- `/restaurant-info` — restaurant details
+- `/settings` — settings
+- `/orders` — orders
+- `/userOrders` — user orders
+- `/favorites` — favorites
+- `/notifications` — notifications
+- `/userProfile` — user profile
+- `/restaurantview` — restaurant directory
+- `/restaurantviewed` — restaurant detail view
+- `/restaurant/:id` — public restaurant page
+- `/checkout` — checkout
+- `/terms` — terms
+- `/privacy` — privacy
+- `/admin` — admin dashboard
 
 ---
 
-## 🎯 Use Cases
+## 🎨 UI and behavior notes
 
-### For Food Enthusiasts
-- Discover new restaurants in your area
-- Browse diverse menus with detailed descriptions
-- Save favorite restaurants for quick access
-- Track order history and reorder favorites
-- Customize delivery preferences
-
-### For Restaurant Owners
-- Reach more customers online
-- Manage menu items efficiently
-- Track orders in real-time
-- Build your brand with custom logos and photos
-- Update business information instantly
-
-### For Developers
-- Learn modern React patterns and best practices
-- Understand Supabase integration
-- Explore animation techniques with Framer Motion
-- Study responsive design implementation
-- Reference clean code architecture
+- The app includes a **dark/light theme system** via [src/context/ThemeContext.jsx](src/context/ThemeContext.jsx)
+- The cart is managed through [src/context/CartContext.jsx](src/context/CartContext.jsx)
+- Notifications are handled in [src/context/NotificationContext.jsx](src/context/NotificationContext.jsx)
+- Pages are lazily loaded in [src/main.jsx](src/main.jsx) for better performance
+- The app uses a shared layout in [src/App.jsx](src/App.jsx) with `Navbar` and `Footer`
 
 ---
 
-## 🚀 Deployment
+## 🗄️ Supabase integration
 
-### Build for Production
+The app expects the following environment variables:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+These are loaded in [src/supabase.js](src/supabase.js).
+
+The current implementation uses Supabase for:
+- user authentication
+- storing user and restaurant data
+- managing file uploads
+- connecting the frontend to backend data
+
+---
+
+## 🧪 Available commands
+
 ```bash
+npm run dev
 npm run build
-```
-
-### Preview Production Build
-```bash
 npm run preview
+npm run lint
 ```
 
-### Deploy to Vercel/Netlify
-The project is configured for easy deployment to modern hosting platforms. Simply connect your repository and deploy!
+---
+
+## 📌 Notes
+
+- The workflow file in [vite-project/.github/workflows/weekly-supabase-ping.yml](vite-project/.github/workflows/weekly-supabase-ping.yml) is separate from the app itself and is used to ping Supabase periodically.
+- If you are deploying this app, make sure the Supabase environment variables are set in your hosting platform as well.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome. If you want to improve the app:
 
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-## 👨‍💻 Author
-
-Built with ❤️ by Daniel Nero
-
----
-
-## 🙏 Acknowledgments
-
-- React team for the amazing framework
-- Supabase for the powerful backend platform
-- TailwindCSS for the utility-first CSS framework
-- Framer Motion for smooth animations
-- The open-source community for inspiration and support
+1. Create a feature branch
+2. Make your changes
+3. Run `npm run lint`
+4. Open a pull request
 
 ---
 
 ## 📞 Support
 
-For support, email nero80311@gmail.com or open an issue in the GitHub repository.
-
----
-
-**QuickPlate** - Bringing delicious food to your doorstep, one click at a time! 🍕🍔🍜
+If you need help setting up the project, check the environment variables and Supabase configuration first.
