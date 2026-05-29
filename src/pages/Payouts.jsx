@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { FiExternalLink, FiCheckCircle, FiAlertCircle } from 'react-icons/fi'
-import { supabase } from '../../supabase'
-import { useTheme } from '../../context/ThemeContext'
+import { supabase } from '../supabase'
+import { useTheme } from '../ThemeContext'
 
 export default function Payouts() {
   const { darkMode } = useTheme()
