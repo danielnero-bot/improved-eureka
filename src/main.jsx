@@ -39,6 +39,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const Favorites = lazy(() => import("./pages/Favorites"));
 const NotificationsPage = lazy(() => import("./pages/Notifications"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Payouts = lazy(()=> import("./pages/Payouts"));
 
 // Loading Component
 const PageLoader = () => (
@@ -99,6 +100,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/dashboard/payouts" element={<Payouts />} />
             </Routes>
           </Suspense>
         </BrowserRouter>

@@ -10,6 +10,7 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 
+
 const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
   const location = useLocation();
   const { darkMode } = useTheme();
@@ -25,6 +26,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, onLogout, restaurantData }) => {
       path: "/restaurant-info",
     },
     { icon: <MdSettings />, label: "Settings", path: "/settings" },
+    { icon: <MdSettings />, label: "Settings", path: "/dashboard/payouts" },
   ];
 
   return (

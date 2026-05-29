@@ -5,6 +5,7 @@ import { MdStorefront } from "react-icons/md";
 import { useCart } from "../context/CartContext";
 import { useTheme } from "../context/ThemeContext";
 import { supabase } from "../supabase";
+import StripeCheckout from '../components/StripeCheckout'
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ const Checkout = () => {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [specialInstructions, setSpecialInstructions] = useState("");
+  const [clientSecret, setClientSecret] = useState(null)
+  const [showStripeForm, setShowStripeForm] = useState(false)
 
   const grouped = getGroupedCart();
 
@@ -39,77 +42,82 @@ const Checkout = () => {
     }
   }, [cartItems, navigate]);
 
-  const handlePlaceOrder = async () => {
-    if (!deliveryAddress.trim()) {
-      alert("Please enter a delivery address");
-      return;
+  const handleProceedToPayment = async () => {
+  if (!deliveryAddress.trim()) {
+    alert('Please enter a delivery address')
+    return
+  }
+  if (!grouped || grouped.length === 0) return
+
+  setLoading(true)
+  try {
+    const totalAmount = Math.round((getCartTotal() + 3.99) * 100) // convert to cents
+    const restaurant = grouped[0].restaurant // single restaurant enforced
+
+    const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+      body: {
+        amount: totalAmount,
+        restaurantStripeAccountId: restaurant.stripe_account_id,
+        orderId: crypto.randomUUID(), // temp id, replaced after order insert
+      },
+    })
+
+    if (error) throw error
+
+    setClientSecret(data.clientSecret)
+    setShowStripeForm(true)
+  } catch (err) {
+    alert('Failed to initialize payment. Please try again.')
+    console.error(err)
+  } finally {
+    setLoading(false)
+  }
+}
+
+const handleOrderSuccess = async () => {
+  const createdOrderIds = []
+  try {
+    for (const group of grouped) {
+      const { restaurant: rest, items, total } = group
+
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert([{
+          user_id: user.id,
+          restaurant_id: rest?.id,
+          total_amount: total,
+          status: 'pending', // webhook will update to 'paid'
+          delivery_address: deliveryAddress,
+          payment_method: 'card',
+          special_instructions: specialInstructions,
+        }])
+        .select()
+        .single()
+
+      if (orderError) throw orderError
+      createdOrderIds.push(orderData.id)
+
+      const orderItems = items.map((item) => ({
+        order_id: orderData.id,
+        menu_item_id: item.id,
+        quantity: item.quantity,
+        price: item.price,
+      }))
+
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
+      if (itemsError) throw itemsError
     }
 
-    if (!grouped || grouped.length === 0) {
-      alert("Your cart is empty.");
-      return;
+    clearCart()
+    navigate('/userOrders')
+  } catch (err) {
+    console.error('Order creation failed:', err)
+    if (createdOrderIds.length > 0) {
+      await supabase.from('orders').delete().in('id', createdOrderIds)
     }
-
-    setLoading(true);
-    const createdOrderIds = [];
-    try {
-      // Create an order per restaurant group
-      for (const group of grouped) {
-        const { restaurant: rest, items, total } = group;
-
-        const { data: orderData, error: orderError } = await supabase
-          .from("orders")
-          .insert([
-            {
-              user_id: user.id,
-              restaurant_id: rest?.id,
-              total_amount: total,
-              status: "pending",
-              delivery_address: deliveryAddress,
-              payment_method: paymentMethod,
-              special_instructions: specialInstructions,
-            },
-          ])
-          .select()
-          .single();
-
-        if (orderError) throw orderError;
-
-        createdOrderIds.push(orderData.id);
-
-        const orderItems = items.map((item) => ({
-          order_id: orderData.id,
-          menu_item_id: item.id,
-          quantity: item.quantity,
-          price: item.price,
-        }));
-
-        const { error: itemsError } = await supabase
-          .from("order_items")
-          .insert(orderItems);
-
-        if (itemsError) throw itemsError;
-      }
-
-      // All orders created successfully
-      clearCart();
-      alert("Order(s) placed successfully!");
-      navigate("/userOrders");
-    } catch (error) {
-      console.error("Error placing multi-restaurant order:", error);
-      // Attempt rollback for partially created orders
-      if (createdOrderIds.length > 0) {
-        try {
-          await supabase.from("orders").delete().in("id", createdOrderIds);
-        } catch (rollbackErr) {
-          console.error("Rollback failed:", rollbackErr);
-        }
-      }
-      alert("Failed to place order(s). Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    alert('Payment succeeded but order failed. Please contact support.')
+  }
+}
 
   if (!grouped || grouped.length === 0) return null;
 
@@ -205,43 +213,33 @@ const Checkout = () => {
               />
             </div>
 
-            {/* Payment Method */}
-            <div
-              className={`p-6 rounded-lg border ${
-                darkMode
-                  ? "bg-card-dark border-border-dark"
-                  : "bg-white border-gray-200"
-              }`}
-            >
-              <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                <FiCreditCard />
-                Payment Method
-              </h2>
-              <div className="space-y-3">
-                {["card", "cash", "mobile"].map((method) => (
-                  <label
-                    key={method}
-                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      paymentMethod === method
-                        ? "border-primary bg-primary/10"
-                        : darkMode
-                        ? "border-border-dark hover:bg-white/5"
-                        : "border-gray-200 hover:bg-gray-50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="payment"
-                      value={method}
-                      checked={paymentMethod === method}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="text-primary"
-                    />
-                    <span className="capitalize">{method} Payment</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            {["card", "cash", "mobile"].map((method) => (
+  <label
+    key={method}
+    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+      method !== 'card' ? 'opacity-40 cursor-not-allowed' : ''
+    } ${
+      paymentMethod === method
+        ? 'border-primary bg-primary/10'
+        : darkMode
+        ? 'border-border-dark hover:bg-white/5'
+        : 'border-gray-200 hover:bg-gray-50'
+    }`}
+  >
+    <input
+      type="radio"
+      name="payment"
+      value={method}
+      checked={paymentMethod === method}
+      onChange={(e) => method === 'card' && setPaymentMethod(e.target.value)}
+      className="text-primary"
+      disabled={method !== 'card'}
+    />
+    <span className="capitalize">
+      {method} Payment {method !== 'card' && '(coming soon)'}
+    </span>
+  </label>
+))}
 
             {/* Special Instructions */}
             <div
@@ -311,13 +309,20 @@ const Checkout = () => {
                   </span>
                 </div>
               </div>
-              <button
-                onClick={handlePlaceOrder}
-                disabled={loading}
-                className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Placing Order..." : "Place Order"}
-              </button>
+              {!showStripeForm ? (
+  <button
+    onClick={handleProceedToPayment}
+    disabled={loading || paymentMethod !== 'card'}
+    className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    {loading ? 'Initializing...' : 'Proceed to Payment'}
+  </button>
+) : (
+  <StripeCheckout
+    clientSecret={clientSecret}
+    onSuccess={handleOrderSuccess}
+  />
+)}
             </div>
           </div>
         </div>
