@@ -17,10 +17,15 @@ export default function Payouts() {
   }, [])
 
   useEffect(() => {
-    if (searchParams.get('success') === 'true' && restaurant?.stripe_account_id) {
-      checkStatus()
-    }
-  }, [searchParams, restaurant])
+  if (
+    searchParams.get('success') === 'true' &&
+    restaurant?.stripe_account_id &&
+    !restaurant?.stripe_onboarding_complete &&
+    !fetching
+  ) {
+    checkStatus()
+  }
+}, [restaurant, fetching])
 
   const fetchRestaurant = async () => {
     try {
