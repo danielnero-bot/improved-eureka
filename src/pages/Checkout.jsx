@@ -53,6 +53,7 @@ const Checkout = () => {
   try {
     const totalAmount = Math.round((getCartTotal() + 3.99) * 100) // convert to cents
     const restaurant = grouped[0].restaurant // single restaurant enforced
+    console.log('restaurant object:', restaurant)
 
     const { data, error } = await supabase.functions.invoke('create-payment-intent', {
       body: {
