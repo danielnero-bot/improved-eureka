@@ -51,15 +51,28 @@ const Checkout = () => {
 
   setLoading(true)
   try {
-    const totalAmount = Math.round((getCartTotal() + 3.99) * 100) // convert to cents
-    const restaurant = grouped[0].restaurant // single restaurant enforced
-    console.log('restaurant object:', restaurant)
+    const totalAmount = Math.round((getCartTotal() + 3.99) * 100)
+    const restaurant = grouped[0].restaurant
+
+    // Fetch stripe_account_id fresh from DB
+    const { data: restaurantData, error: restaurantError } = await supabase
+      .from('restaurants')
+      .select('stripe_account_id, stripe_onboarding_complete')
+      .eq('id', restaurant.id)
+      .single()
+
+    if (restaurantError) throw restaurantError
+
+    if (!restaurantData.stripe_onboarding_complete) {
+      alert('This restaurant is not yet set up to accept payments.')
+      return
+    }
 
     const { data, error } = await supabase.functions.invoke('create-payment-intent', {
       body: {
         amount: totalAmount,
-        restaurantStripeAccountId: restaurant.stripe_account_id,
-        orderId: crypto.randomUUID(), // temp id, replaced after order insert
+        restaurantStripeAccountId: restaurantData.stripe_account_id,
+        orderId: crypto.randomUUID(),
       },
     })
 
